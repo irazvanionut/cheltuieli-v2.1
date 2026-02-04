@@ -1,0 +1,248 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   CHELTUIELI V2 - CUSTOM STYLES
+   Industrial/Utilitarian Restaurant Theme
+   ============================================ */
+
+:root {
+  /* Primary - Warm Red (Restaurant vibe) */
+  --color-primary: #dc2626;
+  --color-primary-dark: #b91c1c;
+  --color-primary-light: #ef4444;
+  
+  /* Neutrals - Warm grays */
+  --color-bg: #fafaf9;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #ffffff;
+  --color-border: #e7e5e4;
+  --color-border-strong: #d6d3d1;
+  
+  /* Text */
+  --color-text: #1c1917;
+  --color-text-secondary: #57534e;
+  --color-text-muted: #a8a29e;
+  
+  /* Categories */
+  --color-cheltuieli: #ef4444;
+  --color-marfa: #3b82f6;
+  --color-salarii: #10b981;
+  --color-tips: #f59e0b;
+  --color-formeplata: #6b7280;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.dark {
+  --color-bg: #0c0a09;
+  --color-surface: #1c1917;
+  --color-surface-elevated: #292524;
+  --color-border: #292524;
+  --color-border-strong: #44403c;
+  --color-text: #fafaf9;
+  --color-text-secondary: #a8a29e;
+  --color-text-muted: #78716c;
+}
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  @apply bg-stone-50 text-stone-900 dark:bg-stone-950 dark:text-stone-50;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-stone-100 dark:bg-stone-900;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-stone-300 dark:bg-stone-700 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-stone-400 dark:bg-stone-600;
+}
+
+/* Focus styles */
+*:focus-visible {
+  @apply outline-none ring-2 ring-red-500 ring-offset-2 ring-offset-stone-50 dark:ring-offset-stone-950;
+}
+
+/* Input styles */
+input, select, textarea {
+  @apply bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700;
+  @apply rounded-lg px-3 py-2 text-stone-900 dark:text-stone-100;
+  @apply placeholder:text-stone-400 dark:placeholder:text-stone-500;
+  @apply transition-colors duration-150;
+}
+
+input:focus, select:focus, textarea:focus {
+  @apply border-red-500 dark:border-red-500;
+}
+
+/* Button base */
+.btn {
+  @apply inline-flex items-center justify-center gap-2 px-4 py-2;
+  @apply rounded-lg font-medium transition-all duration-150;
+  @apply disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-primary {
+  @apply bg-red-600 text-white hover:bg-red-700 active:bg-red-800;
+  @apply shadow-md hover:shadow-lg;
+}
+
+.btn-secondary {
+  @apply bg-stone-200 text-stone-800 hover:bg-stone-300 active:bg-stone-400;
+  @apply dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700;
+}
+
+.btn-ghost {
+  @apply bg-transparent text-stone-600 hover:bg-stone-100 active:bg-stone-200;
+  @apply dark:text-stone-400 dark:hover:bg-stone-800;
+}
+
+.btn-danger {
+  @apply bg-red-100 text-red-700 hover:bg-red-200;
+  @apply dark:bg-red-900/30 dark:text-red-400;
+}
+
+/* Card */
+.card {
+  @apply bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800;
+  @apply shadow-sm;
+}
+
+/* Badge */
+.badge {
+  @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+}
+
+.badge-red { @apply bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400; }
+.badge-blue { @apply bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400; }
+.badge-green { @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400; }
+.badge-yellow { @apply bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400; }
+.badge-gray { @apply bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-400; }
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-fade-in { animation: fadeIn 0.2s ease-out; }
+.animate-slide-up { animation: slideUp 0.3s ease-out; }
+.animate-slide-down { animation: slideDown 0.3s ease-out; }
+
+/* Stagger children */
+.stagger-children > * {
+  animation: slideUp 0.3s ease-out backwards;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+
+/* Table styles */
+.table-container {
+  @apply overflow-x-auto rounded-lg border border-stone-200 dark:border-stone-800;
+}
+
+table {
+  @apply w-full text-sm;
+}
+
+thead {
+  @apply bg-stone-50 dark:bg-stone-900 border-b border-stone-200 dark:border-stone-800;
+}
+
+th {
+  @apply px-4 py-3 text-left font-semibold text-stone-600 dark:text-stone-400 uppercase text-xs tracking-wider;
+}
+
+td {
+  @apply px-4 py-3 border-b border-stone-100 dark:border-stone-800;
+}
+
+tbody tr:hover {
+  @apply bg-stone-50 dark:bg-stone-900/50;
+}
+
+/* Amount display */
+.amount {
+  @apply font-mono tabular-nums;
+}
+
+.amount-positive {
+  @apply text-emerald-600 dark:text-emerald-400;
+}
+
+.amount-negative {
+  @apply text-red-600 dark:text-red-400;
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .btn {
+    @apply w-full;
+  }
+  
+  .card {
+    @apply rounded-none border-x-0;
+  }
+}
+
+/* Print styles */
+@media print {
+  body {
+    @apply bg-white text-black;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+}
