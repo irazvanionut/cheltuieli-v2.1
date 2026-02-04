@@ -7,6 +7,7 @@ import { useAppStore } from '@/hooks/useAppStore';
 import { Layout } from '@/components/layout/Layout';
 import { LoginPage } from '@/pages/LoginPage';
 import { DashboardPage } from '@/pages/DashboardPage';
+import { SettingsPage } from '@/pages/SettingsPage';
 import { Spinner } from '@/components/ui';
 
 // Create React Query client
@@ -47,17 +48,6 @@ const RapoartePage = () => (
   <div className="p-6">
     <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100 mb-4">
       Rapoarte
-    </h1>
-    <p className="text-stone-500">
-      Pagină în dezvoltare...
-    </p>
-  </div>
-);
-
-const SettingsPage = () => (
-  <div className="p-6">
-    <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100 mb-4">
-      Setări
     </h1>
     <p className="text-stone-500">
       Pagină în dezvoltare...
