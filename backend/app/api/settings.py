@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from app.core.database import get_db
 from app.core.security import get_current_user, require_admin, require_sef
@@ -35,6 +35,16 @@ async def list_settings(
     """Lista toate setările (doar admin)"""
     result = await db.execute(select(Setting).order_by(Setting.cheie))
     return [SettingResponse.model_validate(s) for s in result.scalars().all()]
+
+
+@router.get("/settings/ollama/test")
+async def test_ollama_connection(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """Testează conexiunea la Ollama"""
+    await ai_service.update_settings(db)
+    return await ai_service.test_connection()
 
 
 @router.get("/settings/{cheie}", response_model=SettingResponse)
@@ -84,32 +94,22 @@ async def update_setting(
     return SettingResponse.model_validate(setting)
 
 
-@router.get("/settings/ollama/test")
-async def test_ollama_connection(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_admin)
-):
-    """Testează conexiunea la Ollama"""
-    await ai_service.update_settings(db)
-    return await ai_service.test_connection()
-
-
 # ============================================
 # CATEGORII
 # ============================================
 
 @router.get("/categorii", response_model=List[CategorieResponse])
 async def list_categorii(
-    activ: bool = True,
+    activ: Optional[bool] = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Lista categorii"""
-    result = await db.execute(
-        select(Categorie)
-        .where(Categorie.activ == activ)
-        .order_by(Categorie.ordine)
-    )
+    """Lista categorii. Fără parametru activ = toate."""
+    query = select(Categorie)
+    if activ is not None:
+        query = query.where(Categorie.activ == activ)
+    query = query.order_by(Categorie.ordine)
+    result = await db.execute(query)
     return [CategorieResponse.model_validate(c) for c in result.scalars().all()]
 
 
@@ -166,13 +166,15 @@ async def update_categorie(
 
 @router.get("/grupe", response_model=List[GrupaResponse])
 async def list_grupe(
-    categorie_id: int = None,
-    activ: bool = True,
+    categorie_id: Optional[int] = Query(None),
+    activ: Optional[bool] = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Lista grupe"""
-    query = select(Grupa).where(Grupa.activ == activ)
+    """Lista grupe. Fără parametru activ = toate."""
+    query = select(Grupa)
+    if activ is not None:
+        query = query.where(Grupa.activ == activ)
     
     if categorie_id:
         query = query.where(Grupa.categorie_id == categorie_id)

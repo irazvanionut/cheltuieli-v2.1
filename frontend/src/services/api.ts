@@ -212,8 +212,10 @@ class ApiService {
   // PORTOFELE
   // ============================================
 
-  async getPortofele(activ = true): Promise<Portofel[]> {
-    const { data } = await this.client.get<Portofel[]>('/portofele', { params: { activ } });
+  async getPortofele(activ?: boolean): Promise<Portofel[]> {
+    const params: Record<string, any> = {};
+    if (activ !== undefined) params.activ = activ;
+    const { data } = await this.client.get<Portofel[]>('/portofele', { params });
     return data;
   }
 
@@ -317,8 +319,10 @@ class ApiService {
   // CATEGORII
   // ============================================
 
-  async getCategorii(activ = true): Promise<Categorie[]> {
-    const { data } = await this.client.get<Categorie[]>('/categorii', { params: { activ } });
+  async getCategorii(activ?: boolean): Promise<Categorie[]> {
+    const params: Record<string, any> = {};
+    if (activ !== undefined) params.activ = activ;
+    const { data } = await this.client.get<Categorie[]>('/categorii', { params });
     return data;
   }
 

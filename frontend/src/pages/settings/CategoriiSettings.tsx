@@ -29,7 +29,7 @@ export const CategoriiSettings: React.FC = () => {
   // Fetch categorii
   const { data: categorii = [], isLoading } = useQuery({
     queryKey: ['categorii', 'all'],
-    queryFn: () => api.getCategorii(false),
+    queryFn: () => api.getCategorii(),
   });
 
   // Create mutation

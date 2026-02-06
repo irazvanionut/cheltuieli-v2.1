@@ -21,7 +21,7 @@ export const GrupeSettings: React.FC = () => {
   // Fetch grupe
   const { data: grupe = [], isLoading } = useQuery({
     queryKey: ['grupe', 'all'],
-    queryFn: () => api.getGrupe({ activ: false }),
+    queryFn: () => api.getGrupe(),
   });
 
   // Fetch categorii

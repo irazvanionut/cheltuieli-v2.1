@@ -18,7 +18,7 @@ export const PortofeleSettings: React.FC = () => {
     queryKey: ['portofele', 'all'],
     queryFn: async () => {
       // Get all portofele including inactive
-      const response = await api.getPortofele(false);
+      const response = await api.getPortofele();
       return response;
     },
   });

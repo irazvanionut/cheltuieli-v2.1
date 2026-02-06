@@ -50,7 +50,7 @@ async def get_current_user(
     db: AsyncSession = Depends(get_db)
 ):
     """Get current user from JWT token"""
-    from app.models.user import User
+    from app.models import User
     
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -64,9 +64,10 @@ async def get_current_user(
     if payload is None:
         raise credentials_exception
     
-    user_id: int = payload.get("sub")
-    if user_id is None:
+    sub = payload.get("sub")
+    if sub is None:
         raise credentials_exception
+    user_id = int(sub)
     
     result = await db.execute(
         select(User).where(User.id == user_id, User.activ == True)

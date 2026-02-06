@@ -28,16 +28,16 @@ router = APIRouter(tags=["💼 Portofele & Transferuri"])
 
 @router.get("/portofele", response_model=List[PortofelResponse])
 async def list_portofele(
-    activ: bool = Query(True),
+    activ: Optional[bool] = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Lista portofele"""
-    result = await db.execute(
-        select(Portofel)
-        .where(Portofel.activ == activ)
-        .order_by(Portofel.ordine)
-    )
+    """Lista portofele. Fără parametru activ = toate."""
+    query = select(Portofel)
+    if activ is not None:
+        query = query.where(Portofel.activ == activ)
+    query = query.order_by(Portofel.ordine)
+    result = await db.execute(query)
     return [PortofelResponse.model_validate(p) for p in result.scalars().all()]
 
 

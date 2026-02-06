@@ -49,7 +49,7 @@ async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)):
     await db.commit()
     
     # Create token
-    access_token = create_access_token(data={"sub": user.id})
+    access_token = create_access_token(data={"sub": str(user.id)})
     
     return TokenResponse(
         access_token=access_token,

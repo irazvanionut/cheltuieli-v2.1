@@ -42,7 +42,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
   // Get portofele
   const { data: portofele = [] } = useQuery({
     queryKey: ['portofele'],
-    queryFn: () => api.getPortofele(),
+    queryFn: () => api.getPortofele(true),
   });
 
   // Autocomplete
