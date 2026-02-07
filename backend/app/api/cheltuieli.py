@@ -199,6 +199,7 @@ async def create_cheltuiala(
         categorie_id=categorie_id,
         grupa_id=grupa_id,
         suma=data.suma,
+        moneda=data.moneda,
         sens=data.sens,
         neplatit=data.neplatit,
         operator_id=current_user.id,

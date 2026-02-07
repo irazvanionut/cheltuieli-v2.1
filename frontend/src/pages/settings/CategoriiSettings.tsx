@@ -214,6 +214,7 @@ export const CategoriiSettings: React.FC = () => {
         open={isModalOpen}
         onClose={closeModal}
         title={editingItem ? 'Editează categorie' : 'Adaugă categorie nouă'}
+        closeOnBackdropClick={false}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input

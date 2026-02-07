@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { clsx } from 'clsx';
 import { Loader2, X, AlertCircle, CheckCircle, Info, AlertTriangle } from 'lucide-react';
 
@@ -254,6 +255,7 @@ interface ModalProps {
   title?: string;
   children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  closeOnBackdropClick?: boolean;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -262,59 +264,107 @@ export const Modal: React.FC<ModalProps> = ({
   title,
   children,
   size = 'md',
+  closeOnBackdropClick = false,
 }) => {
+  const maxWidths = { sm: '24rem', md: '28rem', lg: '32rem', xl: '36rem' };
+
+  // Prevent body scroll when modal is open
+  React.useEffect(() => {
+    if (!open) return;
+    const orig = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = orig; };
+  }, [open]);
+
   if (!open) return null;
 
-  const sizes = {
-    sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-lg',
-    xl: 'max-w-xl',
-  };
+  return createPortal(
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 99999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem',
+      }}
+      role="dialog"
+      aria-modal="true"
+    >
+      {/* Backdrop */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+        }}
+        onClick={(e) => {
+          if (closeOnBackdropClick && e.target === e.currentTarget) onClose();
+        }}
+      />
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="min-h-screen px-4 text-center">
-        {/* Overlay */}
-        <div
-          className="fixed inset-0 bg-black/50 transition-opacity animate-fade-in"
-          onClick={onClose}
-        />
+      {/* Modal panel */}
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 10,
+          width: '100%',
+          maxWidth: maxWidths[size],
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          backgroundColor: 'var(--color-surface, #ffffff)',
+          borderRadius: '0.75rem',
+          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+        }}
+        className="dark:bg-stone-900"
+      >
+        {/* Header */}
+        {title && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '1rem 1.5rem',
+              borderBottom: '1px solid #e7e5e4',
+            }}
+          >
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 600, margin: 0 }}>
+              {title}
+            </h3>
+            <button
+              onClick={onClose}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '0.25rem',
+                borderRadius: '0.5rem',
+                color: '#a8a29e',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+              aria-label="Close modal"
+            >
+              <X style={{ width: 20, height: 20 }} />
+            </button>
+          </div>
+        )}
 
-        {/* Center trick */}
-        <span className="inline-block h-screen align-middle" aria-hidden="true">
-          &#8203;
-        </span>
-
-        {/* Modal */}
-        <div
-          className={clsx(
-            'inline-block w-full text-left align-middle transition-all',
-            'bg-white dark:bg-stone-900 rounded-xl shadow-xl',
-            'animate-slide-up',
-            sizes[size]
-          )}
-        >
-          {/* Header */}
-          {title && (
-            <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200 dark:border-stone-800">
-              <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
-                {title}
-              </h3>
-              <button
-                onClick={onClose}
-                className="p-1 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-100 dark:hover:bg-stone-800"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-          )}
-
-          {/* Content */}
-          <div className="p-6">{children}</div>
+        {/* Content */}
+        <div style={{ padding: '1.5rem', position: 'relative', zIndex: 1 }}>
+          {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

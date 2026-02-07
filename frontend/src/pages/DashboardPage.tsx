@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
@@ -19,8 +19,8 @@ import { toast } from 'react-hot-toast';
 
 import api from '@/services/api';
 import { useAppStore, useIsSef } from '@/hooks/useAppStore';
-import { Card, Button, Input, Badge, Spinner, Amount, EmptyState, Modal, Select, Checkbox } from '@/components/ui';
-import type { Cheltuiala, CheltuialaCreate, Portofel, AutocompleteResult, RaportZilnic } from '@/types';
+import { Card, Button, Badge, Spinner, Amount, EmptyState, Checkbox } from '@/components/ui';
+import type { Cheltuiala, CheltuialaCreate, AutocompleteResult, RaportZilnic } from '@/types';
 
 // ============================================
 // EXPENSE FORM COMPONENT
@@ -308,8 +308,11 @@ const ExpensesList: React.FC<ExpensesListProps> = ({
         <table className="w-full">
           <thead className="bg-stone-50 dark:bg-stone-800/50">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-stone-500 uppercase tracking-wider">
+<th className="px-4 py-3 text-left text-xs font-semibold text-stone-500 uppercase tracking-wider">
                 Denumire
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-stone-500 uppercase tracking-wider">
+                Tip
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-stone-500 uppercase tracking-wider">
                 Categorie
@@ -336,7 +339,7 @@ const ExpensesList: React.FC<ExpensesListProps> = ({
                 key={ch.id}
                 className="hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors"
               >
-                <td className="px-4 py-3">
+<td className="px-4 py-3">
                   <div className="font-medium text-stone-900 dark:text-stone-100">
                     {ch.denumire || ch.denumire_custom}
                   </div>
@@ -344,6 +347,21 @@ const ExpensesList: React.FC<ExpensesListProps> = ({
                     {format(new Date(ch.created_at), 'HH:mm', { locale: ro })}
                     {ch.operator_nume && ` • ${ch.operator_nume}`}
                   </div>
+                </td>
+                <td className="px-4 py-3">
+                  <Badge
+                    variant={
+                      ch.sens === 'Cheltuiala' 
+                        ? 'red'
+                        : ch.sens === 'Incasare' 
+                        ? 'green'
+                        : ch.sens === 'Alimentare'
+                        ? 'blue'
+                        : 'gray'
+                    }
+                  >
+                    {ch.sens}
+                  </Badge>
                 </td>
                 <td className="px-4 py-3">
                   <Badge
@@ -368,8 +386,17 @@ const ExpensesList: React.FC<ExpensesListProps> = ({
                 <td className="px-4 py-3 text-stone-600 dark:text-stone-400">
                   {ch.portofel_nume}
                 </td>
-                <td className="px-4 py-3 text-right">
-                  <Amount value={-ch.suma} showSign />
+<td className="px-4 py-3 text-right">
+                  <Amount 
+                    value={
+                      ch.sens === 'Cheltuiala' 
+                        ? -ch.suma 
+                        : ch.sens === 'Transfer' 
+                        ? 0 
+                        : ch.suma
+                    } 
+                    showSign 
+                  />
                   {ch.neplatit && (
                     <div className="text-xs text-amber-500 mt-0.5">Neplătit</div>
                   )}
@@ -434,51 +461,46 @@ const Summary: React.FC<SummaryProps> = ({ raport, isLoading }) => {
     );
   }
 
-  return (
+return (
     <div className="space-y-4">
-      {/* Total cheltuieli */}
-      <Card className="p-4">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
-            <TrendingDown className="w-5 h-5 text-red-600 dark:text-red-400" />
-          </div>
-          <div>
-            <p className="text-sm text-stone-500">Total Cheltuieli</p>
-            <p className="text-2xl font-bold text-stone-900 dark:text-stone-100 font-mono">
-              {raport.total_cheltuieli.toLocaleString('ro-RO')} lei
-            </p>
-          </div>
-        </div>
-        {raport.total_neplatit > 0 && (
-          <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 mt-2 pt-2 border-t border-stone-100 dark:border-stone-800">
-            <AlertTriangle className="w-4 h-4" />
-            <span>De plătit: {raport.total_neplatit.toLocaleString('ro-RO')} lei</span>
-          </div>
-        )}
-      </Card>
+
+      
 
       {/* Portofele */}
       <Card className="p-4">
         <h3 className="font-semibold text-stone-900 dark:text-stone-100 mb-3 flex items-center gap-2">
           <Wallet className="w-4 h-4" />
           Solduri Portofele
-        </h3>
+</h3>
         <div className="space-y-2">
           {raport.portofele.map((p) => (
             <div
               key={p.portofel_id}
-              className="flex items-center justify-between py-1.5"
+              className="py-2"
             >
-              <span className="text-stone-600 dark:text-stone-400">{p.portofel_nume}</span>
-              <span className="font-mono font-medium text-stone-900 dark:text-stone-100">
-                {p.sold.toLocaleString('ro-RO')} lei
-              </span>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-stone-600 dark:text-stone-400">{p.portofel_nume}</span>
+                <span className="font-mono font-medium text-stone-900 dark:text-stone-100">
+                  {p.sold.toLocaleString('ro-RO')} lei
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-2 text-sm">
+                <span className="text-green-600 dark:text-green-400">
+                  +{(p.total_incasari || 0).toLocaleString('ro-RO')} lei
+                </span>
+                <span className="text-blue-600 dark:text-blue-400">
+                  +{(p.total_alimentari || 0).toLocaleString('ro-RO')} lei
+                </span>
+                <span className="text-red-600 dark:text-red-400">
+                  -{(p.total_cheltuieli || 0).toLocaleString('ro-RO')} lei
+                </span>
+              </div>
             </div>
           ))}
           <div className="flex items-center justify-between py-2 mt-2 border-t border-stone-200 dark:border-stone-700">
             <span className="font-semibold text-stone-900 dark:text-stone-100">TOTAL</span>
             <span className="font-mono font-bold text-lg text-stone-900 dark:text-stone-100">
-              {raport.total_sold.toLocaleString('ro-RO')} lei
+              {raport.total_sold?.toLocaleString('ro-RO') || 0} lei
             </span>
           </div>
         </div>
@@ -523,15 +545,24 @@ export const DashboardPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { exercitiu } = useAppStore();
 
-  // Fetch cheltuieli
+// Fetch cheltuieli - luăm din ultimele 3 zile ca să vedem și alimentările
   const {
     data: cheltuieli = [],
     isLoading: isLoadingCheltuieli,
-    refetch: refetchCheltuieli,
   } = useQuery({
     queryKey: ['cheltuieli', exercitiu?.id],
-    queryFn: () => api.getCheltuieli({ exercitiu_id: exercitiu?.id }),
-    enabled: !!exercitiu?.id,
+    queryFn: () => {
+      // Verificăm dacă avem exercițiu, dacă nu, luăm ultimele 3 zile
+      if (exercitiu?.id) {
+        return api.getCheltuieli({ exercitiu_id: exercitiu.id });
+      } else {
+        // Încercăm cu dată
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        return api.getCheltuieli({ data_start: sevenDaysAgo.toISOString().split('T')[0] });
+      }
+    },
+    enabled: true, // Activăm mereu ca să vedem datele
   });
 
   // Fetch raport

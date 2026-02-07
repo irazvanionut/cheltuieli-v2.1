@@ -249,6 +249,7 @@ export const UsersSettings: React.FC = () => {
         open={isModalOpen}
         onClose={closeModal}
         title={editingItem ? 'Editează utilizator' : 'Adaugă utilizator nou'}
+        closeOnBackdropClick={false}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input

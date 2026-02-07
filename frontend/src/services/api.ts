@@ -17,7 +17,7 @@ import type {
   OllamaStatus,
 } from '@/types';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+const API_URL = (import.meta as any).env.VITE_API_URL || '/api';
 
 class ApiService {
   private client: AxiosInstance;
@@ -219,12 +219,7 @@ class ApiService {
     return data;
   }
 
-  async getSolduriPortofele(exercitiu_id?: number): Promise<Portofel[]> {
-    const { data } = await this.client.get<Portofel[]>('/portofele/solduri', {
-      params: { exercitiu_id },
-    });
-    return data;
-  }
+
 
   async createPortofel(portofel: Partial<Portofel>): Promise<Portofel> {
     const { data } = await this.client.post<Portofel>('/portofele', portofel);
@@ -250,6 +245,7 @@ class ApiService {
   async createAlimentare(alimentare: {
     portofel_id: number;
     suma: number;
+    moneda?: string;
     comentarii?: string;
   }): Promise<Alimentare> {
     const { data } = await this.client.post<Alimentare>('/alimentari', alimentare);
@@ -271,6 +267,7 @@ class ApiService {
     portofel_sursa_id: number;
     portofel_dest_id: number;
     suma: number;
+    moneda?: string;
     comentarii?: string;
   }): Promise<Transfer> {
     const { data } = await this.client.post<Transfer>('/transferuri', transfer);
@@ -289,9 +286,58 @@ class ApiService {
     return data;
   }
 
-  async getRaportPerioada(data_start: string, data_end: string): Promise<RaportZilnic[]> {
-    const { data } = await this.client.get<RaportZilnic[]>('/rapoarte/perioada', {
-      params: { data_start, data_end },
+  async getRapoarteZilnice(params?: {
+    data_start?: string;
+    data_end?: string;
+    portofel_id?: number;
+    categorie_id?: number;
+  }): Promise<RaportZilnic[]> {
+    const { data } = await this.client.get<RaportZilnic[]>('/rapoarte/zilnice', { params });
+    return data;
+  }
+
+  async getSolduriPortofele(params?: {
+    data?: string;
+    exercitiu_id?: number;
+  }): Promise<any[]> {
+    const { data } = await this.client.get<any[]>('/rapoarte/solduri-portofele', { params });
+    return data;
+  }
+
+  async getSumarCategorii(params?: {
+    data_start?: string;
+    data_end?: string;
+  }): Promise<any[]> {
+    const { data } = await this.client.get<any[]>('/rapoarte/sumar-categorii', { params });
+    return data;
+  }
+
+  async exportRapoarte(params: {
+    format: 'csv' | 'excel';
+    data_start?: string;
+    data_end?: string;
+    portofel_id?: string;
+    categorie_id?: string;
+  }): Promise<Blob> {
+    const response = await this.client.get(`/rapoarte/export/${params.format}`, {
+      params: {
+        data_start: params.data_start,
+        data_end: params.data_end,
+        portofel_id: params.portofel_id,
+        categorie_id: params.categorie_id,
+      },
+      responseType: 'blob',
+    });
+    return response.data;
+  }
+
+  // ============================================
+  // AUTOCOMPLETE
+  // ============================================
+
+  async autocompleteNomenclator(query: string): Promise<AutocompleteResult[]> {
+    const { data } = await this.client.get<AutocompleteResult[]>('/autocomplete', {
+      params: { q: query }
     });
     return data;
   }

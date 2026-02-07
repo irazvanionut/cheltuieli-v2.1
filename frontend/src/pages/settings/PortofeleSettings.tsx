@@ -213,6 +213,7 @@ export const PortofeleSettings: React.FC = () => {
         open={isModalOpen}
         onClose={closeModal}
         title={editingItem ? 'Editează portofel' : 'Adaugă portofel nou'}
+        closeOnBackdropClick={false}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input

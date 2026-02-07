@@ -30,7 +30,7 @@ export const NomenclatorSettings: React.FC = () => {
   // Fetch nomenclator
   const { data: nomenclator = [], isLoading } = useQuery({
     queryKey: ['nomenclator', 'all'],
-    queryFn: () => api.getNomenclator({ activ: false }),
+    queryFn: () => api.getNomenclator(),
   });
 
   // Fetch categorii
@@ -312,6 +312,7 @@ export const NomenclatorSettings: React.FC = () => {
         onClose={closeModal}
         title={editingItem ? 'Editează denumire' : 'Adaugă denumire nouă'}
         size="lg"
+        closeOnBackdropClick={false}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input

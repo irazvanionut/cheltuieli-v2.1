@@ -141,7 +141,10 @@ class AIService:
                 if ai_enabled and ai_enabled.valoare == 'true':
                     query_embedding = await self.generate_embedding_async(query)
                     
-                    sql_vector = text("""
+                    # Convert embedding to string format for PostgreSQL
+                    embedding_str = str(query_embedding)
+                    
+                    sql_vector = text(f"""
                         SELECT 
                             n.id,
                             n.denumire,
@@ -150,35 +153,17 @@ class AIService:
                             n.grupa_id,
                             g.nume as grupa_nume,
                             n.tip_entitate,
-                            1 - (n.embedding <=> :embedding::vector) as similarity
+                            1 - (n.embedding <=> '{embedding_str}'::vector) as similarity
                         FROM nomenclator n
                         LEFT JOIN categorii c ON n.categorie_id = c.id
                         LEFT JOIN grupe g ON n.grupa_id = g.id
                         WHERE n.activ = true
                           AND n.embedding IS NOT NULL
-                        ORDER BY n.embedding <=> :embedding::vector
-                        LIMIT :limit
+                        ORDER BY n.embedding <=> '{embedding_str}'::vector
+                        LIMIT {limit}
                     """)
                     
-                    result = await db.execute(sql_vector, {
-                        "embedding": str(query_embedding),
-                        "limit": limit
-                    })
-                    
-                    existing_ids = {r["id"] for r in results}
-                    for row in result.fetchall():
-                        if row.id not in existing_ids and row.similarity > 0.5:
-                            results.append({
-                                "id": row.id,
-                                "denumire": row.denumire,
-                                "categorie_id": row.categorie_id,
-                                "categorie_nume": row.categorie_nume,
-                                "grupa_id": row.grupa_id,
-                                "grupa_nume": row.grupa_nume,
-                                "tip_entitate": row.tip_entitate,
-                                "similarity": float(row.similarity),
-                                "source": "vector"
-                            })
+                    result = await db.execute(sql_vector)
             except Exception as e:
                 print(f"Vector search error: {e}")
         

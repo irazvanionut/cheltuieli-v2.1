@@ -91,8 +91,12 @@ h1, h2, h3, h4, h5, h6 {
   @apply bg-stone-400 dark:bg-stone-600;
 }
 
-/* Focus styles */
-*:focus-visible {
+/* Focus styles - only on interactive elements, not containers */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible,
+a:focus-visible {
   @apply outline-none ring-2 ring-red-500 ring-offset-2 ring-offset-stone-50 dark:ring-offset-stone-950;
 }
 

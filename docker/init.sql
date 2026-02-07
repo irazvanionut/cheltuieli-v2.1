@@ -226,6 +226,7 @@ CREATE TABLE cheltuieli (
     grupa_id INTEGER REFERENCES grupe(id),
     
     suma NUMERIC(12, 2) NOT NULL,
+    moneda VARCHAR(3) DEFAULT 'RON', -- RON, EUR, USD
     sens VARCHAR(20) NOT NULL, -- 'Cheltuiala', 'Incasare', 'Alimentare', 'Transfer'
     
     -- Flags
@@ -267,9 +268,10 @@ CREATE TABLE transferuri (
     cheltuiala_dest_id INTEGER REFERENCES cheltuieli(id) ON DELETE CASCADE,
     
     suma NUMERIC(12, 2) NOT NULL,
+    moneda VARCHAR(3) DEFAULT 'RON', -- RON, EUR, USD
     operator_id INTEGER REFERENCES users(id),
     comentarii TEXT,
-    
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -284,6 +286,7 @@ CREATE TABLE alimentari (
     exercitiu_id INTEGER REFERENCES exercitii(id) ON DELETE CASCADE,
     portofel_id INTEGER REFERENCES portofele(id),
     suma NUMERIC(12, 2) NOT NULL,
+    moneda VARCHAR(3) DEFAULT 'RON', -- RON, EUR, USD
     operator_id INTEGER REFERENCES users(id),
     comentarii TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

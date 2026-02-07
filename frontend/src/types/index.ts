@@ -96,6 +96,7 @@ export interface Cheltuiala {
   categorie_id?: number;
   grupa_id?: number;
   suma: number;
+  moneda: string;
   sens: 'Cheltuiala' | 'Incasare' | 'Alimentare' | 'Transfer';
   neplatit: boolean;
   verificat: boolean;
@@ -117,6 +118,7 @@ export interface Cheltuiala {
 export interface CheltuialaCreate {
   portofel_id: number;
   suma: number;
+  moneda?: string;
   sens?: string;
   nomenclator_id?: number;
   denumire_custom?: string;
@@ -132,6 +134,7 @@ export interface Transfer {
   portofel_sursa_id: number;
   portofel_dest_id: number;
   suma: number;
+  moneda: string;
   operator_id?: number;
   comentarii?: string;
   created_at: string;
@@ -144,6 +147,7 @@ export interface Alimentare {
   exercitiu_id: number;
   portofel_id: number;
   suma: number;
+  moneda: string;
   operator_id?: number;
   comentarii?: string;
   created_at: string;
@@ -184,17 +188,25 @@ export interface RaportPortofel {
   portofel_id: number;
   portofel_nume: string;
   sold: number;
+  total_incasari?: number;
+  total_cheltuieli?: number;
+  total_alimentari?: number;
 }
 
 export interface RaportZilnic {
   exercitiu_id: number;
   data: string;
   activ: boolean;
+  inchis?: boolean;
+  nr_cheltuieli?: number;
+  nr_incasari?: number;
+  total_cheltuieli: number;
+  total_incasari?: number;
+  total_alimentari?: number;
+  total_neplatit: number;
   categorii: RaportCategorie[];
   portofele: RaportPortofel[];
-  total_cheltuieli: number;
-  total_neplatit: number;
-  total_sold: number;
+  total_sold?: number;
 }
 
 // ============================================
@@ -218,6 +230,18 @@ export interface OllamaStatus {
   embedding_model?: string;
   chat_model?: string;
   error?: string;
+}
+
+// ============================================
+// Chat Types
+// ============================================
+
+export interface ChatRequest {
+  message: string;
+}
+
+export interface ChatResponse {
+  response: string;
 }
 
 // ============================================

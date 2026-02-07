@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useAppStore, useIsAdmin, useIsSef } from '@/hooks/useAppStore';
 import { Badge } from '@/components/ui';
+import { AIChat } from '@/components/ai/AIChat';
 import { format } from 'date-fns';
 import { ro } from 'date-fns/locale';
 
@@ -193,9 +194,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           'pt-14 lg:pt-0',
           'lg:ml-64'
         )}
-      >
-        <div className="p-4 lg:p-6">{children}</div>
-      </main>
-    </div>
-  );
-};
+       >
+         <div className="p-4 lg:p-6">{children}</div>
+       </main>
+
+       {/* AI Chat Widget */}
+       <AIChat />
+     </div>
+   );
+ };

@@ -29,7 +29,7 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-cheltuieli_user}:${POSTGRES_PASSWORD:-cheltuieli_pass_2024}@postgres:5432/${POSTGRES_DB:-cheltuieli}
       SECRET_KEY: ${SECRET_KEY:-your-super-secret-key-change-in-production}
-      OLLAMA_HOST: ${OLLAMA_HOST:-http://host.docker.internal:11434}
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://10.170.7.53:11435}
       ENVIRONMENT: ${ENVIRONMENT:-development}
     volumes:
       - ./backend/app:/app/app

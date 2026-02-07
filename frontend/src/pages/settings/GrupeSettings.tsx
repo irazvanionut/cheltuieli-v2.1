@@ -243,6 +243,7 @@ export const GrupeSettings: React.FC = () => {
         open={isModalOpen}
         onClose={closeModal}
         title={editingItem ? 'Editează grupă' : 'Adaugă grupă nouă'}
+        closeOnBackdropClick={false}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input

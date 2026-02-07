@@ -140,8 +140,9 @@ class Cheltuiala(Base):
     grupa_id = Column(Integer, ForeignKey("grupe.id"))
     
     suma = Column(Numeric(12, 2), nullable=False)
+    moneda = Column(String(3), default='RON')  # RON, EUR, USD
     sens = Column(String(20), nullable=False)  # Cheltuiala, Incasare, Alimentare, Transfer
-    
+
     neplatit = Column(Boolean, default=False)
     verificat = Column(Boolean, default=False)
     verificat_de = Column(Integer, ForeignKey("users.id"))
@@ -176,11 +177,12 @@ class Transfer(Base):
     cheltuiala_dest_id = Column(Integer, ForeignKey("cheltuieli.id", ondelete="CASCADE"))
     
     suma = Column(Numeric(12, 2), nullable=False)
+    moneda = Column(String(3), default='RON')  # RON, EUR, USD
     operator_id = Column(Integer, ForeignKey("users.id"))
     comentarii = Column(Text)
-    
+
     created_at = Column(DateTime, server_default=func.now())
-    
+
     # Relationships
     exercitiu = relationship("Exercitiu", back_populates="transferuri")
 
@@ -192,10 +194,11 @@ class Alimentare(Base):
     exercitiu_id = Column(Integer, ForeignKey("exercitii.id", ondelete="CASCADE"))
     portofel_id = Column(Integer, ForeignKey("portofele.id"))
     suma = Column(Numeric(12, 2), nullable=False)
+    moneda = Column(String(3), default='RON')  # RON, EUR, USD
     operator_id = Column(Integer, ForeignKey("users.id"))
     comentarii = Column(Text)
     created_at = Column(DateTime, server_default=func.now())
-    
+
     # Relationships
     exercitiu = relationship("Exercitiu", back_populates="alimentari")
     portofel = relationship("Portofel", back_populates="alimentari")

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 from app.core.database import get_db
 from app.core.security import get_current_user, require_admin
@@ -38,14 +38,16 @@ async def autocomplete(
 async def list_nomenclator(
     categorie_id: int = Query(None),
     grupa_id: int = Query(None),
-    activ: bool = Query(True),
+    activ: Optional[bool] = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """
     Lista nomenclator cu filtre
     """
-    query = select(Nomenclator).where(Nomenclator.activ == activ)
+    query = select(Nomenclator)
+    if activ is not None:
+        query = query.where(Nomenclator.activ == activ)
     
     if categorie_id:
         query = query.where(Nomenclator.categorie_id == categorie_id)

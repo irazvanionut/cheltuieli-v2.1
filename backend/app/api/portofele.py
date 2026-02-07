@@ -200,6 +200,7 @@ async def create_alimentare(
         exercitiu_id=exercitiu.id,
         portofel_id=data.portofel_id,
         suma=data.suma,
+        moneda=data.moneda,
         operator_id=current_user.id,
         comentarii=data.comentarii
     )
@@ -295,6 +296,7 @@ async def create_transfer(
         portofel_sursa_id=data.portofel_sursa_id,
         portofel_dest_id=data.portofel_dest_id,
         suma=data.suma,
+        moneda=data.moneda,
         operator_id=current_user.id,
         comentarii=data.comentarii
     )
