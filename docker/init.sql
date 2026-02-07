@@ -152,7 +152,7 @@ CREATE TABLE nomenclator (
     categorie_id INTEGER REFERENCES categorii(id) ON DELETE SET NULL,
     grupa_id INTEGER REFERENCES grupe(id) ON DELETE SET NULL,
     tip_entitate VARCHAR(50) DEFAULT 'Altele', -- Furnizor, Persoana, Serviciu, Altele
-    embedding vector(384), -- pentru AI autocomplete
+    embedding vector(768), -- pentru AI autocomplete
     frecventa_utilizare INTEGER DEFAULT 0,
     ultima_utilizare TIMESTAMP,
     activ BOOLEAN DEFAULT true,
@@ -303,7 +303,7 @@ CREATE TABLE chat_history (
     user_id INTEGER REFERENCES users(id),
     message TEXT NOT NULL,
     response TEXT,
-    embedding vector(384),
+    embedding vector(768),
     context_used JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -515,7 +515,7 @@ COMMENT ON TABLE transferuri IS 'Transferuri între portofele';
 COMMENT ON TABLE alimentari IS 'Sold inițial pentru portofele';
 COMMENT ON TABLE chat_history IS 'Istoric conversații cu AI BigBoss';
 
-COMMENT ON COLUMN nomenclator.embedding IS 'Vector embedding generat cu Ollama (384 dims)';
+    COMMENT ON COLUMN nomenclator.embedding IS 'Vector embedding generat cu Ollama (768 dims)';
 COMMENT ON COLUMN categorii.afecteaza_sold IS 'Dacă false, nu se scade din sold (ex: FormePlata)';
 COMMENT ON COLUMN cheltuieli.neplatit IS 'Pentru marfă neplătită - apare separat în raport';
 COMMENT ON COLUMN cheltuieli.activ IS 'Soft delete - nu se șterge fizic';

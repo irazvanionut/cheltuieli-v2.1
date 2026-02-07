@@ -389,6 +389,8 @@ class RaportPortofel(BaseModel):
     portofel_id: int
     portofel_nume: str
     sold: Decimal
+    total_alimentari: Decimal = Decimal("0")
+    total_cheltuieli: Decimal = Decimal("0")
 
 
 class RaportZilnic(BaseModel):

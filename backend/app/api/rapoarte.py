@@ -220,7 +220,8 @@ async def get_raport_zilnic(
     categorii_report = []
     total_cheltuieli = Decimal("0")
     total_neplatit = Decimal("0")
-    
+    matched_ch_ids = set()
+
     for cat in categorii:
         # Get grupe for this categorie
         grupe_result = await db.execute(
@@ -243,6 +244,7 @@ async def get_raport_zilnic(
             
             if ch_cat_id == cat.id:
                 cat_cheltuieli.append(ch)
+                matched_ch_ids.add(ch.id)
         
         if not cat_cheltuieli and not grupe:
             continue  # Skip empty categories
@@ -353,7 +355,54 @@ async def get_raport_zilnic(
             if cat.afecteaza_sold:
                 total_cheltuieli += cat_total_platit
                 total_neplatit += cat_total_neplatit
-    
+
+    # Handle uncategorized cheltuieli
+    unmatched = [ch for ch in cheltuieli if ch.id not in matched_ch_ids]
+    if unmatched:
+        items = []
+        uncat_platit = Decimal("0")
+        uncat_neplatit = Decimal("0")
+
+        for ch in unmatched:
+            if ch.nomenclator_id:
+                nom_result = await db.execute(
+                    select(Nomenclator.denumire).where(Nomenclator.id == ch.nomenclator_id)
+                )
+                denumire = nom_result.scalar_one_or_none() or "N/A"
+            else:
+                denumire = ch.denumire_custom or "N/A"
+
+            items.append(RaportCategorieItem(
+                denumire=denumire,
+                suma=ch.suma,
+                neplatit=ch.neplatit,
+                verificat=ch.verificat,
+                cheltuiala_id=ch.id
+            ))
+
+            if ch.neplatit:
+                uncat_neplatit += ch.suma
+            else:
+                uncat_platit += ch.suma
+
+        categorii_report.append(RaportCategorie(
+            categorie_id=0,
+            categorie_nume="Necategorizate",
+            categorie_culoare="#9CA3AF",
+            afecteaza_sold=True,
+            grupe=[RaportGrupa(
+                grupa_id=None,
+                grupa_nume="Alte",
+                items=items,
+                total=uncat_platit
+            )],
+            total_platit=uncat_platit,
+            total_neplatit=uncat_neplatit,
+            total=uncat_platit + uncat_neplatit
+        ))
+        total_cheltuieli += uncat_platit
+        total_neplatit += uncat_neplatit
+
     # Get portofele solduri
     port_result = await db.execute(
         select(Portofel)
@@ -369,11 +418,33 @@ async def get_raport_zilnic(
         sql = text("SELECT get_sold_portofel(:portofel_id, :exercitiu_id)")
         result = await db.execute(sql, {"portofel_id": p.id, "exercitiu_id": exercitiu.id})
         sold = result.scalar() or Decimal("0")
-        
+
+        # Get alimentari sum for this portofel
+        alim_result = await db.execute(
+            select(func.coalesce(func.sum(Alimentare.suma), 0))
+            .where(Alimentare.portofel_id == p.id, Alimentare.exercitiu_id == exercitiu.id)
+        )
+        p_alimentari = alim_result.scalar() or Decimal("0")
+
+        # Get cheltuieli sum for this portofel
+        ch_result = await db.execute(
+            select(func.coalesce(func.sum(Cheltuiala.suma), 0))
+            .where(
+                Cheltuiala.portofel_id == p.id,
+                Cheltuiala.exercitiu_id == exercitiu.id,
+                Cheltuiala.activ == True,
+                Cheltuiala.sens == 'Cheltuiala',
+                Cheltuiala.neplatit == False
+            )
+        )
+        p_cheltuieli = ch_result.scalar() or Decimal("0")
+
         portofele_report.append(RaportPortofel(
             portofel_id=p.id,
             portofel_nume=p.nume,
-            sold=sold
+            sold=sold,
+            total_alimentari=p_alimentari,
+            total_cheltuieli=p_cheltuieli
         ))
         total_sold += sold
     

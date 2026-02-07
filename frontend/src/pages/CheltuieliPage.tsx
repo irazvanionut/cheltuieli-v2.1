@@ -32,7 +32,9 @@ export const CheltuieliPage: React.FC = () => {
     portofel_id: '',
     categorie_id: '',
     verificat: '',
-    neplatit: ''
+    neplatit: '',
+    data_start: '',
+    data_end: ''
   });
   const [formData, setFormData] = useState<CheltuialaCreate>({
     portofel_id: 0,
@@ -76,22 +78,38 @@ export const CheltuieliPage: React.FC = () => {
   // QUERIES
   // ============================
 
+  const hasDateFilter = filters.data_start || filters.data_end;
+
   const { data: cheltuieli = [], isLoading, refetch } = useQuery({
     queryKey: ['cheltuieli', filters, exercitiu?.id],
-    queryFn: () => api.getCheltuieli({
-      exercitiu_id: exercitiu?.id,
-      ...Object.fromEntries(Object.entries(filters).filter(([_, v]) => v !== ''))
-    }),
+    queryFn: () => {
+      const params: Record<string, any> = {};
+      if (hasDateFilter) {
+        if (filters.data_start) params.data_start = filters.data_start;
+        if (filters.data_end) params.data_end = filters.data_end;
+      } else {
+        params.exercitiu_id = exercitiu?.id;
+      }
+      if (filters.portofel_id) params.portofel_id = filters.portofel_id;
+      if (filters.categorie_id) params.categorie_id = filters.categorie_id;
+      if (filters.verificat) params.verificat = filters.verificat;
+      if (filters.neplatit) params.neplatit = filters.neplatit;
+      return api.getCheltuieli(params);
+    },
   });
 
   const { data: alimentari = [], isLoading: isLoadingAlimentari, refetch: refetchAlimentari } = useQuery({
-    queryKey: ['alimentari', exercitiu?.id],
-    queryFn: () => api.getAlimentari(exercitiu?.id),
+    queryKey: ['alimentari', filters.data_start, filters.data_end, exercitiu?.id],
+    queryFn: () => hasDateFilter
+      ? api.getAlimentari({ data_start: filters.data_start || undefined, data_end: filters.data_end || undefined })
+      : api.getAlimentari({ exercitiu_id: exercitiu?.id }),
   });
 
   const { data: transferuri = [], isLoading: isLoadingTransferuri, refetch: refetchTransferuri } = useQuery({
-    queryKey: ['transferuri', exercitiu?.id],
-    queryFn: () => api.getTransferuri(exercitiu?.id),
+    queryKey: ['transferuri', filters.data_start, filters.data_end, exercitiu?.id],
+    queryFn: () => hasDateFilter
+      ? api.getTransferuri({ data_start: filters.data_start || undefined, data_end: filters.data_end || undefined })
+      : api.getTransferuri({ exercitiu_id: exercitiu?.id }),
   });
 
   const { data: portofele = [] } = useQuery({
@@ -537,45 +555,67 @@ export const CheltuieliPage: React.FC = () => {
             </div>
 
             {showFilters && (
-              <div className="grid grid-cols-4 gap-4 pt-4 border-t border-stone-200 dark:border-stone-700">
-                <select
-                  value={filters.portofel_id}
-                  onChange={(e) => setFilters({ ...filters, portofel_id: e.target.value })}
-                  className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100"
-                >
-                  <option value="">Toate portofelele</option>
-                  {portofele.map(p => (
-                    <option key={p.id} value={p.id.toString()}>{p.nume}</option>
-                  ))}
-                </select>
-                <select
-                  value={filters.categorie_id}
-                  onChange={(e) => setFilters({ ...filters, categorie_id: e.target.value })}
-                  className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100"
-                >
-                  <option value="">Toate categoriile</option>
-                  {categorii.map(c => (
-                    <option key={c.id} value={c.id.toString()}>{c.nume}</option>
-                  ))}
-                </select>
-                <select
-                  value={filters.verificat}
-                  onChange={(e) => setFilters({ ...filters, verificat: e.target.value })}
-                  className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100"
-                >
-                  <option value="">Toate</option>
-                  <option value="true">Verificate</option>
-                  <option value="false">Neverificate</option>
-                </select>
-                <select
-                  value={filters.neplatit}
-                  onChange={(e) => setFilters({ ...filters, neplatit: e.target.value })}
-                  className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100"
-                >
-                  <option value="">Toate</option>
-                  <option value="false">Platite</option>
-                  <option value="true">Neplatite</option>
-                </select>
+              <div className="pt-4 border-t border-stone-200 dark:border-stone-700 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Data start</label>
+                    <input
+                      type="date"
+                      value={filters.data_start}
+                      onChange={(e) => setFilters({ ...filters, data_start: e.target.value })}
+                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Data end</label>
+                    <input
+                      type="date"
+                      value={filters.data_end}
+                      onChange={(e) => setFilters({ ...filters, data_end: e.target.value })}
+                      className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 gap-4">
+                  <select
+                    value={filters.portofel_id}
+                    onChange={(e) => setFilters({ ...filters, portofel_id: e.target.value })}
+                    className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100"
+                  >
+                    <option value="">Toate portofelele</option>
+                    {portofele.map(p => (
+                      <option key={p.id} value={p.id.toString()}>{p.nume}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={filters.categorie_id}
+                    onChange={(e) => setFilters({ ...filters, categorie_id: e.target.value })}
+                    className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100"
+                  >
+                    <option value="">Toate categoriile</option>
+                    {categorii.map(c => (
+                      <option key={c.id} value={c.id.toString()}>{c.nume}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={filters.verificat}
+                    onChange={(e) => setFilters({ ...filters, verificat: e.target.value })}
+                    className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100"
+                  >
+                    <option value="">Toate</option>
+                    <option value="true">Verificate</option>
+                    <option value="false">Neverificate</option>
+                  </select>
+                  <select
+                    value={filters.neplatit}
+                    onChange={(e) => setFilters({ ...filters, neplatit: e.target.value })}
+                    className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100"
+                  >
+                    <option value="">Toate</option>
+                    <option value="false">Platite</option>
+                    <option value="true">Neplatite</option>
+                  </select>
+                </div>
               </div>
             )}
           </Card>

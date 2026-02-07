@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit2, Check, X, Search, Sparkles, BookOpen, RefreshCw } from 'lucide-react';
+import { Plus, Edit2, Check, X, Search, Sparkles, BookOpen, RefreshCw, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 import api from '@/services/api';
@@ -45,11 +45,20 @@ export const NomenclatorSettings: React.FC = () => {
     queryFn: () => api.getGrupe(),
   });
 
+  // Fetch neasociate
+  const { data: neasociate = [] } = useQuery({
+    queryKey: ['nomenclator', 'neasociate'],
+    queryFn: () => api.getNeasociate(),
+  });
+
+  const [showNeasociate, setShowNeasociate] = useState(false);
+
   // Mutations
   const createMutation = useMutation({
     mutationFn: (data: Partial<Nomenclator>) => api.createNomenclator(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nomenclator'] });
+      queryClient.invalidateQueries({ queryKey: ['nomenclator', 'neasociate'] });
       toast.success('Denumire creată');
       closeModal();
     },
@@ -102,6 +111,17 @@ export const NomenclatorSettings: React.FC = () => {
     setIsModalOpen(true);
   };
 
+  const openModalFromNeasociat = (denumire: string) => {
+    setEditingItem(null);
+    setFormData({
+      denumire,
+      categorie_id: 0,
+      grupa_id: 0,
+      tip_entitate: 'Altele',
+    });
+    setIsModalOpen(true);
+  };
+
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingItem(null);
@@ -138,6 +158,13 @@ export const NomenclatorSettings: React.FC = () => {
     const matchCategorie = !filterCategorie || 
       item.categorie_id === Number(filterCategorie);
     return matchSearch && matchCategorie;
+  }).sort((a, b) => {
+    // Items without categorie_id come first (Denumiri neasociate)
+    if (a.categorie_id === null && b.categorie_id !== null) return -1;
+    if (a.categorie_id !== null && b.categorie_id === null) return 1;
+    
+    // Then sort by denumire
+    return a.denumire.localeCompare(b.denumire);
   });
 
   // Get grupe for selected categorie in form
@@ -213,6 +240,57 @@ export const NomenclatorSettings: React.FC = () => {
         <span>•</span>
         <span>Active: {nomenclator.filter(n => n.activ).length}</span>
       </div>
+
+      {/* Neasociate Section */}
+      {neasociate.length > 0 && (
+        <Card className="mb-6" padding="none">
+          <button
+            onClick={() => setShowNeasociate(!showNeasociate)}
+            className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-stone-50 dark:hover:bg-stone-800/50"
+          >
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-amber-500" />
+              <span className="font-semibold text-stone-900 dark:text-stone-100">
+                Denumiri neasociate ({neasociate.length})
+              </span>
+              <span className="text-sm text-stone-500">
+                — cheltuieli fara nomenclator
+              </span>
+            </div>
+            {showNeasociate ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+          {showNeasociate && (
+            <div className="border-t border-stone-200 dark:border-stone-700">
+              <table className="w-full text-sm">
+                <thead className="bg-stone-50 dark:bg-stone-800/50">
+                  <tr>
+                    <th className="px-4 py-2 text-left font-semibold text-stone-600 dark:text-stone-400">Denumire</th>
+                    <th className="px-4 py-2 text-right font-semibold text-stone-600 dark:text-stone-400">Utilizari</th>
+                    <th className="px-4 py-2 text-right font-semibold text-stone-600 dark:text-stone-400">Actiune</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
+                  {neasociate.map((item) => (
+                    <tr key={item.denumire} className="hover:bg-stone-50 dark:hover:bg-stone-800/50">
+                      <td className="px-4 py-2 text-stone-900 dark:text-stone-100">{item.denumire}</td>
+                      <td className="px-4 py-2 text-right text-stone-500">{item.count}</td>
+                      <td className="px-4 py-2 text-right">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => openModalFromNeasociat(item.denumire)}
+                        >
+                          Asociaza
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      )}
 
       {/* Table */}
       {filtered.length === 0 ? (

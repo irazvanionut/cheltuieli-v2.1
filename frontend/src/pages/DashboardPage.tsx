@@ -5,7 +5,6 @@ import {
   Search,
   Receipt,
   Wallet,
-  TrendingDown,
   Clock,
   CheckCircle2,
   XCircle,
@@ -461,38 +460,48 @@ const Summary: React.FC<SummaryProps> = ({ raport, isLoading }) => {
     );
   }
 
-return (
+  return (
     <div className="space-y-4">
-
-      
+      {/* Neplatit warning */}
+      {raport.total_neplatit > 0 && (
+        <Card className="p-3">
+          <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
+            <AlertTriangle className="w-4 h-4" />
+            <span>De platit: {raport.total_neplatit.toLocaleString('ro-RO')} lei</span>
+          </div>
+        </Card>
+      )}
 
       {/* Portofele */}
       <Card className="p-4">
         <h3 className="font-semibold text-stone-900 dark:text-stone-100 mb-3 flex items-center gap-2">
           <Wallet className="w-4 h-4" />
           Solduri Portofele
-</h3>
+        </h3>
         <div className="space-y-2">
           {raport.portofele.map((p) => (
             <div
               key={p.portofel_id}
               className="py-2"
             >
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-stone-600 dark:text-stone-400">{p.portofel_nume}</span>
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-stone-600 dark:text-stone-400">{p.portofel_nume}</span>
+                  <div className="flex gap-3 text-xs mt-0.5">
+                    {(p.total_alimentari || 0) > 0 && (
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        +{(p.total_alimentari || 0).toLocaleString('ro-RO')} lei
+                      </span>
+                    )}
+                    {(p.total_cheltuieli || 0) > 0 && (
+                      <span className="text-red-600 dark:text-red-400">
+                        -{(p.total_cheltuieli || 0).toLocaleString('ro-RO')} lei
+                      </span>
+                    )}
+                  </div>
+                </div>
                 <span className="font-mono font-medium text-stone-900 dark:text-stone-100">
                   {p.sold.toLocaleString('ro-RO')} lei
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-2 text-sm">
-                <span className="text-green-600 dark:text-green-400">
-                  +{(p.total_incasari || 0).toLocaleString('ro-RO')} lei
-                </span>
-                <span className="text-blue-600 dark:text-blue-400">
-                  +{(p.total_alimentari || 0).toLocaleString('ro-RO')} lei
-                </span>
-                <span className="text-red-600 dark:text-red-400">
-                  -{(p.total_cheltuieli || 0).toLocaleString('ro-RO')} lei
                 </span>
               </div>
             </div>
@@ -500,7 +509,7 @@ return (
           <div className="flex items-center justify-between py-2 mt-2 border-t border-stone-200 dark:border-stone-700">
             <span className="font-semibold text-stone-900 dark:text-stone-100">TOTAL</span>
             <span className="font-mono font-bold text-lg text-stone-900 dark:text-stone-100">
-              {raport.total_sold?.toLocaleString('ro-RO') || 0} lei
+              {(raport.total_sold || 0).toLocaleString('ro-RO')} lei
             </span>
           </div>
         </div>

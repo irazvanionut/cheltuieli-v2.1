@@ -140,14 +140,26 @@ async def update_portofel(
 @router.get("/alimentari", response_model=List[AlimentareResponse])
 async def list_alimentari(
     exercitiu_id: Optional[int] = Query(None),
+    data_start: Optional[date] = Query(None),
+    data_end: Optional[date] = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Lista alimentări"""
     query = select(Alimentare)
-    
+
     if exercitiu_id:
         query = query.where(Alimentare.exercitiu_id == exercitiu_id)
+    elif data_start or data_end:
+        # Filter by date range via exercitiu
+        exercitii_query = select(Exercitiu.id)
+        if data_start:
+            exercitii_query = exercitii_query.where(Exercitiu.data >= data_start)
+        if data_end:
+            exercitii_query = exercitii_query.where(Exercitiu.data <= data_end)
+        exercitii_result = await db.execute(exercitii_query)
+        exercitii_ids = [e.id for e in exercitii_result.fetchall()]
+        query = query.where(Alimentare.exercitiu_id.in_(exercitii_ids))
     else:
         # Default to active exercitiu
         ex_result = await db.execute(
@@ -227,14 +239,26 @@ async def create_alimentare(
 @router.get("/transferuri", response_model=List[TransferResponse])
 async def list_transferuri(
     exercitiu_id: Optional[int] = Query(None),
+    data_start: Optional[date] = Query(None),
+    data_end: Optional[date] = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Lista transferuri"""
     query = select(Transfer)
-    
+
     if exercitiu_id:
         query = query.where(Transfer.exercitiu_id == exercitiu_id)
+    elif data_start or data_end:
+        # Filter by date range via exercitiu
+        exercitii_query = select(Exercitiu.id)
+        if data_start:
+            exercitii_query = exercitii_query.where(Exercitiu.data >= data_start)
+        if data_end:
+            exercitii_query = exercitii_query.where(Exercitiu.data <= data_end)
+        exercitii_result = await db.execute(exercitii_query)
+        exercitii_ids = [e.id for e in exercitii_result.fetchall()]
+        query = query.where(Transfer.exercitiu_id.in_(exercitii_ids))
     else:
         # Default to active exercitiu
         ex_result = await db.execute(

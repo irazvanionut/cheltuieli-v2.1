@@ -143,6 +143,11 @@ class ApiService {
     return data;
   }
 
+  async getNeasociate(): Promise<{ denumire: string; count: number }[]> {
+    const { data } = await this.client.get('/nomenclator/neasociate');
+    return data;
+  }
+
   // ============================================
   // EXERCITII
   // ============================================
@@ -235,10 +240,12 @@ class ApiService {
   // ALIMENTARI
   // ============================================
 
-  async getAlimentari(exercitiu_id?: number): Promise<Alimentare[]> {
-    const { data } = await this.client.get<Alimentare[]>('/alimentari', {
-      params: { exercitiu_id },
-    });
+  async getAlimentari(params?: {
+    exercitiu_id?: number;
+    data_start?: string;
+    data_end?: string;
+  }): Promise<Alimentare[]> {
+    const { data } = await this.client.get<Alimentare[]>('/alimentari', { params });
     return data;
   }
 
@@ -256,10 +263,12 @@ class ApiService {
   // TRANSFERURI
   // ============================================
 
-  async getTransferuri(exercitiu_id?: number): Promise<Transfer[]> {
-    const { data } = await this.client.get<Transfer[]>('/transferuri', {
-      params: { exercitiu_id },
-    });
+  async getTransferuri(params?: {
+    exercitiu_id?: number;
+    data_start?: string;
+    data_end?: string;
+  }): Promise<Transfer[]> {
+    const { data } = await this.client.get<Transfer[]>('/transferuri', { params });
     return data;
   }
 
@@ -300,7 +309,7 @@ class ApiService {
     data?: string;
     exercitiu_id?: number;
   }): Promise<any[]> {
-    const { data } = await this.client.get<any[]>('/rapoarte/solduri-portofele', { params });
+    const { data } = await this.client.get<any[]>('/portofele/solduri', { params });
     return data;
   }
 

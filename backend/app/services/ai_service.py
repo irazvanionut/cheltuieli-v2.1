@@ -40,38 +40,7 @@ class AIService:
                 response = await client.get(f"{self._host}/api/tags")
                 if response.status_code == 200:
                     data = response.json()
-                    models = [m['name'] for m in data.get('models', [])]
-                    return {
-                        "status": "connected",
-                        "host": self._host,
-                        "models": models,
-                        "embedding_model": self._embedding_model,
-                        "chat_model": self._chat_model
-                    }
-        except Exception as e:
-            pass
-        
-        return {
-            "status": "disconnected",
-            "host": self._host,
-            "error": "Nu s-a putut conecta la Ollama"
-        }
-    
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=1, max=5))
-    def generate_embedding(self, text: str) -> List[float]:
-        """Generează embedding vector pentru text (sync for batch processing)"""
-        try:
-            with httpx.Client(timeout=30.0) as client:
-                response = client.post(
-                    f"{self._host}/api/embeddings",
-                    json={
-                        "model": self._embedding_model,
-                        "prompt": text
-                    }
-                )
-                if response.status_code == 200:
-                    data = response.json()
-                    return data.get('embedding', [0.0] * 384)
+                    return data.get('embedding', [0.0] * 768)
         except Exception as e:
             print(f"Error generating embedding: {e}")
         
@@ -90,11 +59,11 @@ class AIService:
                 )
                 if response.status_code == 200:
                     data = response.json()
-                    return data.get('embedding', [0.0] * 384)
+                    return data.get('embedding', [0.0] * 768)
         except Exception as e:
             print(f"Error generating embedding: {e}")
         
-        return [0.0] * 384  # Fallback
+        return [0.0] * 768  # Fallback
     
     async def autocomplete_ai(
         self,

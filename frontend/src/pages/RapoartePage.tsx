@@ -70,13 +70,13 @@ export const RapoartePage: React.FC = () => {
   // Fetch alimentari for current exercitiu
   const { data: alimentari = [] } = useQuery({
     queryKey: ['alimentari-raport', exercitiu?.id],
-    queryFn: () => api.getAlimentari(exercitiu?.id),
+    queryFn: () => api.getAlimentari({ exercitiu_id: exercitiu?.id }),
   });
 
   // Fetch transferuri for current exercitiu
   const { data: transferuri = [] } = useQuery({
     queryKey: ['transferuri-raport', exercitiu?.id],
-    queryFn: () => api.getTransferuri(exercitiu?.id),
+    queryFn: () => api.getTransferuri({ exercitiu_id: exercitiu?.id }),
   });
 
   // Fetch reference data
