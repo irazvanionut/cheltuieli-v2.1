@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     APP_VERSION: str = "2.0.0"
     
     # CORS
-    CORS_ORIGINS: list = ["http://localhost:3000", "http://127.0.0.1:3000", "http://127.0.0.1:3000", "http://0.0.0.0:3000"]
+    CORS_ORIGINS: list = ["http://localhost:3000", "http://127.0.0.1:3000", "http://0.0.0.0:3000", "http://10.170.7.150:31000"]
     
     class Config:
         env_file = ".env"
