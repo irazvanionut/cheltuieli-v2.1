@@ -105,16 +105,16 @@ async def create_nomenclator(
         raise HTTPException(status_code=400, detail="Denumirea există deja în nomenclator")
     
     item = Nomenclator(**data.model_dump())
-    
-    # Generate embedding if AI is enabled - disabled for now due to type issues
-    # TODO: Fix embedding type compatibility
-    # try:
-    #     embedding = await ai_service.generate_embedding_async(data.denumire)
-    #     item.embedding = embedding
-    # except Exception as e:
-    #     print(f"Error generating embedding for {data.denumire}: {e}")
-    #     pass  # Continue without embedding
-    
+
+    # Generate embedding automatically
+    try:
+        await ai_service.update_settings(db)
+        embedding = await ai_service.generate_embedding_async(data.denumire)
+        if embedding:
+            item.embedding = embedding
+    except Exception as e:
+        print(f"Error generating embedding for {data.denumire}: {e}")
+
     db.add(item)
     await db.commit()
     await db.refresh(item)
@@ -157,16 +157,17 @@ async def update_nomenclator(
         raise HTTPException(status_code=404, detail="Item negăsit")
     
     update_data = data.model_dump(exclude_unset=True)
-    
-    # Regenerate embedding if denumire changed - disabled for now due to type issues
-    # TODO: Fix embedding type compatibility
-    # if "denumire" in update_data:
-    #     try:
-    #         embedding = ai_service.generate_embedding(update_data["denumire"])
-    #         update_data["embedding"] = embedding
-    #     except Exception:
-    #         pass
-    
+
+    # Regenerate embedding if denumire changed
+    if "denumire" in update_data:
+        try:
+            await ai_service.update_settings(db)
+            embedding = await ai_service.generate_embedding_async(update_data["denumire"])
+            if embedding:
+                update_data["embedding"] = embedding
+        except Exception as e:
+            print(f"Error regenerating embedding: {e}")
+
     for field, value in update_data.items():
         setattr(item, field, value)
     
@@ -223,6 +224,51 @@ async def update_usage(
     )
     await db.commit()
     return {"status": "ok"}
+
+
+@router.post("/nomenclator/asociaza")
+async def asociaza_neasociate(
+    data: dict,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Asociază cheltuielile cu denumire_custom la un nomenclator existent.
+    Primeste: { denumire_custom: str, nomenclator_id: int }
+    Actualizează cheltuielile: setează nomenclator_id, categorie_id, grupa_id din nomenclator.
+    """
+    denumire_custom = data.get("denumire_custom", "").strip()
+    nomenclator_id = data.get("nomenclator_id")
+
+    if not denumire_custom or not nomenclator_id:
+        raise HTTPException(status_code=400, detail="denumire_custom și nomenclator_id sunt obligatorii")
+
+    # Get the nomenclator to get categorie_id and grupa_id
+    nom_result = await db.execute(
+        select(Nomenclator).where(Nomenclator.id == nomenclator_id)
+    )
+    nomenclator_item = nom_result.scalar_one_or_none()
+    if not nomenclator_item:
+        raise HTTPException(status_code=404, detail="Nomenclator negăsit")
+
+    # Update all cheltuieli with this denumire_custom
+    result = await db.execute(
+        update(Cheltuiala)
+        .where(
+            Cheltuiala.denumire_custom == denumire_custom,
+            Cheltuiala.nomenclator_id == None,
+            Cheltuiala.activ == True
+        )
+        .values(
+            nomenclator_id=nomenclator_id,
+            categorie_id=nomenclator_item.categorie_id,
+            grupa_id=nomenclator_item.grupa_id
+        )
+    )
+    updated_count = result.rowcount
+    await db.commit()
+
+    return {"updated": updated_count, "nomenclator_id": nomenclator_id}
 
 
 @router.get("/nomenclator/neasociate")

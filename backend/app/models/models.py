@@ -95,7 +95,7 @@ class Nomenclator(Base):
     categorie_id = Column(Integer, ForeignKey("categorii.id", ondelete="SET NULL"))
     grupa_id = Column(Integer, ForeignKey("grupe.id", ondelete="SET NULL"))
     tip_entitate = Column(String(50), default='Altele')
-    embedding = Column(Vector(384))
+    embedding = Column(Vector(1024))
     frecventa_utilizare = Column(Integer, default=0)
     ultima_utilizare = Column(DateTime)
     activ = Column(Boolean, default=True)
@@ -211,6 +211,6 @@ class ChatHistory(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     message = Column(Text, nullable=False)
     response = Column(Text)
-    embedding = Column(Vector(384))
+    embedding = Column(Vector(1024))
     context_used = Column(Text)  # JSON
     created_at = Column(DateTime, server_default=func.now())

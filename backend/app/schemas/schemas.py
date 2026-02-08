@@ -254,6 +254,7 @@ class ExercitiumResponse(ExercitiumBase):
 class CheltuialaBase(BaseModel):
     portofel_id: int
     suma: Decimal
+    moneda: str = "RON"
     sens: str = "Cheltuiala"
     comentarii: Optional[str] = None
 
@@ -310,6 +311,7 @@ class TransferCreate(BaseModel):
     portofel_sursa_id: int
     portofel_dest_id: int
     suma: Decimal
+    moneda: str = "RON"
     comentarii: Optional[str] = None
 
 
@@ -319,10 +321,11 @@ class TransferResponse(BaseModel):
     portofel_sursa_id: int
     portofel_dest_id: int
     suma: Decimal
+    moneda: str = "RON"
     operator_id: Optional[int] = None
     comentarii: Optional[str] = None
     created_at: datetime
-    
+
     portofel_sursa_nume: Optional[str] = None
     portofel_dest_nume: Optional[str] = None
 
@@ -337,6 +340,7 @@ class TransferResponse(BaseModel):
 class AlimentareCreate(BaseModel):
     portofel_id: int
     suma: Decimal
+    moneda: str = "RON"
     comentarii: Optional[str] = None
 
 
@@ -345,10 +349,11 @@ class AlimentareResponse(BaseModel):
     exercitiu_id: int
     portofel_id: int
     suma: Decimal
+    moneda: str = "RON"
     operator_id: Optional[int] = None
     comentarii: Optional[str] = None
     created_at: datetime
-    
+
     portofel_nume: Optional[str] = None
 
     class Config:
@@ -391,6 +396,8 @@ class RaportPortofel(BaseModel):
     sold: Decimal
     total_alimentari: Decimal = Decimal("0")
     total_cheltuieli: Decimal = Decimal("0")
+    total_transferuri_in: Decimal = Decimal("0")
+    total_transferuri_out: Decimal = Decimal("0")
 
 
 class RaportZilnic(BaseModel):

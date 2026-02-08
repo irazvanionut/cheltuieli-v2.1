@@ -4,7 +4,7 @@ import { Bot, RefreshCw, CheckCircle, XCircle, Server, Cpu, Sparkles, Save } fro
 import { toast } from 'react-hot-toast';
 
 import api from '@/services/api';
-import { Card, Button, Input, Spinner, Badge, Alert } from '@/components/ui';
+import { Card, Button, Input, Spinner, Badge } from '@/components/ui';
 import type { OllamaStatus, Setting } from '@/types';
 
 export const OllamaSettings: React.FC = () => {
@@ -107,21 +107,6 @@ export const OllamaSettings: React.FC = () => {
           Configurează conexiunea la Ollama pentru autocomplete semantic
         </p>
       </div>
-
-      {/* Info */}
-      <Alert type="info" className="mb-6">
-        <strong>Ollama</strong> este folosit pentru autocomplete AI semantic. 
-        Dacă nu ai Ollama configurat, autocomplete-ul va funcționa doar cu căutare text (trigram).
-        <br />
-        <a 
-          href="https://ollama.ai" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="underline"
-        >
-          Descarcă Ollama →
-        </a>
-      </Alert>
 
       {/* Connection Status */}
       <Card className="mb-6">
@@ -250,19 +235,6 @@ export const OllamaSettings: React.FC = () => {
         )}
       </Card>
 
-      {/* Instructions */}
-      <div className="mt-6 p-4 bg-stone-50 dark:bg-stone-800/50 rounded-lg">
-        <h4 className="font-medium text-stone-900 dark:text-stone-100 mb-2">
-          Instrucțiuni instalare Ollama
-        </h4>
-        <ol className="list-decimal list-inside text-sm text-stone-600 dark:text-stone-400 space-y-1">
-          <li>Descarcă și instalează Ollama de la <a href="https://ollama.ai" target="_blank" rel="noopener noreferrer" className="text-red-600 underline">ollama.ai</a></li>
-          <li>Rulează în terminal: <code className="bg-stone-200 dark:bg-stone-700 px-1 rounded">ollama pull mxbai-embed-large</code></li>
-          <li>Opțional pentru chat: <code className="bg-stone-200 dark:bg-stone-700 px-1 rounded">ollama pull llama3.2:3b</code></li>
-          <li>Verifică să fie pornit Ollama (rulează pe <code className="bg-stone-200 dark:bg-stone-700 px-1 rounded">http://localhost:11434</code>)</li>
-          <li>Apasă "Testează" pentru a verifica conexiunea</li>
-        </ol>
-      </div>
     </div>
   );
 };

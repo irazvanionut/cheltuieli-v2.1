@@ -34,17 +34,34 @@ class AIService:
             self._chat_model = settings_db['ollama_chat_model']
     
     async def test_connection(self) -> Dict:
-        """Test Ollama connection"""
+        """Test Ollama connection and return status"""
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
                 response = await client.get(f"{self._host}/api/tags")
                 if response.status_code == 200:
                     data = response.json()
-                    return data.get('embedding', [0.0] * 768)
+                    models = [m.get("name", "") for m in data.get("models", [])]
+                    return {
+                        "status": "connected",
+                        "host": self._host,
+                        "models": models,
+                        "embedding_model": self._embedding_model,
+                        "chat_model": self._chat_model,
+                        "embedding_available": any(self._embedding_model in m for m in models),
+                        "chat_available": any(self._chat_model in m for m in models),
+                    }
+                else:
+                    return {
+                        "status": "disconnected",
+                        "host": self._host,
+                        "error": f"HTTP {response.status_code}",
+                    }
         except Exception as e:
-            print(f"Error generating embedding: {e}")
-        
-        return [0.0] * 384  # Fallback
+            return {
+                "status": "disconnected",
+                "host": self._host,
+                "error": str(e),
+            }
     
     async def generate_embedding_async(self, text: str) -> List[float]:
         """Generează embedding vector pentru text (async)"""
@@ -59,11 +76,13 @@ class AIService:
                 )
                 if response.status_code == 200:
                     data = response.json()
-                    return data.get('embedding', [0.0] * 768)
+                    embedding = data.get('embedding', [])
+                    if embedding:
+                        return embedding
         except Exception as e:
             print(f"Error generating embedding: {e}")
-        
-        return [0.0] * 768  # Fallback
+
+        return []  # Empty = no embedding generated
     
     async def autocomplete_ai(
         self,
@@ -149,21 +168,24 @@ class AIService:
             )
         )
         items = result.scalars().all()
-        
+
         generated = 0
         errors = 0
-        
+
         for item in items:
             try:
-                embedding = self.generate_embedding(item.denumire)
-                item.embedding = embedding
-                generated += 1
+                embedding = await self.generate_embedding_async(item.denumire)
+                if embedding:
+                    item.embedding = embedding
+                    generated += 1
+                else:
+                    errors += 1
             except Exception as e:
                 print(f"Error generating embedding for {item.denumire}: {e}")
                 errors += 1
-        
+
         await db.commit()
-        
+
         return {
             "total": len(items),
             "generated": generated,
@@ -214,10 +236,10 @@ Poți răspunde la întrebări despre:
     async def _build_chat_context(self, db: AsyncSession) -> str:
         """Build context for AI chat from current data"""
         context_parts = []
-        
+
         # Get current exercitiu stats
         sql = text("""
-            SELECT 
+            SELECT
                 e.data,
                 COUNT(ch.id) as nr_cheltuieli,
                 COALESCE(SUM(ch.suma), 0) as total
@@ -231,14 +253,108 @@ Poți răspunde la întrebări despre:
         row = result.fetchone()
         if row:
             context_parts.append(f"Ziua curentă: {row.data}, {row.nr_cheltuieli} cheltuieli, total: {row.total} lei")
-        
+
         # Get portofele solduri
-        sql = text("SELECT portofel, sold_zi_curenta FROM v_solduri_portofele")
+        try:
+            sql = text("SELECT portofel, sold_zi_curenta FROM v_solduri_portofele")
+            result = await db.execute(sql)
+            solduri = [f"{r.portofel}: {r.sold_zi_curenta} lei" for r in result.fetchall()]
+            if solduri:
+                context_parts.append(f"Solduri portofele: {', '.join(solduri)}")
+        except Exception:
+            pass
+
+        # Get cheltuieli by category for today
+        sql = text("""
+            SELECT
+                COALESCE(c.nume, 'Necategorizate') as categorie,
+                COUNT(ch.id) as nr,
+                COALESCE(SUM(ch.suma), 0) as total
+            FROM cheltuieli ch
+            LEFT JOIN categorii c ON ch.categorie_id = c.id
+            JOIN exercitii e ON ch.exercitiu_id = e.id
+            WHERE e.activ = true AND ch.activ = true
+            GROUP BY c.nume
+            ORDER BY total DESC
+        """)
         result = await db.execute(sql)
-        solduri = [f"{r.portofel}: {r.sold_zi_curenta} lei" for r in result.fetchall()]
-        if solduri:
-            context_parts.append(f"Solduri portofele: {', '.join(solduri)}")
-        
+        rows = result.fetchall()
+        if rows:
+            cats = [f"{r.categorie}: {r.nr} tranzacții, {r.total} lei" for r in rows]
+            context_parts.append(f"Pe categorii azi: {'; '.join(cats)}")
+
+        # Get recent cheltuieli (last 10)
+        sql = text("""
+            SELECT
+                COALESCE(n.denumire, ch.denumire_custom, 'N/A') as denumire,
+                ch.suma,
+                ch.sens,
+                ch.moneda,
+                p.nume as portofel
+            FROM cheltuieli ch
+            LEFT JOIN nomenclator n ON ch.nomenclator_id = n.id
+            LEFT JOIN portofele p ON ch.portofel_id = p.id
+            JOIN exercitii e ON ch.exercitiu_id = e.id
+            WHERE e.activ = true AND ch.activ = true
+            ORDER BY ch.created_at DESC
+            LIMIT 10
+        """)
+        result = await db.execute(sql)
+        rows = result.fetchall()
+        if rows:
+            items = [f"{r.denumire}: {r.suma} {r.moneda} ({r.sens}, {r.portofel})" for r in rows]
+            context_parts.append(f"Ultimele cheltuieli: {'; '.join(items)}")
+
+        # Get alimentari today
+        sql = text("""
+            SELECT
+                p.nume as portofel,
+                a.suma,
+                a.moneda
+            FROM alimentari a
+            JOIN portofele p ON a.portofel_id = p.id
+            JOIN exercitii e ON a.exercitiu_id = e.id
+            WHERE e.activ = true
+            ORDER BY a.created_at DESC
+        """)
+        result = await db.execute(sql)
+        rows = result.fetchall()
+        if rows:
+            alims = [f"{r.portofel}: +{r.suma} {r.moneda}" for r in rows]
+            context_parts.append(f"Alimentări azi: {'; '.join(alims)}")
+
+        # Get transferuri today
+        sql = text("""
+            SELECT
+                ps.nume as sursa,
+                pd.nume as dest,
+                t.suma,
+                t.moneda
+            FROM transferuri t
+            JOIN portofele ps ON t.portofel_sursa_id = ps.id
+            JOIN portofele pd ON t.portofel_dest_id = pd.id
+            JOIN exercitii e ON t.exercitiu_id = e.id
+            WHERE e.activ = true
+            ORDER BY t.created_at DESC
+        """)
+        result = await db.execute(sql)
+        rows = result.fetchall()
+        if rows:
+            transfers = [f"{r.sursa} → {r.dest}: {r.suma} {r.moneda}" for r in rows]
+            context_parts.append(f"Transferuri azi: {'; '.join(transfers)}")
+
+        # Get total neplatit
+        sql = text("""
+            SELECT COALESCE(SUM(ch.suma), 0) as total_neplatit
+            FROM cheltuieli ch
+            JOIN exercitii e ON ch.exercitiu_id = e.id
+            WHERE e.activ = true AND ch.activ = true AND ch.neplatit = true
+        """)
+        result = await db.execute(sql)
+        row = result.fetchone()
+        if row and row.total_neplatit > 0:
+            context_parts.append(f"Total marfă neplătită azi: {row.total_neplatit} lei")
+
         return "\n".join(context_parts)
 
 

@@ -191,6 +191,8 @@ export interface RaportPortofel {
   total_incasari?: number;
   total_cheltuieli?: number;
   total_alimentari?: number;
+  total_transferuri_in?: number;
+  total_transferuri_out?: number;
 }
 
 export interface RaportZilnic {

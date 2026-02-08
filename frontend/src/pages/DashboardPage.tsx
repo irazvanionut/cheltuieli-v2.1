@@ -18,8 +18,8 @@ import { toast } from 'react-hot-toast';
 
 import api from '@/services/api';
 import { useAppStore, useIsSef } from '@/hooks/useAppStore';
-import { Card, Button, Badge, Spinner, Amount, EmptyState, Checkbox } from '@/components/ui';
-import type { Cheltuiala, CheltuialaCreate, AutocompleteResult, RaportZilnic } from '@/types';
+import { Card, Button, Badge, Spinner, Amount, EmptyState, Checkbox, Modal, Input } from '@/components/ui';
+import type { Cheltuiala, CheltuialaCreate, AutocompleteResult, RaportZilnic, Nomenclator } from '@/types';
 
 // ============================================
 // EXPENSE FORM COMPONENT
@@ -30,6 +30,7 @@ interface ExpenseFormProps {
 }
 
 const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
+  const queryClient = useQueryClient();
   const [query, setQuery] = useState('');
   const [selectedItem, setSelectedItem] = useState<AutocompleteResult | null>(null);
   const [amount, setAmount] = useState('');
@@ -38,10 +39,25 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Nomenclator add modal state
+  const [showNomModal, setShowNomModal] = useState(false);
+  const [nomForm, setNomForm] = useState({ denumire: '', categorie_id: 0, grupa_id: 0, tip_entitate: 'Altele' });
+  const [isCreatingNom, setIsCreatingNom] = useState(false);
+
   // Get portofele
   const { data: portofele = [] } = useQuery({
     queryKey: ['portofele'],
     queryFn: () => api.getPortofele(true),
+  });
+
+  // Get categorii & grupe for nomenclator modal
+  const { data: categorii = [] } = useQuery({
+    queryKey: ['categorii'],
+    queryFn: () => api.getCategorii(),
+  });
+  const { data: grupe = [] } = useQuery({
+    queryKey: ['grupe'],
+    queryFn: () => api.getGrupe(),
   });
 
   // Autocomplete
@@ -69,6 +85,51 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
     setSelectedItem(null);
     setQuery('');
   };
+
+  const handleOpenNomModal = () => {
+    setShowSuggestions(false);
+    setNomForm({ denumire: query.trim(), categorie_id: 0, grupa_id: 0, tip_entitate: 'Altele' });
+    setShowNomModal(true);
+  };
+
+  const handleCreateNomenclator = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nomForm.denumire.trim()) {
+      toast.error('Denumirea este obligatorie');
+      return;
+    }
+    setIsCreatingNom(true);
+    try {
+      const created: Nomenclator = await api.createNomenclator({
+        denumire: nomForm.denumire.trim(),
+        categorie_id: nomForm.categorie_id || undefined,
+        grupa_id: nomForm.grupa_id || undefined,
+        tip_entitate: nomForm.tip_entitate,
+      });
+      // Auto-select the new item in the expense form
+      setSelectedItem({
+        id: created.id,
+        denumire: created.denumire,
+        categorie_id: created.categorie_id,
+        categorie_nume: created.categorie_nume,
+        grupa_id: created.grupa_id,
+        grupa_nume: created.grupa_nume,
+        similarity: 1,
+      });
+      setQuery(created.denumire);
+      setShowNomModal(false);
+      queryClient.invalidateQueries({ queryKey: ['nomenclator'] });
+      toast.success('Denumire adăugată în nomenclator');
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || 'Eroare la creare');
+    } finally {
+      setIsCreatingNom(false);
+    }
+  };
+
+  const filteredGrupe = nomForm.categorie_id
+    ? grupe.filter((g) => g.categorie_id === nomForm.categorie_id)
+    : grupe;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,8 +244,16 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
                     </button>
                   ))
                 ) : (
-                  <div className="p-3 text-sm text-stone-500 text-center">
-                    Nu s-au găsit rezultate. Se va adăuga ca nou.
+                  <div className="p-3 text-sm text-center">
+                    <div className="text-stone-500 mb-2">Nu s-au găsit rezultate.</div>
+                    <button
+                      type="button"
+                      onClick={handleOpenNomModal}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-400 rounded-lg transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Adaugă în nomenclator
+                    </button>
                   </div>
                 )}
               </div>
@@ -256,6 +325,86 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
           </div>
         </div>
       </form>
+
+      {/* Nomenclator Add Modal */}
+      <Modal
+        open={showNomModal}
+        onClose={() => setShowNomModal(false)}
+        title="Adaugă denumire nouă"
+        size="lg"
+        closeOnBackdropClick={false}
+      >
+        <form onSubmit={handleCreateNomenclator} className="space-y-4">
+          <Input
+            label="Denumire"
+            value={nomForm.denumire}
+            onChange={(e) => setNomForm({ ...nomForm, denumire: e.target.value })}
+            placeholder="ex: Metro, Mega Image, Ion Popescu..."
+            required
+            autoFocus
+          />
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
+                Categorie
+              </label>
+              <select
+                value={nomForm.categorie_id}
+                onChange={(e) => setNomForm({ ...nomForm, categorie_id: Number(e.target.value), grupa_id: 0 })}
+                className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900"
+              >
+                <option value="">- Selectează -</option>
+                {categorii.map((cat) => (
+                  <option key={cat.id} value={cat.id}>{cat.nume}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
+                Grupă
+              </label>
+              <select
+                value={nomForm.grupa_id}
+                onChange={(e) => setNomForm({ ...nomForm, grupa_id: Number(e.target.value) })}
+                className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900"
+                disabled={!nomForm.categorie_id}
+              >
+                <option value="">- Selectează -</option>
+                {filteredGrupe.map((g) => (
+                  <option key={g.id} value={g.id}>{g.nume}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
+              Tip entitate
+            </label>
+            <select
+              value={nomForm.tip_entitate}
+              onChange={(e) => setNomForm({ ...nomForm, tip_entitate: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900"
+            >
+              <option value="Furnizor">Furnizor</option>
+              <option value="Persoana">Persoană</option>
+              <option value="Serviciu">Serviciu</option>
+              <option value="Altele">Altele</option>
+            </select>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <Button type="button" variant="secondary" onClick={() => setShowNomModal(false)} className="flex-1">
+              Anulează
+            </Button>
+            <Button type="submit" variant="primary" className="flex-1" loading={isCreatingNom}>
+              Adaugă
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </Card>
   );
 };
@@ -487,15 +636,25 @@ const Summary: React.FC<SummaryProps> = ({ raport, isLoading }) => {
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-stone-600 dark:text-stone-400">{p.portofel_nume}</span>
-                  <div className="flex gap-3 text-xs mt-0.5">
+                  <div className="flex gap-3 text-xs mt-0.5 flex-wrap">
                     {(p.total_alimentari || 0) > 0 && (
                       <span className="text-emerald-600 dark:text-emerald-400">
-                        +{(p.total_alimentari || 0).toLocaleString('ro-RO')} lei
+                        +{(p.total_alimentari || 0).toLocaleString('ro-RO')} ali
+                      </span>
+                    )}
+                    {(p.total_transferuri_in || 0) > 0 && (
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        +{(p.total_transferuri_in || 0).toLocaleString('ro-RO')} transf
                       </span>
                     )}
                     {(p.total_cheltuieli || 0) > 0 && (
                       <span className="text-red-600 dark:text-red-400">
-                        -{(p.total_cheltuieli || 0).toLocaleString('ro-RO')} lei
+                        -{(p.total_cheltuieli || 0).toLocaleString('ro-RO')} chelt
+                      </span>
+                    )}
+                    {(p.total_transferuri_out || 0) > 0 && (
+                      <span className="text-red-600 dark:text-red-400">
+                        -{(p.total_transferuri_out || 0).toLocaleString('ro-RO')} transf
                       </span>
                     )}
                   </div>

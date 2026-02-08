@@ -148,6 +148,11 @@ class ApiService {
     return data;
   }
 
+  async asociazaNeasociate(denumire_custom: string, nomenclator_id: number): Promise<{ updated: number }> {
+    const { data } = await this.client.post('/nomenclator/asociaza', { denumire_custom, nomenclator_id });
+    return data;
+  }
+
   // ============================================
   // EXERCITII
   // ============================================
@@ -295,13 +300,10 @@ class ApiService {
     return data;
   }
 
-  async getRapoarteZilnice(params?: {
-    data_start?: string;
-    data_end?: string;
-    portofel_id?: number;
-    categorie_id?: number;
-  }): Promise<RaportZilnic[]> {
-    const { data } = await this.client.get<RaportZilnic[]>('/rapoarte/zilnice', { params });
+  async getRaportPerioada(data_start: string, data_end: string): Promise<RaportZilnic[]> {
+    const { data } = await this.client.get<RaportZilnic[]>('/rapoarte/perioada', {
+      params: { data_start, data_end }
+    });
     return data;
   }
 
@@ -311,33 +313,6 @@ class ApiService {
   }): Promise<any[]> {
     const { data } = await this.client.get<any[]>('/portofele/solduri', { params });
     return data;
-  }
-
-  async getSumarCategorii(params?: {
-    data_start?: string;
-    data_end?: string;
-  }): Promise<any[]> {
-    const { data } = await this.client.get<any[]>('/rapoarte/sumar-categorii', { params });
-    return data;
-  }
-
-  async exportRapoarte(params: {
-    format: 'csv' | 'excel';
-    data_start?: string;
-    data_end?: string;
-    portofel_id?: string;
-    categorie_id?: string;
-  }): Promise<Blob> {
-    const response = await this.client.get(`/rapoarte/export/${params.format}`, {
-      params: {
-        data_start: params.data_start,
-        data_end: params.data_end,
-        portofel_id: params.portofel_id,
-        categorie_id: params.categorie_id,
-      },
-      responseType: 'blob',
-    });
-    return response.data;
   }
 
   // ============================================

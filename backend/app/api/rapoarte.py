@@ -439,12 +439,28 @@ async def get_raport_zilnic(
         )
         p_cheltuieli = ch_result.scalar() or Decimal("0")
 
+        # Get transfers IN to this portofel
+        tin_result = await db.execute(
+            select(func.coalesce(func.sum(Transfer.suma), 0))
+            .where(Transfer.portofel_dest_id == p.id, Transfer.exercitiu_id == exercitiu.id)
+        )
+        p_transferuri_in = tin_result.scalar() or Decimal("0")
+
+        # Get transfers OUT from this portofel
+        tout_result = await db.execute(
+            select(func.coalesce(func.sum(Transfer.suma), 0))
+            .where(Transfer.portofel_sursa_id == p.id, Transfer.exercitiu_id == exercitiu.id)
+        )
+        p_transferuri_out = tout_result.scalar() or Decimal("0")
+
         portofele_report.append(RaportPortofel(
             portofel_id=p.id,
             portofel_nume=p.nume,
             sold=sold,
             total_alimentari=p_alimentari,
-            total_cheltuieli=p_cheltuieli
+            total_cheltuieli=p_cheltuieli,
+            total_transferuri_in=p_transferuri_in,
+            total_transferuri_out=p_transferuri_out
         ))
         total_sold += sold
     

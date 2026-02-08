@@ -26,6 +26,7 @@ export const NomenclatorSettings: React.FC = () => {
     grupa_id: 0,
     tip_entitate: 'Altele',
   });
+  const [neasociatDenumire, setNeasociatDenumire] = useState<string | null>(null);
 
   // Fetch nomenclator
   const { data: nomenclator = [], isLoading } = useQuery({
@@ -56,10 +57,22 @@ export const NomenclatorSettings: React.FC = () => {
   // Mutations
   const createMutation = useMutation({
     mutationFn: (data: Partial<Nomenclator>) => api.createNomenclator(data),
-    onSuccess: () => {
+    onSuccess: async (createdItem: Nomenclator) => {
+      // If created from neasociat, also link existing cheltuieli
+      if (neasociatDenumire) {
+        try {
+          const result = await api.asociazaNeasociate(neasociatDenumire, createdItem.id);
+          toast.success(`Denumire creată și ${result.updated} cheltuieli asociate`);
+        } catch {
+          toast.success('Denumire creată (asocierea cheltuielilor a eșuat)');
+        }
+      } else {
+        toast.success('Denumire creată');
+      }
       queryClient.invalidateQueries({ queryKey: ['nomenclator'] });
       queryClient.invalidateQueries({ queryKey: ['nomenclator', 'neasociate'] });
-      toast.success('Denumire creată');
+      queryClient.invalidateQueries({ queryKey: ['cheltuieli'] });
+      queryClient.invalidateQueries({ queryKey: ['raport'] });
       closeModal();
     },
     onError: (err: any) => {
@@ -113,6 +126,7 @@ export const NomenclatorSettings: React.FC = () => {
 
   const openModalFromNeasociat = (denumire: string) => {
     setEditingItem(null);
+    setNeasociatDenumire(denumire);
     setFormData({
       denumire,
       categorie_id: 0,
@@ -125,6 +139,7 @@ export const NomenclatorSettings: React.FC = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingItem(null);
+    setNeasociatDenumire(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {

@@ -152,7 +152,7 @@ CREATE TABLE nomenclator (
     categorie_id INTEGER REFERENCES categorii(id) ON DELETE SET NULL,
     grupa_id INTEGER REFERENCES grupe(id) ON DELETE SET NULL,
     tip_entitate VARCHAR(50) DEFAULT 'Altele', -- Furnizor, Persoana, Serviciu, Altele
-    embedding vector(768), -- pentru AI autocomplete
+    embedding vector(1024), -- pentru AI autocomplete
     frecventa_utilizare INTEGER DEFAULT 0,
     ultima_utilizare TIMESTAMP,
     activ BOOLEAN DEFAULT true,
@@ -303,7 +303,7 @@ CREATE TABLE chat_history (
     user_id INTEGER REFERENCES users(id),
     message TEXT NOT NULL,
     response TEXT,
-    embedding vector(768),
+    embedding vector(1024),
     context_used JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

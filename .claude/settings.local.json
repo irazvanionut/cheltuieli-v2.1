@@ -2,7 +2,22 @@
   "permissions": {
     "allow": [
       "Bash(docker-compose logs:*)",
-      "Bash(docker-compose restart:*)"
+      "Bash(docker-compose restart:*)",
+      "Bash(docker exec:*)",
+      "Bash(curl:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzcwNjM4MjQxfQ.rw6PqyfvLZptGe55CGTJxU-QBGZUW_lJ1IwLJ90LemM\")",
+      "Bash(python:*)",
+      "Bash(docker-compose up:*)"
     ]
-  }
+  },
+  "environmentVariables": [
+    {
+      "name": "ANTHROPIC_BASE_URL",
+      "value": "http://10.170.7.53:11435"
+    },
+    {
+      "name": "ANTHROPIC_AUTH_TOKEN",
+      "value": "ollama"
+    }
+  ]
 }
