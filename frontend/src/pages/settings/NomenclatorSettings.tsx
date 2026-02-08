@@ -446,7 +446,6 @@ export const NomenclatorSettings: React.FC = () => {
                 value={formData.grupa_id}
                 onChange={(e) => setFormData({ ...formData, grupa_id: Number(e.target.value) })}
                 className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900"
-                disabled={!formData.categorie_id}
               >
                 <option value="">- Selectează -</option>
                 {filteredGrupe.map((g) => (
