@@ -28,6 +28,12 @@ export const NomenclatorSettings: React.FC = () => {
   });
   const [neasociatDenumire, setNeasociatDenumire] = useState<string | null>(null);
 
+  // Inline create categorie/grupa state
+  const [isAddingCategorie, setIsAddingCategorie] = useState(false);
+  const [newCategorieName, setNewCategorieName] = useState('');
+  const [isAddingGrupa, setIsAddingGrupa] = useState(false);
+  const [newGrupaName, setNewGrupaName] = useState('');
+
   // Fetch nomenclator
   const { data: nomenclator = [], isLoading } = useQuery({
     queryKey: ['nomenclator', 'all'],
@@ -186,6 +192,34 @@ export const NomenclatorSettings: React.FC = () => {
   const filteredGrupe = formData.categorie_id
     ? grupe.filter((g) => g.categorie_id === formData.categorie_id)
     : grupe;
+
+  const handleInlineCreateCategorie = async () => {
+    if (!newCategorieName.trim()) return;
+    try {
+      const created = await api.createCategorie({ nume: newCategorieName.trim(), culoare: '#6B7280', afecteaza_sold: true });
+      queryClient.invalidateQueries({ queryKey: ['categorii'] });
+      setFormData({ ...formData, categorie_id: created.id, grupa_id: 0 });
+      setNewCategorieName('');
+      setIsAddingCategorie(false);
+      toast.success('Categorie creată');
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || 'Eroare la creare categorie');
+    }
+  };
+
+  const handleInlineCreateGrupa = async () => {
+    if (!newGrupaName.trim()) return;
+    try {
+      const created = await api.createGrupa({ nume: newGrupaName.trim(), categorie_id: formData.categorie_id || undefined });
+      queryClient.invalidateQueries({ queryKey: ['grupe'] });
+      setFormData({ ...formData, grupa_id: created.id });
+      setNewGrupaName('');
+      setIsAddingGrupa(false);
+      toast.success('Grupă creată');
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || 'Eroare la creare grupă');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -419,15 +453,25 @@ export const NomenclatorSettings: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
-                Categorie
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
+                  Categorie
+                </label>
+                <button
+                  type="button"
+                  onClick={() => { setIsAddingCategorie(!isAddingCategorie); setNewCategorieName(''); }}
+                  className="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium"
+                  title="Adaugă categorie nouă"
+                >
+                  {isAddingCategorie ? '✕' : '+'}
+                </button>
+              </div>
               <select
                 value={formData.categorie_id}
-                onChange={(e) => setFormData({ 
-                  ...formData, 
+                onChange={(e) => setFormData({
+                  ...formData,
                   categorie_id: Number(e.target.value),
-                  grupa_id: 0 // Reset grupa
+                  grupa_id: 0
                 })}
                 className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900"
               >
@@ -436,12 +480,42 @@ export const NomenclatorSettings: React.FC = () => {
                   <option key={cat.id} value={cat.id}>{cat.nume}</option>
                 ))}
               </select>
+              {isAddingCategorie && (
+                <div className="flex gap-1 mt-1">
+                  <input
+                    type="text"
+                    value={newCategorieName}
+                    onChange={(e) => setNewCategorieName(e.target.value)}
+                    placeholder="Nume categorie..."
+                    className="flex-1 px-2 py-1 text-sm rounded border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900"
+                    autoFocus
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleInlineCreateCategorie(); } }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleInlineCreateCategorie}
+                    className="px-2 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded"
+                  >
+                    Salvează
+                  </button>
+                </div>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
-                Grupă
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
+                  Grupă
+                </label>
+                <button
+                  type="button"
+                  onClick={() => { setIsAddingGrupa(!isAddingGrupa); setNewGrupaName(''); }}
+                  className="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium"
+                  title="Adaugă grupă nouă"
+                >
+                  {isAddingGrupa ? '✕' : '+'}
+                </button>
+              </div>
               <select
                 value={formData.grupa_id}
                 onChange={(e) => setFormData({ ...formData, grupa_id: Number(e.target.value) })}
@@ -452,6 +526,26 @@ export const NomenclatorSettings: React.FC = () => {
                   <option key={g.id} value={g.id}>{g.nume}</option>
                 ))}
               </select>
+              {isAddingGrupa && (
+                <div className="flex gap-1 mt-1">
+                  <input
+                    type="text"
+                    value={newGrupaName}
+                    onChange={(e) => setNewGrupaName(e.target.value)}
+                    placeholder="Nume grupă..."
+                    className="flex-1 px-2 py-1 text-sm rounded border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900"
+                    autoFocus
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleInlineCreateGrupa(); } }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleInlineCreateGrupa}
+                    className="px-2 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded"
+                  >
+                    Salvează
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 

@@ -10,6 +10,8 @@ import {
   XCircle,
   AlertTriangle,
   RefreshCw,
+  ArrowLeftRight,
+  Banknote,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ro } from 'date-fns/locale';
@@ -19,7 +21,7 @@ import { toast } from 'react-hot-toast';
 import api from '@/services/api';
 import { useAppStore, useIsSef } from '@/hooks/useAppStore';
 import { Card, Button, Badge, Spinner, Amount, EmptyState, Checkbox, Modal, Input } from '@/components/ui';
-import type { Cheltuiala, CheltuialaCreate, AutocompleteResult, RaportZilnic, Nomenclator } from '@/types';
+import type { Cheltuiala, CheltuialaCreate, AutocompleteResult, RaportZilnic, Nomenclator, Portofel } from '@/types';
 
 // ============================================
 // EXPENSE FORM COMPONENT
@@ -43,6 +45,12 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
   const [showNomModal, setShowNomModal] = useState(false);
   const [nomForm, setNomForm] = useState({ denumire: '', categorie_id: 0, grupa_id: 0, tip_entitate: 'Altele' });
   const [isCreatingNom, setIsCreatingNom] = useState(false);
+
+  // Inline create categorie/grupa state
+  const [isAddingCategorie, setIsAddingCategorie] = useState(false);
+  const [newCategorieName, setNewCategorieName] = useState('');
+  const [isAddingGrupa, setIsAddingGrupa] = useState(false);
+  const [newGrupaName, setNewGrupaName] = useState('');
 
   // Get portofele
   const { data: portofele = [] } = useQuery({
@@ -130,6 +138,34 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
   const filteredGrupe = nomForm.categorie_id
     ? grupe.filter((g) => g.categorie_id === nomForm.categorie_id)
     : grupe;
+
+  const handleInlineCreateCategorie = async () => {
+    if (!newCategorieName.trim()) return;
+    try {
+      const created = await api.createCategorie({ nume: newCategorieName.trim(), culoare: '#6B7280', afecteaza_sold: true });
+      queryClient.invalidateQueries({ queryKey: ['categorii'] });
+      setNomForm({ ...nomForm, categorie_id: created.id, grupa_id: 0 });
+      setNewCategorieName('');
+      setIsAddingCategorie(false);
+      toast.success('Categorie creată');
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || 'Eroare la creare categorie');
+    }
+  };
+
+  const handleInlineCreateGrupa = async () => {
+    if (!newGrupaName.trim()) return;
+    try {
+      const created = await api.createGrupa({ nume: newGrupaName.trim(), categorie_id: nomForm.categorie_id || undefined });
+      queryClient.invalidateQueries({ queryKey: ['grupe'] });
+      setNomForm({ ...nomForm, grupa_id: created.id });
+      setNewGrupaName('');
+      setIsAddingGrupa(false);
+      toast.success('Grupă creată');
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || 'Eroare la creare grupă');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -346,9 +382,19 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
-                Categorie
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
+                  Categorie
+                </label>
+                <button
+                  type="button"
+                  onClick={() => { setIsAddingCategorie(!isAddingCategorie); setNewCategorieName(''); }}
+                  className="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium"
+                  title="Adaugă categorie nouă"
+                >
+                  {isAddingCategorie ? '✕' : '+'}
+                </button>
+              </div>
               <select
                 value={nomForm.categorie_id}
                 onChange={(e) => setNomForm({ ...nomForm, categorie_id: Number(e.target.value), grupa_id: 0 })}
@@ -359,23 +405,72 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
                   <option key={cat.id} value={cat.id}>{cat.nume}</option>
                 ))}
               </select>
+              {isAddingCategorie && (
+                <div className="flex gap-1 mt-1">
+                  <input
+                    type="text"
+                    value={newCategorieName}
+                    onChange={(e) => setNewCategorieName(e.target.value)}
+                    placeholder="Nume categorie..."
+                    className="flex-1 px-2 py-1 text-sm rounded border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900"
+                    autoFocus
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleInlineCreateCategorie(); } }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleInlineCreateCategorie}
+                    className="px-2 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded"
+                  >
+                    Salvează
+                  </button>
+                </div>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
-                Grupă
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
+                  Grupă
+                </label>
+                <button
+                  type="button"
+                  onClick={() => { setIsAddingGrupa(!isAddingGrupa); setNewGrupaName(''); }}
+                  className="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium"
+                  title="Adaugă grupă nouă"
+                >
+                  {isAddingGrupa ? '✕' : '+'}
+                </button>
+              </div>
               <select
                 value={nomForm.grupa_id}
                 onChange={(e) => setNomForm({ ...nomForm, grupa_id: Number(e.target.value) })}
                 className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900"
-                disabled={!nomForm.categorie_id}
               >
                 <option value="">- Selectează -</option>
                 {filteredGrupe.map((g) => (
                   <option key={g.id} value={g.id}>{g.nume}</option>
                 ))}
               </select>
+              {isAddingGrupa && (
+                <div className="flex gap-1 mt-1">
+                  <input
+                    type="text"
+                    value={newGrupaName}
+                    onChange={(e) => setNewGrupaName(e.target.value)}
+                    placeholder="Nume grupă..."
+                    className="flex-1 px-2 py-1 text-sm rounded border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900"
+                    autoFocus
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleInlineCreateGrupa(); } }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleInlineCreateGrupa}
+                    className="px-2 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded"
+                  >
+                    Salvează
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -596,9 +691,97 @@ const ExpensesList: React.FC<ExpensesListProps> = ({
 interface SummaryProps {
   raport: RaportZilnic | undefined;
   isLoading: boolean;
+  portofele: Portofel[];
 }
 
-const Summary: React.FC<SummaryProps> = ({ raport, isLoading }) => {
+const CURRENCY_LABELS: Record<string, string> = { RON: 'lei', EUR: '€', USD: '$' };
+
+const Summary: React.FC<SummaryProps> = ({ raport, isLoading, portofele }) => {
+  const queryClient = useQueryClient();
+
+  // Alimentare modal
+  const [showAlimentareModal, setShowAlimentareModal] = useState(false);
+  const [aliForm, setAliForm] = useState({ portofel_id: 0, suma: '', moneda: 'RON', comentarii: '' });
+
+  // Transfer modal
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [trfForm, setTrfForm] = useState({ portofel_sursa_id: 0, portofel_dest_id: 0, suma: '', moneda: 'RON', comentarii: '' });
+
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['raport'] });
+    queryClient.invalidateQueries({ queryKey: ['alimentari'] });
+    queryClient.invalidateQueries({ queryKey: ['transferuri'] });
+    queryClient.invalidateQueries({ queryKey: ['portofele'] });
+    queryClient.invalidateQueries({ queryKey: ['cheltuieli'] });
+  };
+
+  const alimentareMutation = useMutation({
+    mutationFn: (data: { portofel_id: number; suma: number; moneda?: string; comentarii?: string }) =>
+      api.createAlimentare(data),
+    onSuccess: () => {
+      toast.success('Alimentare adăugată');
+      invalidateAll();
+      setShowAlimentareModal(false);
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.detail || 'Eroare la alimentare');
+    },
+  });
+
+  const transferMutation = useMutation({
+    mutationFn: (data: { portofel_sursa_id: number; portofel_dest_id: number; suma: number; moneda?: string; comentarii?: string }) =>
+      api.createTransfer(data),
+    onSuccess: () => {
+      toast.success('Transfer adăugat');
+      invalidateAll();
+      setShowTransferModal(false);
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.detail || 'Eroare la transfer');
+    },
+  });
+
+  const openAlimentareModal = () => {
+    setAliForm({ portofel_id: portofele[0]?.id || 0, suma: '', moneda: 'RON', comentarii: '' });
+    setShowAlimentareModal(true);
+  };
+
+  const openTransferModal = () => {
+    setTrfForm({
+      portofel_sursa_id: portofele[0]?.id || 0,
+      portofel_dest_id: portofele[1]?.id || portofele[0]?.id || 0,
+      suma: '', moneda: 'RON', comentarii: '',
+    });
+    setShowTransferModal(true);
+  };
+
+  const handleAlimentareSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!aliForm.portofel_id || !aliForm.suma) return;
+    alimentareMutation.mutate({
+      portofel_id: aliForm.portofel_id,
+      suma: parseFloat(aliForm.suma),
+      moneda: aliForm.moneda,
+      comentarii: aliForm.comentarii || undefined,
+    });
+  };
+
+  const handleTransferSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!trfForm.portofel_sursa_id || !trfForm.portofel_dest_id || !trfForm.suma) return;
+    if (trfForm.portofel_sursa_id === trfForm.portofel_dest_id) {
+      toast.error('Sursa și destinația nu pot fi identice');
+      return;
+    }
+    transferMutation.mutate({
+      portofel_sursa_id: trfForm.portofel_sursa_id,
+      portofel_dest_id: trfForm.portofel_dest_id,
+      suma: parseFloat(trfForm.suma),
+      moneda: trfForm.moneda,
+      comentarii: trfForm.comentarii || undefined,
+    });
+  };
+
   if (isLoading || !raport) {
     return (
       <Card className="p-6">
@@ -623,10 +806,32 @@ const Summary: React.FC<SummaryProps> = ({ raport, isLoading }) => {
 
       {/* Portofele */}
       <Card className="p-4">
-        <h3 className="font-semibold text-stone-900 dark:text-stone-100 mb-3 flex items-center gap-2">
-          <Wallet className="w-4 h-4" />
-          Solduri Portofele
-        </h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold text-stone-900 dark:text-stone-100 flex items-center gap-2">
+            <Wallet className="w-4 h-4" />
+            Solduri Portofele
+          </h3>
+          <div className="flex gap-1">
+            <button
+              type="button"
+              onClick={openAlimentareModal}
+              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 rounded-md transition-colors"
+              title="Alimentare"
+            >
+              <Banknote className="w-3.5 h-3.5" />
+              Ali
+            </button>
+            <button
+              type="button"
+              onClick={openTransferModal}
+              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-md transition-colors"
+              title="Transfer"
+            >
+              <ArrowLeftRight className="w-3.5 h-3.5" />
+              Transf
+            </button>
+          </div>
+        </div>
         <div className="space-y-2">
           {raport.portofele.map((p) => (
             <div
@@ -701,6 +906,160 @@ const Summary: React.FC<SummaryProps> = ({ raport, isLoading }) => {
           ))}
         </div>
       </Card>
+
+      {/* Alimentare Modal */}
+      <Modal
+        open={showAlimentareModal}
+        onClose={() => setShowAlimentareModal(false)}
+        title="Alimentare portofel"
+        size="md"
+        closeOnBackdropClick={false}
+      >
+        <form onSubmit={handleAlimentareSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Portofel</label>
+            <select
+              value={aliForm.portofel_id}
+              onChange={(e) => setAliForm({ ...aliForm, portofel_id: Number(e.target.value) })}
+              className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900"
+            >
+              {portofele.map((p) => (
+                <option key={p.id} value={p.id}>{p.nume}</option>
+              ))}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Suma</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={aliForm.suma}
+                onChange={(e) => setAliForm({ ...aliForm, suma: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-right font-mono"
+                placeholder="0.00"
+                required
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Moneda</label>
+              <select
+                value={aliForm.moneda}
+                onChange={(e) => setAliForm({ ...aliForm, moneda: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900"
+              >
+                {Object.entries(CURRENCY_LABELS).map(([code, label]) => (
+                  <option key={code} value={code}>{code} ({label})</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Comentarii</label>
+            <input
+              type="text"
+              value={aliForm.comentarii}
+              onChange={(e) => setAliForm({ ...aliForm, comentarii: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900"
+              placeholder="Opțional..."
+            />
+          </div>
+          <div className="flex gap-3 pt-4">
+            <Button type="button" variant="secondary" onClick={() => setShowAlimentareModal(false)} className="flex-1">
+              Anulează
+            </Button>
+            <Button type="submit" variant="primary" className="flex-1" loading={alimentareMutation.isPending}>
+              Alimentează
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Transfer Modal */}
+      <Modal
+        open={showTransferModal}
+        onClose={() => setShowTransferModal(false)}
+        title="Transfer între portofele"
+        size="md"
+        closeOnBackdropClick={false}
+      >
+        <form onSubmit={handleTransferSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Din portofel</label>
+              <select
+                value={trfForm.portofel_sursa_id}
+                onChange={(e) => setTrfForm({ ...trfForm, portofel_sursa_id: Number(e.target.value) })}
+                className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900"
+              >
+                {portofele.map((p) => (
+                  <option key={p.id} value={p.id}>{p.nume}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">În portofel</label>
+              <select
+                value={trfForm.portofel_dest_id}
+                onChange={(e) => setTrfForm({ ...trfForm, portofel_dest_id: Number(e.target.value) })}
+                className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900"
+              >
+                {portofele.map((p) => (
+                  <option key={p.id} value={p.id}>{p.nume}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Suma</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={trfForm.suma}
+                onChange={(e) => setTrfForm({ ...trfForm, suma: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-right font-mono"
+                placeholder="0.00"
+                required
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Moneda</label>
+              <select
+                value={trfForm.moneda}
+                onChange={(e) => setTrfForm({ ...trfForm, moneda: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900"
+              >
+                {Object.entries(CURRENCY_LABELS).map(([code, label]) => (
+                  <option key={code} value={code}>{code} ({label})</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Comentarii</label>
+            <input
+              type="text"
+              value={trfForm.comentarii}
+              onChange={(e) => setTrfForm({ ...trfForm, comentarii: e.target.value })}
+              className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900"
+              placeholder="Opțional..."
+            />
+          </div>
+          <div className="flex gap-3 pt-4">
+            <Button type="button" variant="secondary" onClick={() => setShowTransferModal(false)} className="flex-1">
+              Anulează
+            </Button>
+            <Button type="submit" variant="primary" className="flex-1" loading={transferMutation.isPending}>
+              Transferă
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };
@@ -731,6 +1090,12 @@ export const DashboardPage: React.FC = () => {
       }
     },
     enabled: true, // Activăm mereu ca să vedem datele
+  });
+
+  // Fetch portofele for sidebar modals
+  const { data: portofele = [] } = useQuery({
+    queryKey: ['portofele'],
+    queryFn: () => api.getPortofele(true),
   });
 
   // Fetch raport
@@ -799,7 +1164,7 @@ export const DashboardPage: React.FC = () => {
 
         {/* Sidebar with summary */}
         <div className="lg:col-span-1">
-          <Summary raport={raport} isLoading={isLoadingRaport} />
+          <Summary raport={raport} isLoading={isLoadingRaport} portofele={portofele} />
         </div>
       </div>
     </div>
