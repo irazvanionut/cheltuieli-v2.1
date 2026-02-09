@@ -522,6 +522,22 @@ const ExpensesList: React.FC<ExpensesListProps> = ({
   onDelete,
 }) => {
   const isSef = useIsSef();
+  const [filter, setFilter] = useState('');
+
+  const filteredCheltuieli = cheltuieli.filter((ch) => {
+    if (!filter.trim()) return true;
+    const search = filter.toLowerCase();
+    return (
+      (ch.denumire || '').toLowerCase().includes(search) ||
+      (ch.denumire_custom || '').toLowerCase().includes(search) ||
+      (ch.categorie_nume || '').toLowerCase().includes(search) ||
+      (ch.grupa_nume || '').toLowerCase().includes(search) ||
+      (ch.portofel_nume || '').toLowerCase().includes(search) ||
+      (ch.sens || '').toLowerCase().includes(search) ||
+      (ch.operator_nume || '').toLowerCase().includes(search) ||
+      String(ch.suma).includes(search)
+    );
+  });
 
   if (isLoading) {
     return (
@@ -547,6 +563,34 @@ const ExpensesList: React.FC<ExpensesListProps> = ({
 
   return (
     <Card padding="none">
+      {/* Filter input */}
+      <div className="px-4 pt-4 pb-2">
+        <div className="relative">
+          <input
+            type="text"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder="Filtrează cheltuieli..."
+            className="w-full pl-10 pr-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-colors"
+          />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+          {filter && (
+            <button
+              type="button"
+              onClick={() => setFilter('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
+            >
+              <XCircle className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+        {filter && (
+          <div className="text-xs text-stone-500 mt-1">
+            {filteredCheltuieli.length} din {cheltuieli.length} rezultate
+          </div>
+        )}
+      </div>
+
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-stone-50 dark:bg-stone-800/50">
@@ -577,7 +621,7 @@ const ExpensesList: React.FC<ExpensesListProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-stone-100 dark:divide-stone-800">
-            {cheltuieli.map((ch) => (
+            {filteredCheltuieli.map((ch) => (
               <tr
                 key={ch.id}
                 className="hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors"

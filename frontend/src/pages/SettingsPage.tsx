@@ -9,6 +9,7 @@ import {
   Users,
   Bot,
   Palette,
+  Calendar,
   ChevronRight,
   ArrowLeft,
 } from 'lucide-react';
@@ -21,8 +22,10 @@ import { NomenclatorSettings } from './settings/NomenclatorSettings';
 import { UsersSettings } from './settings/UsersSettings';
 import { OllamaSettings } from './settings/OllamaSettings';
 import { UISettings } from './settings/UISettings';
+import { ExercitiuSettings } from './settings/ExercitiuSettings';
 
 const settingsMenu = [
+  { path: '/settings/exercitiu', name: 'Exercițiu', icon: Calendar, description: 'Închidere / deschidere zi' },
   { path: '/settings/portofele', name: 'Portofele', icon: Wallet, description: 'Gestionare conturi numerar' },
   { path: '/settings/categorii', name: 'Categorii', icon: FolderTree, description: 'Categorii principale cheltuieli' },
   { path: '/settings/grupe', name: 'Grupe', icon: Layers, description: 'Subgrupări pentru categorii' },
@@ -114,6 +117,7 @@ export const SettingsPage: React.FC = () => {
       <div className="flex-1 min-w-0">
         <Routes>
           <Route index element={<SettingsIndex />} />
+          <Route path="exercitiu" element={<ExercitiuSettings />} />
           <Route path="portofele" element={<PortofeleSettings />} />
           <Route path="categorii" element={<CategoriiSettings />} />
           <Route path="grupe" element={<GrupeSettings />} />

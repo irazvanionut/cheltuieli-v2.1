@@ -31,6 +31,7 @@ services:
       SECRET_KEY: ${SECRET_KEY:-your-super-secret-key-change-in-production}
       OLLAMA_HOST: ${OLLAMA_HOST:-http://10.170.7.53:11435}
       ENVIRONMENT: ${ENVIRONMENT:-development}
+      TZ: Europe/Bucharest
     volumes:
       - ./backend/app:/app/app
     ports:
@@ -53,6 +54,7 @@ services:
     volumes:
       - ./frontend/src:/app/src
       - ./frontend/public:/app/public
+      - ./frontend/vite.config.ts:/app/vite.config.ts
     ports:
       - "3000:3000"
     depends_on:

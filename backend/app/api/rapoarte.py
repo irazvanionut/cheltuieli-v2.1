@@ -50,21 +50,41 @@ async def get_exercitiu_curent(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Obține exercițiul activ curent"""
+    """Obține exercițiul activ curent. Auto-închide dacă e din ziua precedentă și e trecut de 07:00."""
     result = await db.execute(
         select(Exercitiu)
         .where(Exercitiu.activ == True)
         .order_by(Exercitiu.data.desc())
     )
     exercitiu = result.scalar_one_or_none()
-    
+
+    now = datetime.now()
+    today = date.today()
+
+    # Auto-close stale exercitiu: if it's past 07:00 and the exercitiu is from a previous day
+    if exercitiu and exercitiu.data < today and now.hour >= 7:
+        exercitiu.activ = False
+        exercitiu.ora_inchidere = now
+        exercitiu.observatii = ((exercitiu.observatii or '') + ' [Închis automat 07:00]').strip()
+        await db.flush()
+        exercitiu = None  # will create new one below
+
     if not exercitiu:
-        # Create new exercitiu for today
-        exercitiu = Exercitiu(data=date.today(), activ=True)
-        db.add(exercitiu)
+        # Check if today's exercitiu already exists (closed earlier)
+        existing = await db.execute(
+            select(Exercitiu).where(Exercitiu.data == today)
+        )
+        exercitiu = existing.scalar_one_or_none()
+        if exercitiu:
+            # Reactivate today's exercitiu
+            exercitiu.activ = True
+        else:
+            # Create new exercitiu for today
+            exercitiu = Exercitiu(data=today, activ=True)
+            db.add(exercitiu)
         await db.commit()
         await db.refresh(exercitiu)
-    
+
     return ExercitiumResponse.model_validate(exercitiu)
 
 
