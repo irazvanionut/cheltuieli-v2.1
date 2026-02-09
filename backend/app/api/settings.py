@@ -37,6 +37,27 @@ async def list_settings(
     return [SettingResponse.model_validate(s) for s in result.scalars().all()]
 
 
+@router.get("/settings/monede")
+async def get_monede(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get available currencies (any authenticated user)"""
+    result = await db.execute(
+        select(Setting).where(Setting.cheie == 'monede')
+    )
+    setting = result.scalar_one_or_none()
+    valoare = setting.valoare if setting else 'RON:lei,EUR:€,USD:$'
+
+    monede = []
+    for pair in valoare.split(','):
+        parts = pair.strip().split(':', 1)
+        if len(parts) == 2:
+            monede.append({"code": parts[0].strip(), "label": parts[1].strip()})
+
+    return monede
+
+
 @router.get("/settings/ollama/test")
 async def test_ollama_connection(
     db: AsyncSession = Depends(get_db),

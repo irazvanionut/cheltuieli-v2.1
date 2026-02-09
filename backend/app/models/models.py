@@ -178,6 +178,8 @@ class Transfer(Base):
     
     suma = Column(Numeric(12, 2), nullable=False)
     moneda = Column(String(3), default='RON')  # RON, EUR, USD
+    suma_dest = Column(Numeric(12, 2))      # nullable — same-currency transfers leave NULL
+    moneda_dest = Column(String(3))          # nullable
     operator_id = Column(Integer, ForeignKey("users.id"))
     comentarii = Column(Text)
 

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Dict
 from datetime import datetime, date
 from decimal import Decimal
 
@@ -101,8 +101,8 @@ class PortofelResponse(PortofelBase):
 
 
 class PortofelSoldResponse(PortofelResponse):
-    sold_total: Decimal = Decimal("0.00")
-    sold_zi_curenta: Decimal = Decimal("0.00")
+    sold_total: Dict[str, Decimal] = {}
+    sold_zi_curenta: Dict[str, Decimal] = {}
 
 
 # ============================================
@@ -312,6 +312,18 @@ class TransferCreate(BaseModel):
     portofel_dest_id: int
     suma: Decimal
     moneda: str = "RON"
+    suma_dest: Optional[Decimal] = None
+    moneda_dest: Optional[str] = None
+    comentarii: Optional[str] = None
+
+
+class TransferUpdate(BaseModel):
+    portofel_sursa_id: Optional[int] = None
+    portofel_dest_id: Optional[int] = None
+    suma: Optional[Decimal] = None
+    moneda: Optional[str] = None
+    suma_dest: Optional[Decimal] = None
+    moneda_dest: Optional[str] = None
     comentarii: Optional[str] = None
 
 
@@ -322,6 +334,8 @@ class TransferResponse(BaseModel):
     portofel_dest_id: int
     suma: Decimal
     moneda: str = "RON"
+    suma_dest: Optional[Decimal] = None
+    moneda_dest: Optional[str] = None
     operator_id: Optional[int] = None
     comentarii: Optional[str] = None
     created_at: datetime
@@ -341,6 +355,13 @@ class AlimentareCreate(BaseModel):
     portofel_id: int
     suma: Decimal
     moneda: str = "RON"
+    comentarii: Optional[str] = None
+
+
+class AlimentareUpdate(BaseModel):
+    portofel_id: Optional[int] = None
+    suma: Optional[Decimal] = None
+    moneda: Optional[str] = None
     comentarii: Optional[str] = None
 
 
@@ -367,6 +388,7 @@ class AlimentareResponse(BaseModel):
 class RaportCategorieItem(BaseModel):
     denumire: str
     suma: Decimal
+    moneda: str = "RON"
     neplatit: bool
     verificat: bool
     cheltuiala_id: int
@@ -376,7 +398,7 @@ class RaportGrupa(BaseModel):
     grupa_id: Optional[int]
     grupa_nume: Optional[str]
     items: List[RaportCategorieItem]
-    total: Decimal
+    total: Dict[str, Decimal] = {}
 
 
 class RaportCategorie(BaseModel):
@@ -385,19 +407,19 @@ class RaportCategorie(BaseModel):
     categorie_culoare: str
     afecteaza_sold: bool
     grupe: List[RaportGrupa]
-    total_platit: Decimal
-    total_neplatit: Decimal
-    total: Decimal
+    total_platit: Dict[str, Decimal] = {}
+    total_neplatit: Dict[str, Decimal] = {}
+    total: Dict[str, Decimal] = {}
 
 
 class RaportPortofel(BaseModel):
     portofel_id: int
     portofel_nume: str
-    sold: Decimal
-    total_alimentari: Decimal = Decimal("0")
-    total_cheltuieli: Decimal = Decimal("0")
-    total_transferuri_in: Decimal = Decimal("0")
-    total_transferuri_out: Decimal = Decimal("0")
+    sold: Dict[str, Decimal] = {}
+    total_alimentari: Dict[str, Decimal] = {}
+    total_cheltuieli: Dict[str, Decimal] = {}
+    total_transferuri_in: Dict[str, Decimal] = {}
+    total_transferuri_out: Dict[str, Decimal] = {}
 
 
 class RaportZilnic(BaseModel):
@@ -406,9 +428,9 @@ class RaportZilnic(BaseModel):
     activ: bool
     categorii: List[RaportCategorie]
     portofele: List[RaportPortofel]
-    total_cheltuieli: Decimal
-    total_neplatit: Decimal
-    total_sold: Decimal
+    total_cheltuieli: Dict[str, Decimal] = {}
+    total_neplatit: Dict[str, Decimal] = {}
+    total_sold: Dict[str, Decimal] = {}
 
 
 # ============================================

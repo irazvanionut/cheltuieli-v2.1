@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, text, func
+from sqlalchemy import select, text, func, or_, case
 from datetime import datetime, date, timedelta
 from typing import List, Optional
 from decimal import Decimal
@@ -211,9 +211,9 @@ async def get_raport_zilnic(
             activ=False,
             categorii=[],
             portofele=[],
-            total_cheltuieli=Decimal("0"),
-            total_neplatit=Decimal("0"),
-            total_sold=Decimal("0")
+            total_cheltuieli={},
+            total_neplatit={},
+            total_sold={}
         )
     
     # Get all categorii
@@ -236,10 +236,20 @@ async def get_raport_zilnic(
     )
     cheltuieli = ch_result.scalars().all()
     
+    # Helper to add to a per-currency dict
+    def add_to_dict(d: dict, moneda: str, val: Decimal):
+        d[moneda] = d.get(moneda, Decimal("0")) + val
+
+    def merge_dicts(a: dict, b: dict) -> dict:
+        result = dict(a)
+        for k, v in b.items():
+            result[k] = result.get(k, Decimal("0")) + v
+        return result
+
     # Build categorii report
     categorii_report = []
-    total_cheltuieli = Decimal("0")
-    total_neplatit = Decimal("0")
+    total_cheltuieli: dict[str, Decimal] = {}
+    total_neplatit: dict[str, Decimal] = {}
     matched_ch_ids = set()
 
     for cat in categorii:
@@ -250,31 +260,29 @@ async def get_raport_zilnic(
             .order_by(Grupa.ordine)
         )
         grupe = grupe_result.scalars().all()
-        
+
         # Filter cheltuieli for this categorie
         cat_cheltuieli = []
         for ch in cheltuieli:
             ch_cat_id = ch.categorie_id
             if not ch_cat_id and ch.nomenclator_id:
-                # Get categorie from nomenclator
                 nom_result = await db.execute(
                     select(Nomenclator.categorie_id).where(Nomenclator.id == ch.nomenclator_id)
                 )
                 ch_cat_id = nom_result.scalar_one_or_none()
-            
+
             if ch_cat_id == cat.id:
                 cat_cheltuieli.append(ch)
                 matched_ch_ids.add(ch.id)
-        
+
         if not cat_cheltuieli and not grupe:
-            continue  # Skip empty categories
-        
+            continue
+
         # Build grupe report
         grupe_report = []
-        cat_total_platit = Decimal("0")
-        cat_total_neplatit = Decimal("0")
-        
-        # Group cheltuieli by grupa
+        cat_total_platit: dict[str, Decimal] = {}
+        cat_total_neplatit: dict[str, Decimal] = {}
+
         ch_by_grupa = defaultdict(list)
         for ch in cat_cheltuieli:
             ch_grupa_id = ch.grupa_id
@@ -284,17 +292,16 @@ async def get_raport_zilnic(
                 )
                 ch_grupa_id = nom_result.scalar_one_or_none()
             ch_by_grupa[ch_grupa_id].append(ch)
-        
+
         for grupa in grupe:
             grupa_cheltuieli = ch_by_grupa.get(grupa.id, [])
             if not grupa_cheltuieli:
                 continue
-            
+
             items = []
-            grupa_total = Decimal("0")
-            
+            grupa_total: dict[str, Decimal] = {}
+
             for ch in grupa_cheltuieli:
-                # Get denumire
                 if ch.nomenclator_id:
                     nom_result = await db.execute(
                         select(Nomenclator.denumire).where(Nomenclator.id == ch.nomenclator_id)
@@ -302,34 +309,36 @@ async def get_raport_zilnic(
                     denumire = nom_result.scalar_one_or_none() or "N/A"
                 else:
                     denumire = ch.denumire_custom or "N/A"
-                
+
+                m = ch.moneda or 'RON'
                 items.append(RaportCategorieItem(
                     denumire=denumire,
                     suma=ch.suma,
+                    moneda=m,
                     neplatit=ch.neplatit,
                     verificat=ch.verificat,
                     cheltuiala_id=ch.id
                 ))
-                
+
                 if ch.neplatit:
-                    cat_total_neplatit += ch.suma
+                    add_to_dict(cat_total_neplatit, m, ch.suma)
                 else:
-                    cat_total_platit += ch.suma
-                    grupa_total += ch.suma
-            
+                    add_to_dict(cat_total_platit, m, ch.suma)
+                    add_to_dict(grupa_total, m, ch.suma)
+
             grupe_report.append(RaportGrupa(
                 grupa_id=grupa.id,
                 grupa_nume=grupa.nume,
                 items=items,
                 total=grupa_total
             ))
-        
+
         # Handle cheltuieli without grupa
         ungrouped = ch_by_grupa.get(None, [])
         if ungrouped:
             items = []
-            ungrouped_total = Decimal("0")
-            
+            ungrouped_total: dict[str, Decimal] = {}
+
             for ch in ungrouped:
                 if ch.nomenclator_id:
                     nom_result = await db.execute(
@@ -338,28 +347,30 @@ async def get_raport_zilnic(
                     denumire = nom_result.scalar_one_or_none() or "N/A"
                 else:
                     denumire = ch.denumire_custom or "N/A"
-                
+
+                m = ch.moneda or 'RON'
                 items.append(RaportCategorieItem(
                     denumire=denumire,
                     suma=ch.suma,
+                    moneda=m,
                     neplatit=ch.neplatit,
                     verificat=ch.verificat,
                     cheltuiala_id=ch.id
                 ))
-                
+
                 if ch.neplatit:
-                    cat_total_neplatit += ch.suma
+                    add_to_dict(cat_total_neplatit, m, ch.suma)
                 else:
-                    cat_total_platit += ch.suma
-                    ungrouped_total += ch.suma
-            
+                    add_to_dict(cat_total_platit, m, ch.suma)
+                    add_to_dict(ungrouped_total, m, ch.suma)
+
             grupe_report.append(RaportGrupa(
                 grupa_id=None,
                 grupa_nume="Alte",
                 items=items,
                 total=ungrouped_total
             ))
-        
+
         if grupe_report:
             categorii_report.append(RaportCategorie(
                 categorie_id=cat.id,
@@ -369,19 +380,19 @@ async def get_raport_zilnic(
                 grupe=grupe_report,
                 total_platit=cat_total_platit,
                 total_neplatit=cat_total_neplatit,
-                total=cat_total_platit + cat_total_neplatit
+                total=merge_dicts(cat_total_platit, cat_total_neplatit)
             ))
-            
+
             if cat.afecteaza_sold:
-                total_cheltuieli += cat_total_platit
-                total_neplatit += cat_total_neplatit
+                total_cheltuieli = merge_dicts(total_cheltuieli, cat_total_platit)
+                total_neplatit = merge_dicts(total_neplatit, cat_total_neplatit)
 
     # Handle uncategorized cheltuieli
     unmatched = [ch for ch in cheltuieli if ch.id not in matched_ch_ids]
     if unmatched:
         items = []
-        uncat_platit = Decimal("0")
-        uncat_neplatit = Decimal("0")
+        uncat_platit: dict[str, Decimal] = {}
+        uncat_neplatit: dict[str, Decimal] = {}
 
         for ch in unmatched:
             if ch.nomenclator_id:
@@ -392,18 +403,20 @@ async def get_raport_zilnic(
             else:
                 denumire = ch.denumire_custom or "N/A"
 
+            m = ch.moneda or 'RON'
             items.append(RaportCategorieItem(
                 denumire=denumire,
                 suma=ch.suma,
+                moneda=m,
                 neplatit=ch.neplatit,
                 verificat=ch.verificat,
                 cheltuiala_id=ch.id
             ))
 
             if ch.neplatit:
-                uncat_neplatit += ch.suma
+                add_to_dict(uncat_neplatit, m, ch.suma)
             else:
-                uncat_platit += ch.suma
+                add_to_dict(uncat_platit, m, ch.suma)
 
         categorii_report.append(RaportCategorie(
             categorie_id=0,
@@ -418,10 +431,10 @@ async def get_raport_zilnic(
             )],
             total_platit=uncat_platit,
             total_neplatit=uncat_neplatit,
-            total=uncat_platit + uncat_neplatit
+            total=merge_dicts(uncat_platit, uncat_neplatit)
         ))
-        total_cheltuieli += uncat_platit
-        total_neplatit += uncat_neplatit
+        total_cheltuieli = merge_dicts(total_cheltuieli, uncat_platit)
+        total_neplatit = merge_dicts(total_neplatit, uncat_neplatit)
 
     # Get portofele solduri
     port_result = await db.execute(
@@ -430,69 +443,93 @@ async def get_raport_zilnic(
         .order_by(Portofel.ordine)
     )
     portofele = port_result.scalars().all()
-    
+
     portofele_report = []
-    total_sold = Decimal("0")
-    
+    total_sold: dict[str, Decimal] = {}
+
     for p in portofele:
-        sql = text("SELECT get_sold_portofel(:portofel_id, :exercitiu_id)")
-        result = await db.execute(sql, {"portofel_id": p.id, "exercitiu_id": exercitiu.id})
-        sold = result.scalar() or Decimal("0")
-
-        # Get alimentari sum for this portofel
+        # Get alimentari grouped by moneda
         alim_result = await db.execute(
-            select(func.coalesce(func.sum(Alimentare.suma), 0))
+            select(Alimentare.moneda, func.coalesce(func.sum(Alimentare.suma), 0))
             .where(Alimentare.portofel_id == p.id, Alimentare.exercitiu_id == exercitiu.id)
+            .group_by(Alimentare.moneda)
         )
-        p_alimentari = alim_result.scalar() or Decimal("0")
+        p_alimentari = {row[0]: row[1] for row in alim_result.all() if row[1]}
 
-        # Get cheltuieli sum for this portofel
+        # Get cheltuieli grouped by moneda (only categories with afecteaza_sold=True)
         ch_result = await db.execute(
-            select(func.coalesce(func.sum(Cheltuiala.suma), 0))
+            select(Cheltuiala.moneda, func.coalesce(func.sum(Cheltuiala.suma), 0))
+            .outerjoin(Categorie, Cheltuiala.categorie_id == Categorie.id)
             .where(
                 Cheltuiala.portofel_id == p.id,
                 Cheltuiala.exercitiu_id == exercitiu.id,
                 Cheltuiala.activ == True,
                 Cheltuiala.sens == 'Cheltuiala',
-                Cheltuiala.neplatit == False
+                Cheltuiala.neplatit == False,
+                or_(Categorie.afecteaza_sold == True, Cheltuiala.categorie_id == None)
             )
+            .group_by(Cheltuiala.moneda)
         )
-        p_cheltuieli = ch_result.scalar() or Decimal("0")
+        p_cheltuieli = {row[0]: row[1] for row in ch_result.all() if row[1]}
 
-        # Get transfers IN to this portofel
+        # Get transfers IN grouped by dest currency (use moneda_dest/suma_dest when set)
         tin_result = await db.execute(
-            select(func.coalesce(func.sum(Transfer.suma), 0))
-            .where(Transfer.portofel_dest_id == p.id, Transfer.exercitiu_id == exercitiu.id)
+            select(Transfer).where(Transfer.portofel_dest_id == p.id, Transfer.exercitiu_id == exercitiu.id)
         )
-        p_transferuri_in = tin_result.scalar() or Decimal("0")
+        p_transferuri_in: dict[str, Decimal] = {}
+        for t in tin_result.scalars().all():
+            m = t.moneda_dest or t.moneda or 'RON'
+            s = t.suma_dest if t.moneda_dest else t.suma
+            p_transferuri_in[m] = p_transferuri_in.get(m, Decimal("0")) + s
 
-        # Get transfers OUT from this portofel
+        # Get transfers OUT grouped by source moneda
         tout_result = await db.execute(
-            select(func.coalesce(func.sum(Transfer.suma), 0))
+            select(Transfer.moneda, func.coalesce(func.sum(Transfer.suma), 0))
             .where(Transfer.portofel_sursa_id == p.id, Transfer.exercitiu_id == exercitiu.id)
+            .group_by(Transfer.moneda)
         )
-        p_transferuri_out = tout_result.scalar() or Decimal("0")
+        p_transferuri_out = {row[0]: row[1] for row in tout_result.all() if row[1]}
+
+        # Compute per-currency sold: ali - chelt + transf_in - transf_out
+        all_currencies = set(list(p_alimentari.keys()) + list(p_cheltuieli.keys()) +
+                            list(p_transferuri_in.keys()) + list(p_transferuri_out.keys()))
+        p_sold: dict[str, Decimal] = {}
+        for currency in all_currencies:
+            val = (p_alimentari.get(currency, Decimal("0"))
+                   - p_cheltuieli.get(currency, Decimal("0"))
+                   + p_transferuri_in.get(currency, Decimal("0"))
+                   - p_transferuri_out.get(currency, Decimal("0")))
+            if val != Decimal("0"):
+                p_sold[currency] = val
+
+        # Accumulate into total_sold
+        for currency, val in p_sold.items():
+            total_sold[currency] = total_sold.get(currency, Decimal("0")) + val
 
         portofele_report.append(RaportPortofel(
             portofel_id=p.id,
             portofel_nume=p.nume,
-            sold=sold,
+            sold=p_sold,
             total_alimentari=p_alimentari,
             total_cheltuieli=p_cheltuieli,
             total_transferuri_in=p_transferuri_in,
             total_transferuri_out=p_transferuri_out
         ))
-        total_sold += sold
-    
+
+    # Filter out zero-value currencies
+    total_sold_filtered = {k: v for k, v in total_sold.items() if v != Decimal("0")}
+    total_cheltuieli_filtered = {k: v for k, v in total_cheltuieli.items() if v != Decimal("0")}
+    total_neplatit_filtered = {k: v for k, v in total_neplatit.items() if v != Decimal("0")}
+
     return RaportZilnic(
         exercitiu_id=exercitiu.id,
         data=exercitiu.data,
         activ=exercitiu.activ,
         categorii=categorii_report,
         portofele=portofele_report,
-        total_cheltuieli=total_cheltuieli,
-        total_neplatit=total_neplatit,
-        total_sold=total_sold
+        total_cheltuieli=total_cheltuieli_filtered,
+        total_neplatit=total_neplatit_filtered,
+        total_sold=total_sold_filtered
     )
 
 

@@ -63,8 +63,8 @@ export const LoginPage: React.FC = () => {
             <div className="w-20 h-20 mx-auto bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm mb-4">
               <Wallet className="w-10 h-10 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-white">Cheltuieli V2</h1>
-            <p className="text-red-100 mt-1">Management cheltuieli restaurant</p>
+            <h1 className="text-2xl font-bold text-white">La Nuci</h1>
+            <p className="text-red-100 mt-1">Management Daily Restaurant</p>
           </div>
 
           {/* Form */}

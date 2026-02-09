@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import {
@@ -14,6 +14,15 @@ import {
   Moon,
   Calendar,
   User,
+  ChevronDown,
+  ChevronRight,
+  Phone,
+  Globe,
+  PhoneCall,
+  PhoneIncoming,
+  ShoppingCart,
+  TrendingUp,
+  MessageSquare,
 } from 'lucide-react';
 import { useAppStore, useIsAdmin, useIsSef } from '@/hooks/useAppStore';
 import { Badge } from '@/components/ui';
@@ -32,11 +41,47 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isAdmin = useIsAdmin();
   const isSef = useIsSef();
 
-  const navigation = [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard, show: true },
-    { name: 'Cheltuieli', href: '/cheltuieli', icon: Receipt, show: true },
-    { name: 'Rapoarte', href: '/rapoarte', icon: FileText, show: isSef },
-    { name: 'Setări', href: '/settings', icon: Settings, show: isAdmin },
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+    cheltuieli: true,
+    apeluri: false,
+    online: false,
+  });
+
+  const toggleGroup = (key: string) => {
+    setExpandedGroups((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const navGroups = [
+    {
+      key: 'cheltuieli',
+      label: 'Cheltuieli V2',
+      icon: Wallet,
+      items: [
+        { name: 'Dashboard', href: '/', icon: LayoutDashboard, show: true },
+        { name: 'Cheltuieli', href: '/cheltuieli', icon: Receipt, show: true },
+        { name: 'Rapoarte', href: '/rapoarte', icon: FileText, show: isSef },
+        { name: 'Setări', href: '/settings', icon: Settings, show: isAdmin },
+      ],
+    },
+    {
+      key: 'apeluri',
+      label: 'Apeluri',
+      icon: Phone,
+      items: [
+        { name: 'Apeluri primite', href: '/apeluri/primite', icon: PhoneIncoming, show: true },
+        { name: 'Apeluri efectuate', href: '/apeluri/efectuate', icon: PhoneCall, show: true },
+      ],
+    },
+    {
+      key: 'online',
+      label: 'Online',
+      icon: Globe,
+      items: [
+        { name: 'Comenzi', href: '/online/comenzi', icon: ShoppingCart, show: true },
+        { name: 'Statistici', href: '/online/statistici', icon: TrendingUp, show: true },
+        { name: 'Recenzii', href: '/online/recenzii', icon: MessageSquare, show: true },
+      ],
+    },
   ];
 
   const handleLogout = () => {
@@ -65,7 +110,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               <Wallet className="w-5 h-5 text-white" />
             </div>
             <span className="font-semibold text-stone-900 dark:text-stone-100">
-              Cheltuieli
+              La Nuci
             </span>
           </div>
 
@@ -91,8 +136,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             <Wallet className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="font-bold text-stone-900 dark:text-stone-100">Cheltuieli</h1>
-            <p className="text-xs text-stone-500">v2.0</p>
+            <h1 className="font-bold text-stone-900 dark:text-stone-100">La Nuci</h1>
+            <p className="text-xs text-stone-500">Management Daily</p>
           </div>
         </div>
 
@@ -116,28 +161,61 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         )}
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          {navigation
-            .filter((item) => item.show)
-            .map((item) => {
-              const isActive = location.pathname === item.href;
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  onClick={() => window.innerWidth < 1024 && toggleSidebar()}
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          {navGroups.map((group) => {
+            const isExpanded = expandedGroups[group.key];
+            const visibleItems = group.items.filter((item) => item.show);
+            const hasActiveItem = visibleItems.some((item) => location.pathname === item.href);
+
+            return (
+              <div key={group.key}>
+                {/* Group header */}
+                <button
+                  onClick={() => toggleGroup(group.key)}
                   className={clsx(
-                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                    isActive
-                      ? 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
-                      : 'text-stone-600 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800'
+                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors',
+                    hasActiveItem && !isExpanded
+                      ? 'text-red-700 dark:text-red-400'
+                      : 'text-stone-500 dark:text-stone-400',
+                    'hover:bg-stone-100 dark:hover:bg-stone-800'
                   )}
                 >
-                  <item.icon className="w-5 h-5" />
-                  {item.name}
-                </Link>
-              );
-            })}
+                  <group.icon className="w-4 h-4" />
+                  <span className="flex-1 text-left">{group.label}</span>
+                  {isExpanded ? (
+                    <ChevronDown className="w-4 h-4 text-stone-400" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 text-stone-400" />
+                  )}
+                </button>
+
+                {/* Group items */}
+                {isExpanded && (
+                  <div className="ml-3 mt-0.5 space-y-0.5">
+                    {visibleItems.map((item) => {
+                      const isActive = location.pathname === item.href;
+                      return (
+                        <Link
+                          key={item.name}
+                          to={item.href}
+                          onClick={() => window.innerWidth < 1024 && toggleSidebar()}
+                          className={clsx(
+                            'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                            isActive
+                              ? 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+                              : 'text-stone-600 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800'
+                          )}
+                        >
+                          <item.icon className="w-4 h-4" />
+                          {item.name}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
         {/* User info & logout */}

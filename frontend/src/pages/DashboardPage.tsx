@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
@@ -36,6 +36,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
   const [query, setQuery] = useState('');
   const [selectedItem, setSelectedItem] = useState<AutocompleteResult | null>(null);
   const [amount, setAmount] = useState('');
+  const [moneda, setMoneda] = useState('RON');
   const [portofelId, setPortofelId] = useState<number | null>(null);
   const [neplatit, setNeplatit] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -51,6 +52,13 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
   const [newCategorieName, setNewCategorieName] = useState('');
   const [isAddingGrupa, setIsAddingGrupa] = useState(false);
   const [newGrupaName, setNewGrupaName] = useState('');
+
+  // Get monede (currencies)
+  const { data: monede = [] } = useQuery({
+    queryKey: ['monede'],
+    queryFn: () => api.getMonede(),
+    staleTime: 5 * 60 * 1000,
+  });
 
   // Get portofele
   const { data: portofele = [] } = useQuery({
@@ -177,6 +185,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
       const data: CheltuialaCreate = {
         portofel_id: portofelId,
         suma: parseFloat(amount),
+        moneda,
         neplatit,
       };
 
@@ -196,6 +205,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
       setQuery('');
       setSelectedItem(null);
       setAmount('');
+      setMoneda('RON');
       setNeplatit(false);
       
       onSuccess();
@@ -304,7 +314,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
           </div>
 
           {/* Suma */}
-          <div className="md:col-span-2">
+          <div className="md:col-span-1">
             <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
               Suma
             </label>
@@ -318,6 +328,28 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
               className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-right font-mono"
               required
             />
+          </div>
+
+          {/* Moneda */}
+          <div className="md:col-span-1">
+            <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
+              Moneda
+            </label>
+            <select
+              value={moneda}
+              onChange={(e) => setMoneda(e.target.value)}
+              className="w-full px-2 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900"
+            >
+              {monede.length > 0 ? monede.map((m) => (
+                <option key={m.code} value={m.code}>{m.code}</option>
+              )) : (
+                <>
+                  <option value="RON">RON</option>
+                  <option value="EUR">EUR</option>
+                  <option value="USD">USD</option>
+                </>
+              )}
+            </select>
           </div>
 
           {/* Portofel */}
@@ -674,15 +706,16 @@ const ExpensesList: React.FC<ExpensesListProps> = ({
                   {ch.portofel_nume}
                 </td>
 <td className="px-4 py-3 text-right">
-                  <Amount 
+                  <Amount
                     value={
-                      ch.sens === 'Cheltuiala' 
-                        ? -ch.suma 
-                        : ch.sens === 'Transfer' 
-                        ? 0 
+                      ch.sens === 'Cheltuiala'
+                        ? -ch.suma
+                        : ch.sens === 'Transfer'
+                        ? 0
                         : ch.suma
-                    } 
-                    showSign 
+                    }
+                    currency={CURRENCY_LABELS[ch.moneda] || ch.moneda || 'lei'}
+                    showSign
                   />
                   {ch.neplatit && (
                     <div className="text-xs text-amber-500 mt-0.5">Neplătit</div>
@@ -736,12 +769,35 @@ interface SummaryProps {
   raport: RaportZilnic | undefined;
   isLoading: boolean;
   portofele: Portofel[];
+  currencyLabels: Record<string, string>;
 }
 
-const CURRENCY_LABELS: Record<string, string> = { RON: 'lei', EUR: '€', USD: '$' };
+const CURRENCY_LABELS_DEFAULT: Record<string, string> = { RON: 'lei', EUR: '€', USD: '$' };
+let CURRENCY_LABELS: Record<string, string> = CURRENCY_LABELS_DEFAULT;
 
-const Summary: React.FC<SummaryProps> = ({ raport, isLoading, portofele }) => {
+const formatMoneda = (monedaMap: Record<string, number> | undefined) => {
+  if (!monedaMap) return [];
+  return Object.entries(monedaMap)
+    .filter(([, v]) => v > 0)
+    .map(([moneda, suma]) => ({
+      moneda,
+      suma: Number(suma),
+      label: CURRENCY_LABELS[moneda] || moneda,
+    }));
+};
+
+const formatSold = (soldMap: Record<string, number> | undefined) => {
+  if (!soldMap || Object.keys(soldMap).length === 0) return '0 lei';
+  return Object.entries(soldMap)
+    .filter(([, v]) => Number(v) !== 0)
+    .map(([moneda, suma]) => `${Number(suma).toLocaleString('ro-RO')} ${CURRENCY_LABELS[moneda] || moneda}`)
+    .join(' / ') || '0 lei';
+};
+
+const Summary: React.FC<SummaryProps> = ({ raport, isLoading, portofele, currencyLabels }) => {
   const queryClient = useQueryClient();
+  // Update module-level CURRENCY_LABELS so formatSold/formatMoneda use it
+  CURRENCY_LABELS = { ...CURRENCY_LABELS_DEFAULT, ...currencyLabels };
 
   // Alimentare modal
   const [showAlimentareModal, setShowAlimentareModal] = useState(false);
@@ -749,7 +805,7 @@ const Summary: React.FC<SummaryProps> = ({ raport, isLoading, portofele }) => {
 
   // Transfer modal
   const [showTransferModal, setShowTransferModal] = useState(false);
-  const [trfForm, setTrfForm] = useState({ portofel_sursa_id: 0, portofel_dest_id: 0, suma: '', moneda: 'RON', comentarii: '' });
+  const [trfForm, setTrfForm] = useState({ portofel_sursa_id: 0, portofel_dest_id: 0, suma: '', moneda: 'RON', suma_dest: '', moneda_dest: '', comentarii: '' });
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: ['raport'] });
@@ -773,7 +829,7 @@ const Summary: React.FC<SummaryProps> = ({ raport, isLoading, portofele }) => {
   });
 
   const transferMutation = useMutation({
-    mutationFn: (data: { portofel_sursa_id: number; portofel_dest_id: number; suma: number; moneda?: string; comentarii?: string }) =>
+    mutationFn: (data: { portofel_sursa_id: number; portofel_dest_id: number; suma: number; moneda?: string; suma_dest?: number; moneda_dest?: string; comentarii?: string }) =>
       api.createTransfer(data),
     onSuccess: () => {
       toast.success('Transfer adăugat');
@@ -794,7 +850,7 @@ const Summary: React.FC<SummaryProps> = ({ raport, isLoading, portofele }) => {
     setTrfForm({
       portofel_sursa_id: portofele[0]?.id || 0,
       portofel_dest_id: portofele[1]?.id || portofele[0]?.id || 0,
-      suma: '', moneda: 'RON', comentarii: '',
+      suma: '', moneda: 'RON', suma_dest: '', moneda_dest: '', comentarii: '',
     });
     setShowTransferModal(true);
   };
@@ -817,13 +873,18 @@ const Summary: React.FC<SummaryProps> = ({ raport, isLoading, portofele }) => {
       toast.error('Sursa și destinația nu pot fi identice');
       return;
     }
-    transferMutation.mutate({
+    const transferData: any = {
       portofel_sursa_id: trfForm.portofel_sursa_id,
       portofel_dest_id: trfForm.portofel_dest_id,
       suma: parseFloat(trfForm.suma),
       moneda: trfForm.moneda,
       comentarii: trfForm.comentarii || undefined,
-    });
+    };
+    if (trfForm.moneda_dest && trfForm.moneda_dest !== trfForm.moneda && trfForm.suma_dest) {
+      transferData.suma_dest = parseFloat(trfForm.suma_dest);
+      transferData.moneda_dest = trfForm.moneda_dest;
+    }
+    transferMutation.mutate(transferData);
   };
 
   if (isLoading || !raport) {
@@ -839,11 +900,11 @@ const Summary: React.FC<SummaryProps> = ({ raport, isLoading, portofele }) => {
   return (
     <div className="space-y-4">
       {/* Neplatit warning */}
-      {raport.total_neplatit > 0 && (
+      {raport.total_neplatit && Object.values(raport.total_neplatit).some(v => Number(v) > 0) && (
         <Card className="p-3">
           <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400">
             <AlertTriangle className="w-4 h-4" />
-            <span>De platit: {raport.total_neplatit.toLocaleString('ro-RO')} lei</span>
+            <span>De platit: {formatSold(raport.total_neplatit)}</span>
           </div>
         </Card>
       )}
@@ -886,30 +947,30 @@ const Summary: React.FC<SummaryProps> = ({ raport, isLoading, portofele }) => {
                 <div>
                   <span className="text-stone-600 dark:text-stone-400">{p.portofel_nume}</span>
                   <div className="flex gap-3 text-xs mt-0.5 flex-wrap">
-                    {(p.total_alimentari || 0) > 0 && (
-                      <span className="text-emerald-600 dark:text-emerald-400">
-                        +{(p.total_alimentari || 0).toLocaleString('ro-RO')} ali
+                    {formatMoneda(p.total_alimentari).map(({ moneda, suma, label }) => (
+                      <span key={`ali-${moneda}`} className="text-emerald-600 dark:text-emerald-400">
+                        +{suma.toLocaleString('ro-RO')} {label} ali
                       </span>
-                    )}
-                    {(p.total_transferuri_in || 0) > 0 && (
-                      <span className="text-emerald-600 dark:text-emerald-400">
-                        +{(p.total_transferuri_in || 0).toLocaleString('ro-RO')} transf
+                    ))}
+                    {formatMoneda(p.total_transferuri_in).map(({ moneda, suma, label }) => (
+                      <span key={`tin-${moneda}`} className="text-emerald-600 dark:text-emerald-400">
+                        +{suma.toLocaleString('ro-RO')} {label} transf
                       </span>
-                    )}
-                    {(p.total_cheltuieli || 0) > 0 && (
-                      <span className="text-red-600 dark:text-red-400">
-                        -{(p.total_cheltuieli || 0).toLocaleString('ro-RO')} chelt
+                    ))}
+                    {formatMoneda(p.total_cheltuieli).map(({ moneda, suma, label }) => (
+                      <span key={`ch-${moneda}`} className="text-red-600 dark:text-red-400">
+                        -{suma.toLocaleString('ro-RO')} {label} chelt
                       </span>
-                    )}
-                    {(p.total_transferuri_out || 0) > 0 && (
-                      <span className="text-red-600 dark:text-red-400">
-                        -{(p.total_transferuri_out || 0).toLocaleString('ro-RO')} transf
+                    ))}
+                    {formatMoneda(p.total_transferuri_out).map(({ moneda, suma, label }) => (
+                      <span key={`tout-${moneda}`} className="text-red-600 dark:text-red-400">
+                        -{suma.toLocaleString('ro-RO')} {label} transf
                       </span>
-                    )}
+                    ))}
                   </div>
                 </div>
                 <span className="font-mono font-medium text-stone-900 dark:text-stone-100">
-                  {p.sold.toLocaleString('ro-RO')} lei
+                  {formatSold(p.sold)}
                 </span>
               </div>
             </div>
@@ -917,7 +978,7 @@ const Summary: React.FC<SummaryProps> = ({ raport, isLoading, portofele }) => {
           <div className="flex items-center justify-between py-2 mt-2 border-t border-stone-200 dark:border-stone-700">
             <span className="font-semibold text-stone-900 dark:text-stone-100">TOTAL</span>
             <span className="font-mono font-bold text-lg text-stone-900 dark:text-stone-100">
-              {(raport.total_sold || 0).toLocaleString('ro-RO')} lei
+              {formatSold(raport.total_sold)}
             </span>
           </div>
         </div>
@@ -944,7 +1005,7 @@ const Summary: React.FC<SummaryProps> = ({ raport, isLoading, portofele }) => {
                 </span>
               </div>
               <span className="font-mono text-stone-900 dark:text-stone-100">
-                {cat.total.toLocaleString('ro-RO')} lei
+                {formatSold(cat.total)}
               </span>
             </div>
           ))}
@@ -994,7 +1055,7 @@ const Summary: React.FC<SummaryProps> = ({ raport, isLoading, portofele }) => {
                 onChange={(e) => setAliForm({ ...aliForm, moneda: e.target.value })}
                 className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900"
               >
-                {Object.entries(CURRENCY_LABELS).map(([code, label]) => (
+                {Object.entries(currencyLabels).map(([code, label]) => (
                   <option key={code} value={code}>{code} ({label})</option>
                 ))}
               </select>
@@ -1058,7 +1119,7 @@ const Summary: React.FC<SummaryProps> = ({ raport, isLoading, portofele }) => {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Suma</label>
+              <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Suma sursă</label>
               <input
                 type="number"
                 step="0.01"
@@ -1072,17 +1133,64 @@ const Summary: React.FC<SummaryProps> = ({ raport, isLoading, portofele }) => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Moneda</label>
+              <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Moneda sursă</label>
               <select
                 value={trfForm.moneda}
                 onChange={(e) => setTrfForm({ ...trfForm, moneda: e.target.value })}
                 className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900"
               >
-                {Object.entries(CURRENCY_LABELS).map(([code, label]) => (
+                {Object.entries(currencyLabels).map(([code, label]) => (
                   <option key={code} value={code}>{code} ({label})</option>
                 ))}
               </select>
             </div>
+          </div>
+          {/* Destination currency (exchange rate) */}
+          <div>
+            <label className="flex items-center gap-2 text-sm text-stone-600 dark:text-stone-400 mb-2">
+              <input
+                type="checkbox"
+                checked={!!trfForm.moneda_dest}
+                onChange={(e) => setTrfForm({
+                  ...trfForm,
+                  moneda_dest: e.target.checked ? (trfForm.moneda === 'RON' ? 'EUR' : 'RON') : '',
+                  suma_dest: ''
+                })}
+                className="rounded"
+              />
+              Schimb valutar (monedă diferită la destinație)
+            </label>
+            {trfForm.moneda_dest && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Suma destinație</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={trfForm.suma_dest}
+                    onChange={(e) => setTrfForm({ ...trfForm, suma_dest: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-right font-mono"
+                    placeholder="0.00"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Moneda destinație</label>
+                  <select
+                    value={trfForm.moneda_dest}
+                    onChange={(e) => setTrfForm({ ...trfForm, moneda_dest: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900"
+                  >
+                    {Object.entries(currencyLabels)
+                      .filter(([code]) => code !== trfForm.moneda)
+                      .map(([code, label]) => (
+                        <option key={code} value={code}>{code} ({label})</option>
+                      ))}
+                  </select>
+                </div>
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Comentarii</label>
@@ -1141,6 +1249,20 @@ export const DashboardPage: React.FC = () => {
     queryKey: ['portofele'],
     queryFn: () => api.getPortofele(true),
   });
+
+  // Fetch monede (currencies)
+  const { data: monede = [] } = useQuery({
+    queryKey: ['monede'],
+    queryFn: () => api.getMonede(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const currencyLabels = useMemo(() => {
+    const labels: Record<string, string> = { RON: 'lei', EUR: '€', USD: '$' };
+    monede.forEach(m => { labels[m.code] = m.label; });
+    // Update module-level for formatSold usage in this component
+    CURRENCY_LABELS = labels;
+    return labels;
+  }, [monede]);
 
   // Fetch raport
   const { data: raport, isLoading: isLoadingRaport } = useQuery({
@@ -1208,7 +1330,7 @@ export const DashboardPage: React.FC = () => {
 
         {/* Sidebar with summary */}
         <div className="lg:col-span-1">
-          <Summary raport={raport} isLoading={isLoadingRaport} portofele={portofele} />
+          <Summary raport={raport} isLoading={isLoadingRaport} portofele={portofele} currencyLabels={currencyLabels} />
         </div>
       </div>
     </div>

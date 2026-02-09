@@ -10,6 +10,7 @@ import {
   Bot,
   Palette,
   Calendar,
+  DollarSign,
   ChevronRight,
   ArrowLeft,
 } from 'lucide-react';
@@ -23,6 +24,7 @@ import { UsersSettings } from './settings/UsersSettings';
 import { OllamaSettings } from './settings/OllamaSettings';
 import { UISettings } from './settings/UISettings';
 import { ExercitiuSettings } from './settings/ExercitiuSettings';
+import { MonedaSettings } from './settings/MonedaSettings';
 
 const settingsMenu = [
   { path: '/settings/exercitiu', name: 'Exercițiu', icon: Calendar, description: 'Închidere / deschidere zi' },
@@ -31,6 +33,7 @@ const settingsMenu = [
   { path: '/settings/grupe', name: 'Grupe', icon: Layers, description: 'Subgrupări pentru categorii' },
   { path: '/settings/nomenclator', name: 'Nomenclator', icon: BookOpen, description: 'Furnizori, servicii, denumiri' },
   { path: '/settings/users', name: 'Utilizatori', icon: Users, description: 'Conturi și permisiuni' },
+  { path: '/settings/monede', name: 'Monede', icon: DollarSign, description: 'Gestionare monede active' },
   { path: '/settings/ollama', name: 'Conexiune AI', icon: Bot, description: 'Configurare autocomplete AI' },
   { path: '/settings/ui', name: 'Interfață', icon: Palette, description: 'Temă și preferințe vizuale' },
 ];
@@ -123,6 +126,7 @@ export const SettingsPage: React.FC = () => {
           <Route path="grupe" element={<GrupeSettings />} />
           <Route path="nomenclator" element={<NomenclatorSettings />} />
           <Route path="users" element={<UsersSettings />} />
+          <Route path="monede" element={<MonedaSettings />} />
           <Route path="ollama" element={<OllamaSettings />} />
           <Route path="ui" element={<UISettings />} />
         </Routes>

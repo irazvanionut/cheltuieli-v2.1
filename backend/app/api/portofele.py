@@ -1,21 +1,23 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, text
+from sqlalchemy import select, func, or_
 from datetime import date
 from typing import List, Optional
 from decimal import Decimal
 
 from app.core.database import get_db
-from app.core.security import get_current_user, require_admin
-from app.models import User, Portofel, Transfer, Alimentare, Exercitiu, Cheltuiala
+from app.core.security import get_current_user, require_admin, require_sef
+from app.models import User, Portofel, Transfer, Alimentare, Exercitiu, Cheltuiala, Categorie
 from app.schemas import (
     PortofelCreate,
     PortofelUpdate,
     PortofelResponse,
     PortofelSoldResponse,
     TransferCreate,
+    TransferUpdate,
     TransferResponse,
     AlimentareCreate,
+    AlimentareUpdate,
     AlimentareResponse
 )
 
@@ -64,24 +66,111 @@ async def get_solduri_portofele(
         select(Portofel).where(Portofel.activ == True).order_by(Portofel.ordine)
     )
     portofele = result.scalars().all()
-    
+
     response = []
     for p in portofele:
         data = PortofelSoldResponse.model_validate(p)
-        
-        # Get sold total
-        sql = text("SELECT get_sold_portofel(:portofel_id)")
-        result = await db.execute(sql, {"portofel_id": p.id})
-        data.sold_total = result.scalar() or Decimal("0.00")
-        
-        # Get sold zi curenta
+
+        # Compute sold_total (all-time) per currency: alimentari - cheltuieli + transfers_in - transfers_out
+        ali_res = await db.execute(
+            select(Alimentare.moneda, func.coalesce(func.sum(Alimentare.suma), 0))
+            .where(Alimentare.portofel_id == p.id)
+            .group_by(Alimentare.moneda)
+        )
+        ali_map = {row[0]: row[1] for row in ali_res.all() if row[1]}
+
+        ch_res = await db.execute(
+            select(Cheltuiala.moneda, func.coalesce(func.sum(Cheltuiala.suma), 0))
+            .outerjoin(Categorie, Cheltuiala.categorie_id == Categorie.id)
+            .where(
+                Cheltuiala.portofel_id == p.id,
+                Cheltuiala.activ == True,
+                Cheltuiala.sens == 'Cheltuiala',
+                Cheltuiala.neplatit == False,
+                or_(Categorie.afecteaza_sold == True, Cheltuiala.categorie_id == None)
+            )
+            .group_by(Cheltuiala.moneda)
+        )
+        ch_map = {row[0]: row[1] for row in ch_res.all() if row[1]}
+
+        # Transfers IN: use moneda_dest/suma_dest when set (cross-currency)
+        tin_res = await db.execute(
+            select(Transfer).where(Transfer.portofel_dest_id == p.id)
+        )
+        tin_map: dict[str, Decimal] = {}
+        for t in tin_res.scalars().all():
+            m = t.moneda_dest or t.moneda or 'RON'
+            s = t.suma_dest if t.moneda_dest else t.suma
+            tin_map[m] = tin_map.get(m, Decimal("0")) + s
+
+        tout_res = await db.execute(
+            select(Transfer.moneda, func.coalesce(func.sum(Transfer.suma), 0))
+            .where(Transfer.portofel_sursa_id == p.id)
+            .group_by(Transfer.moneda)
+        )
+        tout_map = {row[0]: row[1] for row in tout_res.all() if row[1]}
+
+        all_currencies = set(list(ali_map.keys()) + list(ch_map.keys()) + list(tin_map.keys()) + list(tout_map.keys()))
+        sold_total = {}
+        for cur in all_currencies:
+            val = (ali_map.get(cur, Decimal("0")) - ch_map.get(cur, Decimal("0"))
+                   + tin_map.get(cur, Decimal("0")) - tout_map.get(cur, Decimal("0")))
+            if val != Decimal("0"):
+                sold_total[cur] = val
+        data.sold_total = sold_total
+
+        # Compute sold_zi_curenta (current exercitiu) per currency
         if exercitiu_id:
-            sql = text("SELECT get_sold_portofel(:portofel_id, :exercitiu_id)")
-            result = await db.execute(sql, {"portofel_id": p.id, "exercitiu_id": exercitiu_id})
-            data.sold_zi_curenta = result.scalar() or Decimal("0.00")
-        
+            ali_zi = await db.execute(
+                select(Alimentare.moneda, func.coalesce(func.sum(Alimentare.suma), 0))
+                .where(Alimentare.portofel_id == p.id, Alimentare.exercitiu_id == exercitiu_id)
+                .group_by(Alimentare.moneda)
+            )
+            ali_zi_map = {row[0]: row[1] for row in ali_zi.all() if row[1]}
+
+            ch_zi = await db.execute(
+                select(Cheltuiala.moneda, func.coalesce(func.sum(Cheltuiala.suma), 0))
+                .outerjoin(Categorie, Cheltuiala.categorie_id == Categorie.id)
+                .where(
+                    Cheltuiala.portofel_id == p.id,
+                    Cheltuiala.exercitiu_id == exercitiu_id,
+                    Cheltuiala.activ == True,
+                    Cheltuiala.sens == 'Cheltuiala',
+                    Cheltuiala.neplatit == False,
+                    or_(Categorie.afecteaza_sold == True, Cheltuiala.categorie_id == None)
+                )
+                .group_by(Cheltuiala.moneda)
+            )
+            ch_zi_map = {row[0]: row[1] for row in ch_zi.all() if row[1]}
+
+            # Transfers IN: use moneda_dest/suma_dest when set
+            tin_zi = await db.execute(
+                select(Transfer).where(Transfer.portofel_dest_id == p.id, Transfer.exercitiu_id == exercitiu_id)
+            )
+            tin_zi_map: dict[str, Decimal] = {}
+            for t in tin_zi.scalars().all():
+                m = t.moneda_dest or t.moneda or 'RON'
+                s = t.suma_dest if t.moneda_dest else t.suma
+                tin_zi_map[m] = tin_zi_map.get(m, Decimal("0")) + s
+
+            tout_zi = await db.execute(
+                select(Transfer.moneda, func.coalesce(func.sum(Transfer.suma), 0))
+                .where(Transfer.portofel_sursa_id == p.id, Transfer.exercitiu_id == exercitiu_id)
+                .group_by(Transfer.moneda)
+            )
+            tout_zi_map = {row[0]: row[1] for row in tout_zi.all() if row[1]}
+
+            zi_currencies = set(list(ali_zi_map.keys()) + list(ch_zi_map.keys()) + list(tin_zi_map.keys()) + list(tout_zi_map.keys()))
+            sold_zi = {}
+            for cur in zi_currencies:
+                val = (ali_zi_map.get(cur, Decimal("0")) - ch_zi_map.get(cur, Decimal("0"))
+                       + tin_zi_map.get(cur, Decimal("0")) - tout_zi_map.get(cur, Decimal("0")))
+                if val != Decimal("0"):
+                    sold_zi[cur] = val
+            data.sold_zi_curenta = sold_zi
+
         response.append(data)
-    
+
     return response
 
 
@@ -228,8 +317,59 @@ async def create_alimentare(
         select(Portofel.nume).where(Portofel.id == alimentare.portofel_id)
     )
     response.portofel_nume = port_result.scalar_one_or_none()
-    
+
     return response
+
+
+@router.patch("/alimentari/{alimentare_id}", response_model=AlimentareResponse)
+async def update_alimentare(
+    alimentare_id: int,
+    data: AlimentareUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_sef)
+):
+    """Actualizează alimentare (doar șef/admin)"""
+    result = await db.execute(
+        select(Alimentare).where(Alimentare.id == alimentare_id)
+    )
+    alimentare = result.scalar_one_or_none()
+
+    if not alimentare:
+        raise HTTPException(status_code=404, detail="Alimentare negăsită")
+
+    update_data = data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(alimentare, field, value)
+
+    await db.commit()
+    await db.refresh(alimentare)
+
+    response = AlimentareResponse.model_validate(alimentare)
+    port_result = await db.execute(
+        select(Portofel.nume).where(Portofel.id == alimentare.portofel_id)
+    )
+    response.portofel_nume = port_result.scalar_one_or_none()
+
+    return response
+
+
+@router.delete("/alimentari/{alimentare_id}", status_code=204)
+async def delete_alimentare(
+    alimentare_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_sef)
+):
+    """Șterge alimentare (doar șef/admin)"""
+    result = await db.execute(
+        select(Alimentare).where(Alimentare.id == alimentare_id)
+    )
+    alimentare = result.scalar_one_or_none()
+
+    if not alimentare:
+        raise HTTPException(status_code=404, detail="Alimentare negăsită")
+
+    await db.delete(alimentare)
+    await db.commit()
 
 
 # ============================================
@@ -321,6 +461,8 @@ async def create_transfer(
         portofel_dest_id=data.portofel_dest_id,
         suma=data.suma,
         moneda=data.moneda,
+        suma_dest=data.suma_dest,
+        moneda_dest=data.moneda_dest,
         operator_id=current_user.id,
         comentarii=data.comentarii
     )
@@ -341,5 +483,65 @@ async def create_transfer(
         select(Portofel.nume).where(Portofel.id == transfer.portofel_dest_id)
     )
     response.portofel_dest_nume = dest_result.scalar_one_or_none()
-    
+
     return response
+
+
+@router.patch("/transferuri/{transfer_id}", response_model=TransferResponse)
+async def update_transfer(
+    transfer_id: int,
+    data: TransferUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_sef)
+):
+    """Actualizează transfer (doar șef/admin)"""
+    result = await db.execute(
+        select(Transfer).where(Transfer.id == transfer_id)
+    )
+    transfer = result.scalar_one_or_none()
+
+    if not transfer:
+        raise HTTPException(status_code=404, detail="Transfer negăsit")
+
+    update_data = data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(transfer, field, value)
+
+    # Validate sursa != dest after update
+    if transfer.portofel_sursa_id == transfer.portofel_dest_id:
+        raise HTTPException(status_code=400, detail="Portofelele trebuie să fie diferite")
+
+    await db.commit()
+    await db.refresh(transfer)
+
+    response = TransferResponse.model_validate(transfer)
+    sursa_result = await db.execute(
+        select(Portofel.nume).where(Portofel.id == transfer.portofel_sursa_id)
+    )
+    response.portofel_sursa_nume = sursa_result.scalar_one_or_none()
+
+    dest_result = await db.execute(
+        select(Portofel.nume).where(Portofel.id == transfer.portofel_dest_id)
+    )
+    response.portofel_dest_nume = dest_result.scalar_one_or_none()
+
+    return response
+
+
+@router.delete("/transferuri/{transfer_id}", status_code=204)
+async def delete_transfer(
+    transfer_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_sef)
+):
+    """Șterge transfer (doar șef/admin)"""
+    result = await db.execute(
+        select(Transfer).where(Transfer.id == transfer_id)
+    )
+    transfer = result.scalar_one_or_none()
+
+    if not transfer:
+        raise HTTPException(status_code=404, detail="Transfer negăsit")
+
+    await db.delete(transfer)
+    await db.commit()

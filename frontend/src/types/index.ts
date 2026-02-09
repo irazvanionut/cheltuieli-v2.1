@@ -25,8 +25,8 @@ export interface Portofel {
   ordine: number;
   activ: boolean;
   created_at: string;
-  sold_total?: number;
-  sold_zi_curenta?: number;
+  sold_total?: Record<string, number>;
+  sold_zi_curenta?: Record<string, number>;
 }
 
 export interface Categorie {
@@ -135,6 +135,8 @@ export interface Transfer {
   portofel_dest_id: number;
   suma: number;
   moneda: string;
+  suma_dest?: number;
+  moneda_dest?: string;
   operator_id?: number;
   comentarii?: string;
   created_at: string;
@@ -161,6 +163,7 @@ export interface Alimentare {
 export interface RaportCategorieItem {
   denumire: string;
   suma: number;
+  moneda: string;
   neplatit: boolean;
   verificat: boolean;
   cheltuiala_id: number;
@@ -170,7 +173,7 @@ export interface RaportGrupa {
   grupa_id?: number;
   grupa_nume?: string;
   items: RaportCategorieItem[];
-  total: number;
+  total: Record<string, number>;
 }
 
 export interface RaportCategorie {
@@ -179,20 +182,19 @@ export interface RaportCategorie {
   categorie_culoare: string;
   afecteaza_sold: boolean;
   grupe: RaportGrupa[];
-  total_platit: number;
-  total_neplatit: number;
-  total: number;
+  total_platit: Record<string, number>;
+  total_neplatit: Record<string, number>;
+  total: Record<string, number>;
 }
 
 export interface RaportPortofel {
   portofel_id: number;
   portofel_nume: string;
-  sold: number;
-  total_incasari?: number;
-  total_cheltuieli?: number;
-  total_alimentari?: number;
-  total_transferuri_in?: number;
-  total_transferuri_out?: number;
+  sold: Record<string, number>;
+  total_alimentari?: Record<string, number>;
+  total_cheltuieli?: Record<string, number>;
+  total_transferuri_in?: Record<string, number>;
+  total_transferuri_out?: Record<string, number>;
 }
 
 export interface RaportZilnic {
@@ -202,13 +204,13 @@ export interface RaportZilnic {
   inchis?: boolean;
   nr_cheltuieli?: number;
   nr_incasari?: number;
-  total_cheltuieli: number;
+  total_cheltuieli: Record<string, number>;
   total_incasari?: number;
   total_alimentari?: number;
-  total_neplatit: number;
+  total_neplatit: Record<string, number>;
   categorii: RaportCategorie[];
   portofele: RaportPortofel[];
-  total_sold?: number;
+  total_sold?: Record<string, number>;
 }
 
 // ============================================

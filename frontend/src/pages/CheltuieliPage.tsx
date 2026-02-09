@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus, Edit2, Check, X, DollarSign, Filter, Search, RefreshCw,
@@ -11,8 +11,8 @@ import api from '@/services/api';
 import { Card, Button, Input, Modal, Spinner, EmptyState } from '@/components/ui';
 import type { Cheltuiala, CheltuialaCreate, AutocompleteResult, Alimentare, Transfer } from '@/types';
 
-const CURRENCY_LABELS: Record<string, string> = { RON: 'lei', EUR: '€', USD: '$' };
-const getCurrencyLabel = (moneda: string) => CURRENCY_LABELS[moneda] || moneda;
+const CURRENCY_LABELS_DEFAULT: Record<string, string> = { RON: 'lei', EUR: '€', USD: '$' };
+const getCurrencyLabel = (moneda: string, labels?: Record<string, string>) => (labels || CURRENCY_LABELS_DEFAULT)[moneda] || moneda;
 
 type TabType = 'cheltuieli' | 'alimentari' | 'transferuri';
 
@@ -55,6 +55,7 @@ export const CheltuieliPage: React.FC = () => {
   // ALIMENTARI STATE
   // ============================
   const [isAlimentareModalOpen, setIsAlimentareModalOpen] = useState(false);
+  const [editingAlimentare, setEditingAlimentare] = useState<Alimentare | null>(null);
   const [alimentareForm, setAlimentareForm] = useState({
     portofel_id: 0,
     suma: 0,
@@ -66,11 +67,14 @@ export const CheltuieliPage: React.FC = () => {
   // TRANSFERURI STATE
   // ============================
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [editingTransfer, setEditingTransfer] = useState<Transfer | null>(null);
   const [transferForm, setTransferForm] = useState({
     portofel_sursa_id: 0,
     portofel_dest_id: 0,
     suma: 0,
     moneda: 'RON',
+    suma_dest: 0,
+    moneda_dest: '',
     comentarii: ''
   });
 
@@ -126,6 +130,17 @@ export const CheltuieliPage: React.FC = () => {
     queryKey: ['grupe'],
     queryFn: () => api.getGrupe(),
   });
+
+  const { data: monede = [] } = useQuery({
+    queryKey: ['monede'],
+    queryFn: () => api.getMonede(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const CURRENCY_LABELS = useMemo(() => {
+    const labels: Record<string, string> = { ...CURRENCY_LABELS_DEFAULT };
+    monede.forEach(m => { labels[m.code] = m.label; });
+    return labels;
+  }, [monede]);
 
   // ============================
   // CHELTUIELI MUTATIONS
@@ -191,12 +206,39 @@ export const CheltuieliPage: React.FC = () => {
     },
   });
 
+  const updateAlimentareMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<Alimentare> }) =>
+      api.updateAlimentare(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['alimentari'] });
+      queryClient.invalidateQueries({ queryKey: ['portofele'] });
+      toast.success('Alimentare actualizata');
+      setIsAlimentareModalOpen(false);
+      resetAlimentareForm();
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.detail || 'Eroare la actualizare');
+    },
+  });
+
+  const deleteAlimentareMutation = useMutation({
+    mutationFn: (id: number) => api.deleteAlimentare(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['alimentari'] });
+      queryClient.invalidateQueries({ queryKey: ['portofele'] });
+      toast.success('Alimentare stearsa');
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.detail || 'Eroare la stergere');
+    },
+  });
+
   // ============================
   // TRANSFERURI MUTATIONS
   // ============================
 
   const createTransferMutation = useMutation({
-    mutationFn: (data: { portofel_sursa_id: number; portofel_dest_id: number; suma: number; moneda: string; comentarii?: string }) =>
+    mutationFn: (data: { portofel_sursa_id: number; portofel_dest_id: number; suma: number; moneda: string; suma_dest?: number; moneda_dest?: string; comentarii?: string }) =>
       api.createTransfer(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transferuri'] });
@@ -207,6 +249,33 @@ export const CheltuieliPage: React.FC = () => {
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.detail || 'Eroare la transfer');
+    },
+  });
+
+  const updateTransferMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<Transfer> }) =>
+      api.updateTransfer(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transferuri'] });
+      queryClient.invalidateQueries({ queryKey: ['portofele'] });
+      toast.success('Transfer actualizat');
+      setIsTransferModalOpen(false);
+      resetTransferForm();
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.detail || 'Eroare la actualizare');
+    },
+  });
+
+  const deleteTransferMutation = useMutation({
+    mutationFn: (id: number) => api.deleteTransfer(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transferuri'] });
+      queryClient.invalidateQueries({ queryKey: ['portofele'] });
+      toast.success('Transfer sters');
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.detail || 'Eroare la stergere');
     },
   });
 
@@ -312,10 +381,21 @@ export const CheltuieliPage: React.FC = () => {
 
   const resetAlimentareForm = () => {
     setAlimentareForm({ portofel_id: portofele[0]?.id || 0, suma: 0, moneda: 'RON', comentarii: '' });
+    setEditingAlimentare(null);
   };
 
-  const openAlimentareModal = () => {
-    resetAlimentareForm();
+  const openAlimentareModal = (item?: Alimentare) => {
+    if (item) {
+      setEditingAlimentare(item);
+      setAlimentareForm({
+        portofel_id: item.portofel_id,
+        suma: item.suma,
+        moneda: item.moneda || 'RON',
+        comentarii: item.comentarii || ''
+      });
+    } else {
+      resetAlimentareForm();
+    }
     setIsAlimentareModalOpen(true);
   };
 
@@ -329,12 +409,24 @@ export const CheltuieliPage: React.FC = () => {
       toast.error('Suma trebuie sa fie pozitiva');
       return;
     }
-    createAlimentareMutation.mutate({
-      portofel_id: alimentareForm.portofel_id,
-      suma: alimentareForm.suma,
-      moneda: alimentareForm.moneda,
-      comentarii: alimentareForm.comentarii || undefined
-    });
+    if (editingAlimentare) {
+      updateAlimentareMutation.mutate({
+        id: editingAlimentare.id,
+        data: {
+          portofel_id: alimentareForm.portofel_id,
+          suma: alimentareForm.suma,
+          moneda: alimentareForm.moneda,
+          comentarii: alimentareForm.comentarii || undefined
+        } as Partial<Alimentare>
+      });
+    } else {
+      createAlimentareMutation.mutate({
+        portofel_id: alimentareForm.portofel_id,
+        suma: alimentareForm.suma,
+        moneda: alimentareForm.moneda,
+        comentarii: alimentareForm.comentarii || undefined
+      });
+    }
   };
 
   // ============================
@@ -347,12 +439,28 @@ export const CheltuieliPage: React.FC = () => {
       portofel_dest_id: portofele[1]?.id || 0,
       suma: 0,
       moneda: 'RON',
+      suma_dest: 0,
+      moneda_dest: '',
       comentarii: ''
     });
+    setEditingTransfer(null);
   };
 
-  const openTransferModal = () => {
-    resetTransferForm();
+  const openTransferModal = (item?: Transfer) => {
+    if (item) {
+      setEditingTransfer(item);
+      setTransferForm({
+        portofel_sursa_id: item.portofel_sursa_id,
+        portofel_dest_id: item.portofel_dest_id,
+        suma: item.suma,
+        moneda: item.moneda || 'RON',
+        suma_dest: item.suma_dest || 0,
+        moneda_dest: item.moneda_dest || '',
+        comentarii: item.comentarii || ''
+      });
+    } else {
+      resetTransferForm();
+    }
     setIsTransferModalOpen(true);
   };
 
@@ -370,13 +478,22 @@ export const CheltuieliPage: React.FC = () => {
       toast.error('Suma trebuie sa fie pozitiva');
       return;
     }
-    createTransferMutation.mutate({
+    const transferData: any = {
       portofel_sursa_id: transferForm.portofel_sursa_id,
       portofel_dest_id: transferForm.portofel_dest_id,
       suma: transferForm.suma,
       moneda: transferForm.moneda,
       comentarii: transferForm.comentarii || undefined
-    });
+    };
+    if (transferForm.moneda_dest && transferForm.moneda_dest !== transferForm.moneda && transferForm.suma_dest) {
+      transferData.suma_dest = transferForm.suma_dest;
+      transferData.moneda_dest = transferForm.moneda_dest;
+    }
+    if (editingTransfer) {
+      updateTransferMutation.mutate({ id: editingTransfer.id, data: transferData });
+    } else {
+      createTransferMutation.mutate(transferData);
+    }
   };
 
   // ============================
@@ -418,9 +535,9 @@ export const CheltuieliPage: React.FC = () => {
       onChange={(e) => onChange(e.target.value)}
       className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100"
     >
-      <option value="RON">RON (lei)</option>
-      <option value="EUR">EUR (€)</option>
-      <option value="USD">USD ($)</option>
+      {Object.entries(CURRENCY_LABELS).map(([code, label]) => (
+        <option key={code} value={code}>{code} ({label})</option>
+      ))}
     </select>
   );
 
@@ -452,12 +569,12 @@ export const CheltuieliPage: React.FC = () => {
             </Button>
           )}
           {activeTab === 'alimentari' && (
-            <Button onClick={openAlimentareModal} icon={<Plus className="w-4 h-4" />}>
+            <Button onClick={() => openAlimentareModal()} icon={<Plus className="w-4 h-4" />}>
               Alimenteaza portofel
             </Button>
           )}
           {activeTab === 'transferuri' && (
-            <Button onClick={openTransferModal} icon={<Plus className="w-4 h-4" />}>
+            <Button onClick={() => openTransferModal()} icon={<Plus className="w-4 h-4" />}>
               Transfer nou
             </Button>
           )}
@@ -737,7 +854,7 @@ export const CheltuieliPage: React.FC = () => {
                 title="Nu exista alimentari"
                 description="Alimenteaza un portofel pentru a incepe"
                 action={
-                  <Button onClick={openAlimentareModal} icon={<Plus className="w-4 h-4" />}>
+                  <Button onClick={() => openAlimentareModal()} icon={<Plus className="w-4 h-4" />}>
                     Alimenteaza portofel
                   </Button>
                 }
@@ -774,6 +891,28 @@ export const CheltuieliPage: React.FC = () => {
                         })}
                       </div>
                     </div>
+
+                    {canVerify && (
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openAlimentareModal(item)}
+                          title="Editeaza"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => deleteAlimentareMutation.mutate(item.id)}
+                          title="Sterge"
+                          loading={deleteAlimentareMutation.isPending}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </Card>
               ))}
@@ -794,7 +933,7 @@ export const CheltuieliPage: React.FC = () => {
                 title="Nu exista transferuri"
                 description="Efectueaza un transfer intre portofele"
                 action={
-                  <Button onClick={openTransferModal} icon={<Plus className="w-4 h-4" />}>
+                  <Button onClick={() => openTransferModal()} icon={<Plus className="w-4 h-4" />}>
                     Transfer nou
                   </Button>
                 }
@@ -824,7 +963,11 @@ export const CheltuieliPage: React.FC = () => {
 
                     <div className="text-right flex-shrink-0">
                       <div className="font-bold text-green-600 dark:text-green-400">
-                        {item.suma} {getCurrencyLabel(item.moneda || 'RON')}
+                        {item.suma_dest && item.moneda_dest ? (
+                          <>{item.suma} {getCurrencyLabel(item.moneda || 'RON', CURRENCY_LABELS)} → {item.suma_dest} {getCurrencyLabel(item.moneda_dest, CURRENCY_LABELS)}</>
+                        ) : (
+                          <>{item.suma} {getCurrencyLabel(item.moneda || 'RON', CURRENCY_LABELS)}</>
+                        )}
                       </div>
                       <div className="text-sm text-stone-500">
                         {new Date(item.created_at).toLocaleTimeString('ro-RO', {
@@ -833,6 +976,28 @@ export const CheltuieliPage: React.FC = () => {
                         })}
                       </div>
                     </div>
+
+                    {canVerify && (
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openTransferModal(item)}
+                          title="Editeaza"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => deleteTransferMutation.mutate(item.id)}
+                          title="Sterge"
+                          loading={deleteTransferMutation.isPending}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </Card>
               ))}
@@ -1033,8 +1198,8 @@ export const CheltuieliPage: React.FC = () => {
          ============================ */}
       <Modal
         open={isAlimentareModalOpen}
-        onClose={() => setIsAlimentareModalOpen(false)}
-        title="Alimenteaza portofel"
+        onClose={() => { setIsAlimentareModalOpen(false); setEditingAlimentare(null); }}
+        title={editingAlimentare ? 'Editeaza alimentare' : 'Alimenteaza portofel'}
         size="md"
         closeOnBackdropClick={false}
       >
@@ -1097,16 +1262,16 @@ export const CheltuieliPage: React.FC = () => {
           </div>
 
           <div className="flex gap-3 pt-4">
-            <Button type="button" variant="secondary" onClick={() => setIsAlimentareModalOpen(false)} className="flex-1">
+            <Button type="button" variant="secondary" onClick={() => { setIsAlimentareModalOpen(false); setEditingAlimentare(null); }} className="flex-1">
               Anuleaza
             </Button>
             <Button
               type="submit"
               variant="primary"
               className="flex-1"
-              loading={createAlimentareMutation.isPending}
+              loading={createAlimentareMutation.isPending || updateAlimentareMutation.isPending}
             >
-              Alimenteaza
+              {editingAlimentare ? 'Salveaza' : 'Alimenteaza'}
             </Button>
           </div>
         </form>
@@ -1117,8 +1282,8 @@ export const CheltuieliPage: React.FC = () => {
          ============================ */}
       <Modal
         open={isTransferModalOpen}
-        onClose={() => setIsTransferModalOpen(false)}
-        title="Transfer intre portofele"
+        onClose={() => { setIsTransferModalOpen(false); setEditingTransfer(null); }}
+        title={editingTransfer ? 'Editeaza transfer' : 'Transfer intre portofele'}
         size="md"
         closeOnBackdropClick={false}
       >
@@ -1166,7 +1331,7 @@ export const CheltuieliPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
-                Suma
+                Suma sursă
               </label>
               <Input
                 type="number"
@@ -1179,13 +1344,63 @@ export const CheltuieliPage: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
-                Moneda
+                Moneda sursă
               </label>
               <CurrencySelect
                 value={transferForm.moneda}
                 onChange={(v) => setTransferForm({ ...transferForm, moneda: v })}
               />
             </div>
+          </div>
+
+          {/* Exchange rate section */}
+          <div>
+            <label className="flex items-center gap-2 text-sm text-stone-600 dark:text-stone-400 mb-2">
+              <input
+                type="checkbox"
+                checked={!!transferForm.moneda_dest}
+                onChange={(e) => setTransferForm({
+                  ...transferForm,
+                  moneda_dest: e.target.checked ? (transferForm.moneda === 'RON' ? 'EUR' : 'RON') : '',
+                  suma_dest: 0
+                })}
+                className="rounded"
+              />
+              Schimb valutar (monedă diferită la destinație)
+            </label>
+            {transferForm.moneda_dest && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
+                    Suma destinație
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={transferForm.suma_dest}
+                    onChange={(e) => setTransferForm({ ...transferForm, suma_dest: parseFloat(e.target.value) || 0 })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
+                    Moneda destinație
+                  </label>
+                  <select
+                    value={transferForm.moneda_dest}
+                    onChange={(e) => setTransferForm({ ...transferForm, moneda_dest: e.target.value })}
+                    className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100"
+                  >
+                    {Object.entries(CURRENCY_LABELS)
+                      .filter(([code]) => code !== transferForm.moneda)
+                      .map(([code, label]) => (
+                        <option key={code} value={code}>{code} ({label})</option>
+                      ))}
+                  </select>
+                </div>
+              </div>
+            )}
           </div>
 
           <div>
@@ -1202,16 +1417,16 @@ export const CheltuieliPage: React.FC = () => {
           </div>
 
           <div className="flex gap-3 pt-4">
-            <Button type="button" variant="secondary" onClick={() => setIsTransferModalOpen(false)} className="flex-1">
+            <Button type="button" variant="secondary" onClick={() => { setIsTransferModalOpen(false); setEditingTransfer(null); }} className="flex-1">
               Anuleaza
             </Button>
             <Button
               type="submit"
               variant="primary"
               className="flex-1"
-              loading={createTransferMutation.isPending}
+              loading={createTransferMutation.isPending || updateTransferMutation.isPending}
             >
-              Transfera
+              {editingTransfer ? 'Salveaza' : 'Transfera'}
             </Button>
           </div>
         </form>

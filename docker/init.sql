@@ -33,7 +33,8 @@ INSERT INTO settings (cheie, valoare, tip, descriere) VALUES
     ('inchidere_automata', 'true', 'boolean', 'Închidere automată activă'),
     ('tema_ui', 'light', 'string', 'Tema interfață: light/dark/auto'),
     ('limba', 'ro', 'string', 'Limba aplicației'),
-    ('inregistrari_per_pagina', '20', 'number', 'Număr înregistrări per pagină');
+    ('inregistrari_per_pagina', '20', 'number', 'Număr înregistrări per pagină'),
+    ('monede', 'RON:lei,EUR:€,USD:$', 'string', 'Lista monede active: CODE:label separate prin virgula');
 
 -- ============================================
 -- 2. USERS (Utilizatori)
@@ -269,6 +270,8 @@ CREATE TABLE transferuri (
     
     suma NUMERIC(12, 2) NOT NULL,
     moneda VARCHAR(3) DEFAULT 'RON', -- RON, EUR, USD
+    suma_dest NUMERIC(12, 2),        -- nullable: dest amount for cross-currency transfers
+    moneda_dest VARCHAR(3),           -- nullable: dest currency for cross-currency transfers
     operator_id INTEGER REFERENCES users(id),
     comentarii TEXT,
 

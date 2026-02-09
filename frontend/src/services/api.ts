@@ -264,6 +264,15 @@ class ApiService {
     return data;
   }
 
+  async updateAlimentare(id: number, alimentare: Partial<Alimentare>): Promise<Alimentare> {
+    const { data } = await this.client.patch<Alimentare>(`/alimentari/${id}`, alimentare);
+    return data;
+  }
+
+  async deleteAlimentare(id: number): Promise<void> {
+    await this.client.delete(`/alimentari/${id}`);
+  }
+
   // ============================================
   // TRANSFERURI
   // ============================================
@@ -282,10 +291,21 @@ class ApiService {
     portofel_dest_id: number;
     suma: number;
     moneda?: string;
+    suma_dest?: number;
+    moneda_dest?: string;
     comentarii?: string;
   }): Promise<Transfer> {
     const { data } = await this.client.post<Transfer>('/transferuri', transfer);
     return data;
+  }
+
+  async updateTransfer(id: number, transfer: Partial<Transfer>): Promise<Transfer> {
+    const { data } = await this.client.patch<Transfer>(`/transferuri/${id}`, transfer);
+    return data;
+  }
+
+  async deleteTransfer(id: number): Promise<void> {
+    await this.client.delete(`/transferuri/${id}`);
   }
 
   // ============================================
@@ -323,6 +343,15 @@ class ApiService {
     const { data } = await this.client.get<AutocompleteResult[]>('/autocomplete', {
       params: { q: query }
     });
+    return data;
+  }
+
+  // ============================================
+  // MONEDE (currencies)
+  // ============================================
+
+  async getMonede(): Promise<{ code: string; label: string }[]> {
+    const { data } = await this.client.get<{ code: string; label: string }[]>('/settings/monede');
     return data;
   }
 

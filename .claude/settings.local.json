@@ -8,7 +8,10 @@
       "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzcwNjM4MjQxfQ.rw6PqyfvLZptGe55CGTJxU-QBGZUW_lJ1IwLJ90LemM\")",
       "Bash(python:*)",
       "Bash(docker-compose up:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(docker restart:*)",
+      "Bash(timeout:*)",
+      "Bash(ping:*)"
     ]
   },
   "environmentVariables": [
