@@ -113,6 +113,8 @@ export interface Cheltuiala {
   categorie_culoare?: string;
   grupa_nume?: string;
   operator_nume?: string;
+  exercitiu_data?: string;
+  exercitiu_activ?: boolean;
 }
 
 export interface CheltuialaCreate {

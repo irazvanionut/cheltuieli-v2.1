@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus, Edit2, Check, X, DollarSign, Filter, Search, RefreshCw,
-  EyeOff, CheckCircle, ArrowRightLeft, Wallet, ArrowRight
+  EyeOff, CheckCircle, ArrowRightLeft, Wallet, ArrowRight, Lock
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -757,7 +757,9 @@ export const CheltuieliPage: React.FC = () => {
             </Card>
           ) : (
             <div className="space-y-2">
-              {filteredCheltuieli.map((item) => (
+              {filteredCheltuieli.map((item) => {
+                const isLocked = item.verificat || item.exercitiu_activ === false;
+                return (
                 <Card key={item.id} padding="sm">
                   <div className="flex items-center gap-4">
                     <div
@@ -771,11 +773,15 @@ export const CheltuieliPage: React.FC = () => {
                           {item.denumire}
                         </span>
                         <div className="flex gap-1">
-                          {item.verificat && <CheckCircle className="w-4 h-4 text-green-500" />}
-                          {item.neplatit && <EyeOff className="w-4 h-4 text-orange-500" />}
+                          {item.verificat && <CheckCircle className="w-4 h-4 text-green-500" title="Verificat" />}
+                          {item.exercitiu_activ === false && <Lock className="w-4 h-4 text-stone-400" title="Zi închisă" />}
+                          {item.neplatit && <EyeOff className="w-4 h-4 text-orange-500" title="Neplatit" />}
                         </div>
                       </div>
                       <div className="flex items-center gap-4 text-sm text-stone-500">
+                        {item.exercitiu_data && (
+                          <span className="font-medium">{new Date(item.exercitiu_data + 'T00:00:00').toLocaleDateString('ro-RO', { day: '2-digit', month: '2-digit' })}</span>
+                        )}
                         <span>{item.portofel_nume}</span>
                         {item.categorie_nume && <span>{item.categorie_nume}</span>}
                         {item.grupa_nume && <span>{item.grupa_nume}</span>}
@@ -801,14 +807,16 @@ export const CheltuieliPage: React.FC = () => {
                     </div>
 
                     <div className="flex items-center gap-1 flex-shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openModal(item)}
-                        title="Editeaza"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
+                      {!isLocked && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openModal(item)}
+                          title="Editeaza"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                      )}
 
                       {canVerify && !item.verificat && (
                         <Button
@@ -822,7 +830,7 @@ export const CheltuieliPage: React.FC = () => {
                         </Button>
                       )}
 
-                      {canVerify && (
+                      {canVerify && !isLocked && (
                         <Button
                           variant="danger"
                           size="sm"
@@ -836,7 +844,8 @@ export const CheltuieliPage: React.FC = () => {
                     </div>
                   </div>
                 </Card>
-              ))}
+                );
+              })}
             </div>
           )}
         </>

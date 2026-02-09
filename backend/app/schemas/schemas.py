@@ -298,6 +298,8 @@ class CheltuialaResponse(CheltuialaBase):
     categorie_culoare: Optional[str] = None
     grupa_nume: Optional[str] = None
     operator_nume: Optional[str] = None
+    exercitiu_data: Optional[date] = None
+    exercitiu_activ: Optional[bool] = None
 
     class Config:
         from_attributes = True

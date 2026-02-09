@@ -85,7 +85,17 @@ async def enrich_cheltuiala(ch: Cheltuiala, db: AsyncSession) -> CheltuialaRespo
             select(User.nume_complet).where(User.id == ch.operator_id)
         )
         data.operator_nume = op_result.scalar_one_or_none()
-    
+
+    # Get exercitiu info
+    if ch.exercitiu_id:
+        ex_result = await db.execute(
+            select(Exercitiu).where(Exercitiu.id == ch.exercitiu_id)
+        )
+        ex = ex_result.scalar_one_or_none()
+        if ex:
+            data.exercitiu_data = ex.data
+            data.exercitiu_activ = ex.activ
+
     return data
 
 
@@ -250,20 +260,37 @@ async def update_cheltuiala(
     
     if not cheltuiala:
         raise HTTPException(status_code=404, detail="Cheltuială negăsită")
-    
+
     update_data = data.model_dump(exclude_unset=True)
-    
+
+    # Allow sef/admin to verify/unverify, but block other edits on verified items
+    is_only_verify = set(update_data.keys()) <= {"verificat", "verificat_de", "verificat_la"}
+    is_sef = current_user.rol in ("sef", "admin")
+
+    if not is_only_verify:
+        # Block if cheltuiala is verified
+        if cheltuiala.verificat:
+            raise HTTPException(status_code=403, detail="Cheltuiala verificată nu poate fi modificată")
+
+        # Block if exercitiu is closed
+        ex_result = await db.execute(
+            select(Exercitiu).where(Exercitiu.id == cheltuiala.exercitiu_id)
+        )
+        ex = ex_result.scalar_one_or_none()
+        if ex and not ex.activ:
+            raise HTTPException(status_code=403, detail="Cheltuiala dintr-o zi închisă nu poate fi modificată")
+
     # Handle verificat update
     if "verificat" in update_data and update_data["verificat"]:
         update_data["verificat_de"] = current_user.id
         update_data["verificat_la"] = datetime.utcnow()
-    
+
     for field, value in update_data.items():
         setattr(cheltuiala, field, value)
-    
+
     await db.commit()
     await db.refresh(cheltuiala)
-    
+
     return await enrich_cheltuiala(cheltuiala, db)
 
 
@@ -283,10 +310,22 @@ async def delete_cheltuiala(
     
     if not cheltuiala:
         raise HTTPException(status_code=404, detail="Cheltuială negăsită")
-    
+
+    # Block if cheltuiala is verified
+    if cheltuiala.verificat:
+        raise HTTPException(status_code=403, detail="Cheltuiala verificată nu poate fi ștearsă")
+
+    # Block if exercitiu is closed
+    ex_result = await db.execute(
+        select(Exercitiu).where(Exercitiu.id == cheltuiala.exercitiu_id)
+    )
+    ex = ex_result.scalar_one_or_none()
+    if ex and not ex.activ:
+        raise HTTPException(status_code=403, detail="Cheltuiala dintr-o zi închisă nu poate fi ștearsă")
+
     cheltuiala.activ = False
     await db.commit()
-    
+
     return {"status": "deleted", "id": cheltuiala_id}
 
 
