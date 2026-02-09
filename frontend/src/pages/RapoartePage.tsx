@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Calendar, Filter, BarChart3, TrendingUp, DollarSign,
-  Wallet, CreditCard, ArrowRightLeft, ArrowRight
+  Wallet, ArrowRightLeft, ArrowRight
 } from 'lucide-react';
 
 import { useAppStore } from '@/hooks/useAppStore';
@@ -22,7 +22,14 @@ const formatSold = (soldMap: Record<string, number> | undefined) => {
     .join(' / ') || '0 lei';
 };
 
+const mergeDicts = (a: Record<string, number>, b: Record<string, number>): Record<string, number> => {
+  const result = { ...a };
+  Object.entries(b).forEach(([k, v]) => { result[k] = (result[k] || 0) + Number(v); });
+  return result;
+};
+
 export const RapoartePage: React.FC = () => {
+  const queryClient = useQueryClient();
   const { exercitiu } = useAppStore();
 
   // Fetch monede and update module-level labels
@@ -45,11 +52,14 @@ export const RapoartePage: React.FC = () => {
   });
   const [showFilters, setShowFilters] = useState(true);
 
-  // Fetch raport zilnic (single report for current exercitiu or date range)
-  const { data: raportData, isLoading: isLoadingRaport, refetch } = useQuery({
+  const hasDateFilter = filters.data_start && filters.data_end;
+
+  // === SINGLE DATA SOURCE: raport zilnic ===
+  // All summary cards, solduri, categories come from here
+  const { data: raportData, isLoading } = useQuery({
     queryKey: ['raport-zilnic', exercitiu?.id, filters.data_start, filters.data_end],
     queryFn: () => {
-      if (filters.data_start && filters.data_end) {
+      if (hasDateFilter) {
         return api.getRaportPerioada(filters.data_start, filters.data_end);
       }
       return api.getRaportZilnic({ exercitiu_id: exercitiu?.id }).then(r => [r]);
@@ -58,28 +68,22 @@ export const RapoartePage: React.FC = () => {
   });
   const rapoarte: RaportZilnic[] = Array.isArray(raportData) ? raportData : raportData ? [raportData] : [];
 
-  // Fetch solduri portofele
-  const { data: solduri = [], isLoading: isLoadingSolduri } = useQuery({
-    queryKey: ['solduri-portofele', filters],
-    queryFn: () => api.getSolduriPortofele({
-      data: filters.data_start || undefined,
-    }),
-    retry: 1,
-  });
-
-  // Fetch alimentari for current exercitiu
+  // Alimentari & transferuri detail lists — same period as raport
   const { data: alimentari = [] } = useQuery({
-    queryKey: ['alimentari-raport', exercitiu?.id],
-    queryFn: () => api.getAlimentari({ exercitiu_id: exercitiu?.id }),
+    queryKey: ['alimentari-raport', exercitiu?.id, filters.data_start, filters.data_end],
+    queryFn: () => hasDateFilter
+      ? api.getAlimentari({ data_start: filters.data_start, data_end: filters.data_end })
+      : api.getAlimentari({ exercitiu_id: exercitiu?.id }),
   });
 
-  // Fetch transferuri for current exercitiu
   const { data: transferuri = [] } = useQuery({
-    queryKey: ['transferuri-raport', exercitiu?.id],
-    queryFn: () => api.getTransferuri({ exercitiu_id: exercitiu?.id }),
+    queryKey: ['transferuri-raport', exercitiu?.id, filters.data_start, filters.data_end],
+    queryFn: () => hasDateFilter
+      ? api.getTransferuri({ data_start: filters.data_start, data_end: filters.data_end })
+      : api.getTransferuri({ exercitiu_id: exercitiu?.id }),
   });
 
-  // Fetch reference data
+  // Reference data
   const { data: portofele = [] } = useQuery({
     queryKey: ['portofele'],
     queryFn: () => api.getPortofele(),
@@ -90,13 +94,9 @@ export const RapoartePage: React.FC = () => {
     queryFn: () => api.getCategorii(),
   });
 
-  // Apply portofel/categorie filters client-side
+  // === FILTERS ===
   const portofelFilter = filters.portofel_id ? Number(filters.portofel_id) : null;
   const categorieFilter = filters.categorie_id ? Number(filters.categorie_id) : null;
-
-  const filteredSolduri = portofelFilter
-    ? solduri.filter((s: any) => s.id === portofelFilter)
-    : solduri;
 
   const filteredAlimentari = portofelFilter
     ? alimentari.filter((a: Alimentare) => a.portofel_id === portofelFilter)
@@ -106,54 +106,85 @@ export const RapoartePage: React.FC = () => {
     ? transferuri.filter((t: Transfer) => t.portofel_sursa_id === portofelFilter || t.portofel_dest_id === portofelFilter)
     : transferuri;
 
-  // Filter raport categorii by categorie filter
   const filteredRapoarte = rapoarte.map((r: any) => {
-    if (!categorieFilter) return r;
+    if (!categorieFilter && !portofelFilter) return r;
     return {
       ...r,
-      categorii: (r.categorii || []).filter((c: any) => c.categorie_id === categorieFilter),
+      categorii: categorieFilter
+        ? (r.categorii || []).filter((c: any) => c.categorie_id === categorieFilter)
+        : r.categorii,
+      portofele: portofelFilter
+        ? (r.portofele || []).filter((p: any) => p.portofel_id === portofelFilter)
+        : r.portofele,
     };
   });
 
-  // Helper: merge per-currency dicts
-  const mergeDicts = (a: Record<string, number>, b: Record<string, number>): Record<string, number> => {
-    const result = { ...a };
-    Object.entries(b).forEach(([k, v]) => { result[k] = (result[k] || 0) + Number(v); });
-    return result;
-  };
-
-  // Calculations with defensive programming — total_cheltuieli/total_neplatit are now per-currency dicts
+  // === ALL TOTALS DERIVED FROM RAPORT (same period) ===
   const totalCheltuieli: Record<string, number> = filteredRapoarte.reduce((acc: Record<string, number>, r: any) => {
-    const tc = r.total_cheltuieli || {};
-    return typeof tc === 'object' && !Array.isArray(tc) ? mergeDicts(acc, tc) : acc;
+    return mergeDicts(acc, r.total_cheltuieli || {});
   }, {});
+
   const totalNeplatit: Record<string, number> = filteredRapoarte.reduce((acc: Record<string, number>, r: any) => {
-    const tn = r.total_neplatit || {};
-    return typeof tn === 'object' && !Array.isArray(tn) ? mergeDicts(acc, tn) : acc;
+    return mergeDicts(acc, r.total_neplatit || {});
   }, {});
-  const totalAlimentari: Record<string, number> = Array.isArray(filteredAlimentari)
-    ? filteredAlimentari.reduce((acc: Record<string, number>, a: Alimentare) => {
-        const m = a.moneda || 'RON';
-        return { ...acc, [m]: (acc[m] || 0) + Number(a.suma) };
-      }, {})
-    : {};
-  const totalSolduri: Record<string, number> = {};
-  if (Array.isArray(filteredSolduri)) {
-    filteredSolduri.forEach((s: any) => {
-      const st = s.sold_total || {};
-      Object.entries(st).forEach(([cur, val]) => {
-        totalSolduri[cur] = (totalSolduri[cur] || 0) + Number(val);
+
+  const totalSold: Record<string, number> = filteredRapoarte.reduce((acc: Record<string, number>, r: any) => {
+    return mergeDicts(acc, r.total_sold || {});
+  }, {});
+
+  // Alimentari/transferuri totals from raport portofele (not from detail lists)
+  const totalAlimentari: Record<string, number> = filteredRapoarte.reduce((acc: Record<string, number>, r: any) => {
+    (r.portofele || []).forEach((p: any) => {
+      Object.entries(p.total_alimentari || {}).forEach(([k, v]) => {
+        acc[k] = (acc[k] || 0) + Number(v);
       });
     });
-  }
-  const totalTransferuri: Record<string, number> = Array.isArray(filteredTransferuri)
-    ? filteredTransferuri.reduce((acc: Record<string, number>, t: Transfer) => {
-        const m = t.moneda || 'RON';
-        return { ...acc, [m]: (acc[m] || 0) + Number(t.suma) };
-      }, {})
-    : {};
+    return acc;
+  }, {});
 
-  const isLoading = isLoadingRaport || isLoadingSolduri;
+  const totalTransferuri: Record<string, number> = filteredRapoarte.reduce((acc: Record<string, number>, r: any) => {
+    (r.portofele || []).forEach((p: any) => {
+      Object.entries(p.total_transferuri_out || {}).forEach(([k, v]) => {
+        acc[k] = (acc[k] || 0) + Number(v);
+      });
+    });
+    return acc;
+  }, {});
+
+  // Portofele solduri from raport — merge across days if period
+  const portofeleSolduri = useMemo(() => {
+    const map: Record<number, { portofel_id: number; portofel_nume: string; sold: Record<string, number> }> = {};
+    filteredRapoarte.forEach((r: any) => {
+      (r.portofele || []).forEach((p: any) => {
+        if (!map[p.portofel_id]) {
+          map[p.portofel_id] = { portofel_id: p.portofel_id, portofel_nume: p.portofel_nume, sold: {} };
+        }
+        map[p.portofel_id].sold = mergeDicts(map[p.portofel_id].sold, p.sold || {});
+      });
+    });
+    return Object.values(map);
+  }, [filteredRapoarte]);
+
+  // Merge all categories across days for the summary
+  const allCategories = useMemo(() => {
+    const map: Record<number, any> = {};
+    filteredRapoarte.forEach((r: any) => {
+      (r.categorii || []).forEach((c: any) => {
+        if (!map[c.categorie_id]) {
+          map[c.categorie_id] = {
+            ...c,
+            total_platit: {},
+            total_neplatit: {},
+            total: {},
+          };
+        }
+        map[c.categorie_id].total_platit = mergeDicts(map[c.categorie_id].total_platit, c.total_platit || {});
+        map[c.categorie_id].total_neplatit = mergeDicts(map[c.categorie_id].total_neplatit, c.total_neplatit || {});
+        map[c.categorie_id].total = mergeDicts(map[c.categorie_id].total, c.total || {});
+      });
+    });
+    return Object.values(map);
+  }, [filteredRapoarte]);
 
   if (isLoading) {
     return (
@@ -162,6 +193,12 @@ export const RapoartePage: React.FC = () => {
       </div>
     );
   }
+
+  const periodLabel = hasDateFilter
+    ? `${filters.data_start} — ${filters.data_end}`
+    : exercitiu?.data
+      ? new Date(exercitiu.data + 'T00:00:00').toLocaleDateString('ro-RO')
+      : 'Azi';
 
   return (
     <div>
@@ -172,13 +209,17 @@ export const RapoartePage: React.FC = () => {
             Rapoarte
           </h1>
           <p className="text-sm text-stone-500 mt-1">
-            Analiza si vizualizarea datelor financiare
+            {periodLabel}
           </p>
         </div>
         <div className="flex gap-2">
           <Button
             variant="secondary"
-            onClick={() => refetch()}
+            onClick={() => {
+              queryClient.invalidateQueries({ queryKey: ['raport-zilnic'] });
+              queryClient.invalidateQueries({ queryKey: ['alimentari-raport'] });
+              queryClient.invalidateQueries({ queryKey: ['transferuri-raport'] });
+            }}
             icon={<BarChart3 className="w-4 h-4" />}
           >
             Reimprospatare
@@ -252,14 +293,14 @@ export const RapoartePage: React.FC = () => {
       )}
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-5 gap-4 mb-6">
         <Card>
           <div className="flex items-center gap-3">
             <div className="p-2 bg-red-100 dark:bg-red-900/20 rounded-lg">
               <DollarSign className="w-5 h-5 text-red-600 dark:text-red-400" />
             </div>
             <div>
-              <div className="text-sm text-stone-500">Total Cheltuieli</div>
+              <div className="text-sm text-stone-500">Cheltuieli</div>
               <div className="text-lg font-bold text-red-600 dark:text-red-400">
                 {formatSold(totalCheltuieli)}
               </div>
@@ -269,42 +310,11 @@ export const RapoartePage: React.FC = () => {
 
         <Card>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
-              <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
-            </div>
-            <div>
-              <div className="text-sm text-stone-500">Total Incasari</div>
-              <div className="text-lg font-bold text-green-600 dark:text-green-400">
-                {formatSold(totalAlimentari)}
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        <Card>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-100 dark:bg-orange-900/20 rounded-lg">
-              <CreditCard className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-            </div>
-            <div>
-              <div className="text-sm text-stone-500">Sold Total Portofele</div>
-              <div className="text-lg font-bold text-orange-600 dark:text-orange-400">
-                {formatSold(totalSolduri)}
-              </div>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Secondary stats row */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <Card>
-          <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
               <Wallet className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <div className="text-sm text-stone-500">Total Alimentari</div>
+              <div className="text-sm text-stone-500">Alimentari</div>
               <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
                 {formatSold(totalAlimentari)}
               </div>
@@ -318,7 +328,7 @@ export const RapoartePage: React.FC = () => {
               <ArrowRightLeft className="w-5 h-5 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <div className="text-sm text-stone-500">Total Transferuri</div>
+              <div className="text-sm text-stone-500">Transferuri</div>
               <div className="text-lg font-bold text-purple-600 dark:text-purple-400">
                 {formatSold(totalTransferuri)}
               </div>
@@ -332,126 +342,244 @@ export const RapoartePage: React.FC = () => {
               <DollarSign className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
             </div>
             <div>
-              <div className="text-sm text-stone-500">Total Neplatit</div>
+              <div className="text-sm text-stone-500">Neplatit</div>
               <div className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
                 {formatSold(totalNeplatit)}
               </div>
             </div>
           </div>
         </Card>
-      </div>
 
-      {/* Export placeholder - future feature */}
+        <Card>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
+              <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
+            </div>
+            <div>
+              <div className="text-sm text-stone-500">Sold</div>
+              <div className="text-lg font-bold text-green-600 dark:text-green-400">
+                {formatSold(totalSold)}
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
 
       <div className="grid grid-cols-2 gap-6">
-        {/* Daily Reports */}
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-stone-900 dark:text-stone-100">Raport Zilnic</h2>
-            <Badge variant="gray">{filteredRapoarte.length} zile</Badge>
-          </div>
-
-          {filteredRapoarte.length === 0 ? (
-            <div className="text-center py-8 text-stone-500">
-              <Calendar className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>Nu exista date pentru perioada selectata</p>
+        {/* Daily Reports — only show when period has multiple days */}
+        {hasDateFilter ? (
+          <Card>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-stone-900 dark:text-stone-100">Raport Zilnic</h2>
+              <Badge variant="gray">{filteredRapoarte.length} zile</Badge>
             </div>
-          ) : (
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {filteredRapoarte.map((raport: any) => (
-                <div key={raport.data || raport.exercitiu_id} className="border-b border-stone-100 dark:border-stone-800 pb-3 last:border-b-0">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-stone-900 dark:text-stone-100">
-                      {new Date(raport.data).toLocaleDateString('ro-RO')}
-                    </span>
-                    <Badge
-                      variant={raport.activ ? 'yellow' : 'green'}
-                    >
-                      {raport.activ ? 'Deschis' : 'Inchis'}
-                    </Badge>
+
+            {filteredRapoarte.length === 0 ? (
+              <div className="text-center py-8 text-stone-500">
+                <Calendar className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p>Nu exista date pentru perioada selectata</p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {filteredRapoarte.map((raport: any) => (
+                  <div key={raport.data || raport.exercitiu_id} className="border-b border-stone-100 dark:border-stone-800 pb-3 last:border-b-0">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-stone-900 dark:text-stone-100">
+                        {new Date(raport.data + 'T00:00:00').toLocaleDateString('ro-RO')}
+                      </span>
+                      <Badge variant={raport.activ ? 'yellow' : 'green'}>
+                        {raport.activ ? 'Deschis' : 'Inchis'}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-stone-500">Cheltuieli:</span>
+                        <span className="ml-2 font-medium text-red-600">
+                          {formatSold(raport.total_cheltuieli)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-stone-500">Sold:</span>
+                        <span className="ml-2 font-medium text-green-600">
+                          {formatSold(raport.total_sold)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-stone-500">Neplatit:</span>
+                        <span className="ml-2 font-medium text-orange-600">
+                          {formatSold(raport.total_neplatit)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-stone-500">Categorii:</span>
+                        <span className="ml-2 font-medium">
+                          {(raport.categorii || []).length}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <span className="text-stone-500">Cheltuieli:</span>
-                      <span className="ml-2 font-medium text-red-600">
-                        {formatSold(raport.total_cheltuieli)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-stone-500">Sold:</span>
-                      <span className="ml-2 font-medium text-green-600">
-                        {formatSold(raport.total_sold)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-stone-500">Neplatit:</span>
-                      <span className="ml-2 font-medium text-orange-600">
-                        {formatSold(raport.total_neplatit)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-stone-500">Categorii:</span>
-                      <span className="ml-2 font-medium">
-                        {(raport.categorii || []).length}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            )}
+          </Card>
+        ) : (
+          /* Solduri Portofele — single day view */
+          <Card>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-stone-900 dark:text-stone-100">Solduri Portofele</h2>
+              <Badge variant="gray">{portofeleSolduri.length} portofele</Badge>
             </div>
-          )}
-        </Card>
 
-        {/* Wallet Balances */}
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-stone-900 dark:text-stone-100">Solduri Portofele</h2>
-            <Badge variant="gray">{filteredSolduri.length} portofele</Badge>
-          </div>
-
-          {filteredSolduri.length === 0 ? (
-            <div className="text-center py-8 text-stone-500">
-              <Wallet className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>Nu exista date despre solduri</p>
-            </div>
-          ) : (
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {filteredSolduri.map((sold: any) => (
-                <div key={sold.id} className="flex items-center justify-between p-3 bg-stone-50 dark:bg-stone-800/50 rounded-lg">
-                  <div>
+            {portofeleSolduri.length === 0 ? (
+              <div className="text-center py-8 text-stone-500">
+                <Wallet className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p>Nu exista date despre solduri</p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {portofeleSolduri.map((p) => (
+                  <div key={p.portofel_id} className="flex items-center justify-between p-3 bg-stone-50 dark:bg-stone-800/50 rounded-lg">
                     <div className="font-medium text-stone-900 dark:text-stone-100">
-                      {sold.nume}
+                      {p.portofel_nume}
                     </div>
-                    <div className="text-sm text-stone-500">
-                      Zi: {formatSold(sold.sold_zi_curenta)}
-                    </div>
-                  </div>
-                  <div className="text-right">
                     <div className="font-bold text-stone-900 dark:text-stone-100">
-                      {formatSold(sold.sold_total)}
+                      {formatSold(p.sold)}
                     </div>
-                    <div className="text-sm text-stone-500">Total</div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            )}
+          </Card>
+        )}
+
+        {/* Solduri Portofele — period view (show alongside daily reports) */}
+        {hasDateFilter ? (
+          <Card>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-stone-900 dark:text-stone-100">Solduri Portofele</h2>
+              <Badge variant="gray">{portofeleSolduri.length} portofele</Badge>
             </div>
-          )}
-        </Card>
+
+            {portofeleSolduri.length === 0 ? (
+              <div className="text-center py-8 text-stone-500">
+                <Wallet className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p>Nu exista date despre solduri</p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {portofeleSolduri.map((p) => (
+                  <div key={p.portofel_id} className="flex items-center justify-between p-3 bg-stone-50 dark:bg-stone-800/50 rounded-lg">
+                    <div className="font-medium text-stone-900 dark:text-stone-100">
+                      {p.portofel_nume}
+                    </div>
+                    <div className="font-bold text-stone-900 dark:text-stone-100">
+                      {formatSold(p.sold)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        ) : (
+          /* Categories Summary — single day view */
+          <Card>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-stone-900 dark:text-stone-100">Sumar pe Categorii</h2>
+              <Badge variant="gray">{allCategories.length} categorii</Badge>
+            </div>
+
+            {allCategories.length === 0 ? (
+              <div className="text-center py-8 text-stone-500">
+                <Calendar className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p>Nu exista cheltuieli</p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {allCategories.map((cat: any) => (
+                  <div key={cat.categorie_id} className="p-3 border border-stone-200 dark:border-stone-700 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: cat.categorie_culoare || '#6B7280' }}
+                      />
+                      <span className="font-medium text-stone-900 dark:text-stone-100">
+                        {cat.categorie_nume}
+                      </span>
+                    </div>
+                    <div className="text-sm flex gap-6">
+                      <div>
+                        <span className="text-stone-500">Platit: </span>
+                        <span className="font-medium text-red-600">{formatSold(cat.total_platit)}</span>
+                      </div>
+                      <div>
+                        <span className="text-stone-500">Neplatit: </span>
+                        <span className="font-medium text-orange-600">{formatSold(cat.total_neplatit)}</span>
+                      </div>
+                      <div>
+                        <span className="text-stone-500">Total: </span>
+                        <span className="font-medium">{formatSold(cat.total)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        )}
       </div>
 
-      {/* Alimentari & Transferuri Section */}
+      {/* Categories Summary — period view (below the grid) */}
+      {hasDateFilter && allCategories.length > 0 && (
+        <Card className="mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-stone-900 dark:text-stone-100">Sumar pe Categorii</h2>
+            <Badge variant="gray">{allCategories.length} categorii</Badge>
+          </div>
+
+          <div className="grid grid-cols-4 gap-4">
+            {allCategories.map((cat: any) => (
+              <div key={cat.categorie_id} className="p-3 border border-stone-200 dark:border-stone-700 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <div
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: cat.categorie_culoare || '#6B7280' }}
+                  />
+                  <span className="font-medium text-stone-900 dark:text-stone-100">
+                    {cat.categorie_nume}
+                  </span>
+                </div>
+                <div className="text-sm space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-stone-500">Platit:</span>
+                    <span className="font-medium text-red-600">{formatSold(cat.total_platit)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-stone-500">Neplatit:</span>
+                    <span className="font-medium text-orange-600">{formatSold(cat.total_neplatit)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-stone-500">Total:</span>
+                    <span className="font-medium">{formatSold(cat.total)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Alimentari & Transferuri Detail Lists */}
       <div className="grid grid-cols-2 gap-6 mt-6">
-        {/* Alimentari */}
         <Card>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-stone-900 dark:text-stone-100">Alimentari Zi</h2>
-            <Badge variant="blue">{filteredAlimentari.length} alimentari</Badge>
+            <h2 className="font-semibold text-stone-900 dark:text-stone-100">Alimentari</h2>
+            <Badge variant="blue">{filteredAlimentari.length}</Badge>
           </div>
 
           {filteredAlimentari.length === 0 ? (
             <div className="text-center py-8 text-stone-500">
               <Wallet className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>Nu exista alimentari pentru aceasta zi</p>
+              <p>Nu exista alimentari</p>
             </div>
           ) : (
             <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -479,17 +607,16 @@ export const RapoartePage: React.FC = () => {
           )}
         </Card>
 
-        {/* Transferuri */}
         <Card>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-stone-900 dark:text-stone-100">Transferuri Zi</h2>
-            <Badge variant="green">{filteredTransferuri.length} transferuri</Badge>
+            <h2 className="font-semibold text-stone-900 dark:text-stone-100">Transferuri</h2>
+            <Badge variant="green">{filteredTransferuri.length}</Badge>
           </div>
 
           {filteredTransferuri.length === 0 ? (
             <div className="text-center py-8 text-stone-500">
               <ArrowRightLeft className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>Nu exista transferuri pentru aceasta zi</p>
+              <p>Nu exista transferuri</p>
             </div>
           ) : (
             <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -523,52 +650,6 @@ export const RapoartePage: React.FC = () => {
           )}
         </Card>
       </div>
-
-      {/* Categories Summary - from raport data */}
-      {filteredRapoarte.length > 0 && filteredRapoarte[0]?.categorii?.length > 0 && (
-        <Card className="mt-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-stone-900 dark:text-stone-100">Sumar pe Categorii</h2>
-            <Badge variant="gray">{filteredRapoarte[0].categorii.length} categorii</Badge>
-          </div>
-
-          <div className="grid grid-cols-4 gap-4">
-            {filteredRapoarte[0].categorii.map((cat: any) => (
-              <div key={cat.categorie_id} className="p-3 border border-stone-200 dark:border-stone-700 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: cat.categorie_culoare || '#6B7280' }}
-                  />
-                  <span className="font-medium text-stone-900 dark:text-stone-100">
-                    {cat.categorie_nume}
-                  </span>
-                </div>
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-stone-500">Platit:</span>
-                    <span className="font-medium text-red-600">
-                      {formatSold(cat.total_platit)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-stone-500">Neplatit:</span>
-                    <span className="font-medium text-orange-600">
-                      {formatSold(cat.total_neplatit)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-stone-500">Total:</span>
-                    <span className="font-medium">
-                      {formatSold(cat.total)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
     </div>
   );
 };

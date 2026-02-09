@@ -146,10 +146,19 @@ export const CheltuieliPage: React.FC = () => {
   // CHELTUIELI MUTATIONS
   // ============================
 
+  const invalidateFinancialQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['cheltuieli'] });
+    queryClient.invalidateQueries({ queryKey: ['raport-zilnic'] });
+    queryClient.invalidateQueries({ queryKey: ['solduri-portofele'] });
+    queryClient.invalidateQueries({ queryKey: ['alimentari-raport'] });
+    queryClient.invalidateQueries({ queryKey: ['transferuri-raport'] });
+    queryClient.invalidateQueries({ queryKey: ['portofele'] });
+  };
+
   const createMutation = useMutation({
     mutationFn: (data: CheltuialaCreate) => api.createCheltuiala(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cheltuieli'] });
+      invalidateFinancialQueries();
       toast.success('Cheltuiala adaugata cu succes');
       closeModal();
     },
@@ -162,7 +171,7 @@ export const CheltuieliPage: React.FC = () => {
     mutationFn: ({ id, data }: { id: number; data: Partial<Cheltuiala> }) =>
       api.updateCheltuiala(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cheltuieli'] });
+      invalidateFinancialQueries();
       toast.success('Cheltuiala actualizata');
       closeModal();
     },
@@ -174,7 +183,7 @@ export const CheltuieliPage: React.FC = () => {
   const verifyMutation = useMutation({
     mutationFn: (id: number) => api.verificaCheltuiala(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cheltuieli'] });
+      invalidateFinancialQueries();
       toast.success('Cheltuiala verificata');
     },
   });
@@ -182,7 +191,7 @@ export const CheltuieliPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => api.deleteCheltuiala(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cheltuieli'] });
+      invalidateFinancialQueries();
       toast.success('Cheltuiala stearsa');
     },
   });
@@ -195,8 +204,8 @@ export const CheltuieliPage: React.FC = () => {
     mutationFn: (data: { portofel_id: number; suma: number; moneda: string; comentarii?: string }) =>
       api.createAlimentare(data),
     onSuccess: () => {
+      invalidateFinancialQueries();
       queryClient.invalidateQueries({ queryKey: ['alimentari'] });
-      queryClient.invalidateQueries({ queryKey: ['portofele'] });
       toast.success('Alimentare adaugata cu succes');
       setIsAlimentareModalOpen(false);
       resetAlimentareForm();
@@ -210,8 +219,8 @@ export const CheltuieliPage: React.FC = () => {
     mutationFn: ({ id, data }: { id: number; data: Partial<Alimentare> }) =>
       api.updateAlimentare(id, data),
     onSuccess: () => {
+      invalidateFinancialQueries();
       queryClient.invalidateQueries({ queryKey: ['alimentari'] });
-      queryClient.invalidateQueries({ queryKey: ['portofele'] });
       toast.success('Alimentare actualizata');
       setIsAlimentareModalOpen(false);
       resetAlimentareForm();
@@ -224,8 +233,8 @@ export const CheltuieliPage: React.FC = () => {
   const deleteAlimentareMutation = useMutation({
     mutationFn: (id: number) => api.deleteAlimentare(id),
     onSuccess: () => {
+      invalidateFinancialQueries();
       queryClient.invalidateQueries({ queryKey: ['alimentari'] });
-      queryClient.invalidateQueries({ queryKey: ['portofele'] });
       toast.success('Alimentare stearsa');
     },
     onError: (err: any) => {
@@ -241,8 +250,8 @@ export const CheltuieliPage: React.FC = () => {
     mutationFn: (data: { portofel_sursa_id: number; portofel_dest_id: number; suma: number; moneda: string; suma_dest?: number; moneda_dest?: string; comentarii?: string }) =>
       api.createTransfer(data),
     onSuccess: () => {
+      invalidateFinancialQueries();
       queryClient.invalidateQueries({ queryKey: ['transferuri'] });
-      queryClient.invalidateQueries({ queryKey: ['portofele'] });
       toast.success('Transfer efectuat cu succes');
       setIsTransferModalOpen(false);
       resetTransferForm();
@@ -256,8 +265,8 @@ export const CheltuieliPage: React.FC = () => {
     mutationFn: ({ id, data }: { id: number; data: Partial<Transfer> }) =>
       api.updateTransfer(id, data),
     onSuccess: () => {
+      invalidateFinancialQueries();
       queryClient.invalidateQueries({ queryKey: ['transferuri'] });
-      queryClient.invalidateQueries({ queryKey: ['portofele'] });
       toast.success('Transfer actualizat');
       setIsTransferModalOpen(false);
       resetTransferForm();
@@ -270,8 +279,8 @@ export const CheltuieliPage: React.FC = () => {
   const deleteTransferMutation = useMutation({
     mutationFn: (id: number) => api.deleteTransfer(id),
     onSuccess: () => {
+      invalidateFinancialQueries();
       queryClient.invalidateQueries({ queryKey: ['transferuri'] });
-      queryClient.invalidateQueries({ queryKey: ['portofele'] });
       toast.success('Transfer sters');
     },
     onError: (err: any) => {
@@ -773,9 +782,9 @@ export const CheltuieliPage: React.FC = () => {
                           {item.denumire}
                         </span>
                         <div className="flex gap-1">
-                          {item.verificat && <CheckCircle className="w-4 h-4 text-green-500" title="Verificat" />}
-                          {item.exercitiu_activ === false && <Lock className="w-4 h-4 text-stone-400" title="Zi închisă" />}
-                          {item.neplatit && <EyeOff className="w-4 h-4 text-orange-500" title="Neplatit" />}
+                          {item.verificat && <span title="Verificat"><CheckCircle className="w-4 h-4 text-green-500" /></span>}
+                          {item.exercitiu_activ === false && <span title="Zi închisă"><Lock className="w-4 h-4 text-stone-400" /></span>}
+                          {item.neplatit && <span title="Neplatit"><EyeOff className="w-4 h-4 text-orange-500" /></span>}
                         </div>
                       </div>
                       <div className="flex items-center gap-4 text-sm text-stone-500">

@@ -71,7 +71,7 @@ async def get_solduri_portofele(
     for p in portofele:
         data = PortofelSoldResponse.model_validate(p)
 
-        # Compute sold_total (all-time) per currency: alimentari - cheltuieli + transfers_in - transfers_out
+        # Compute sold_total (all-time) per currency: alimentari - cheltuieli + incasari + transfers_in - transfers_out
         ali_res = await db.execute(
             select(Alimentare.moneda, func.coalesce(func.sum(Alimentare.suma), 0))
             .where(Alimentare.portofel_id == p.id)
@@ -93,6 +93,21 @@ async def get_solduri_portofele(
         )
         ch_map = {row[0]: row[1] for row in ch_res.all() if row[1]}
 
+        # Get incasari (sens='Incasare') — adds to sold
+        inc_res = await db.execute(
+            select(Cheltuiala.moneda, func.coalesce(func.sum(Cheltuiala.suma), 0))
+            .outerjoin(Categorie, Cheltuiala.categorie_id == Categorie.id)
+            .where(
+                Cheltuiala.portofel_id == p.id,
+                Cheltuiala.activ == True,
+                Cheltuiala.sens == 'Incasare',
+                Cheltuiala.neplatit == False,
+                or_(Categorie.afecteaza_sold == True, Cheltuiala.categorie_id == None)
+            )
+            .group_by(Cheltuiala.moneda)
+        )
+        inc_map = {row[0]: row[1] for row in inc_res.all() if row[1]}
+
         # Transfers IN: use moneda_dest/suma_dest when set (cross-currency)
         tin_res = await db.execute(
             select(Transfer).where(Transfer.portofel_dest_id == p.id)
@@ -110,11 +125,14 @@ async def get_solduri_portofele(
         )
         tout_map = {row[0]: row[1] for row in tout_res.all() if row[1]}
 
-        all_currencies = set(list(ali_map.keys()) + list(ch_map.keys()) + list(tin_map.keys()) + list(tout_map.keys()))
+        all_currencies = set(list(ali_map.keys()) + list(ch_map.keys()) + list(inc_map.keys()) + list(tin_map.keys()) + list(tout_map.keys()))
         sold_total = {}
         for cur in all_currencies:
-            val = (ali_map.get(cur, Decimal("0")) - ch_map.get(cur, Decimal("0"))
-                   + tin_map.get(cur, Decimal("0")) - tout_map.get(cur, Decimal("0")))
+            val = (ali_map.get(cur, Decimal("0"))
+                   - ch_map.get(cur, Decimal("0"))
+                   + inc_map.get(cur, Decimal("0"))
+                   + tin_map.get(cur, Decimal("0"))
+                   - tout_map.get(cur, Decimal("0")))
             if val != Decimal("0"):
                 sold_total[cur] = val
         data.sold_total = sold_total
@@ -143,6 +161,21 @@ async def get_solduri_portofele(
             )
             ch_zi_map = {row[0]: row[1] for row in ch_zi.all() if row[1]}
 
+            inc_zi = await db.execute(
+                select(Cheltuiala.moneda, func.coalesce(func.sum(Cheltuiala.suma), 0))
+                .outerjoin(Categorie, Cheltuiala.categorie_id == Categorie.id)
+                .where(
+                    Cheltuiala.portofel_id == p.id,
+                    Cheltuiala.exercitiu_id == exercitiu_id,
+                    Cheltuiala.activ == True,
+                    Cheltuiala.sens == 'Incasare',
+                    Cheltuiala.neplatit == False,
+                    or_(Categorie.afecteaza_sold == True, Cheltuiala.categorie_id == None)
+                )
+                .group_by(Cheltuiala.moneda)
+            )
+            inc_zi_map = {row[0]: row[1] for row in inc_zi.all() if row[1]}
+
             # Transfers IN: use moneda_dest/suma_dest when set
             tin_zi = await db.execute(
                 select(Transfer).where(Transfer.portofel_dest_id == p.id, Transfer.exercitiu_id == exercitiu_id)
@@ -160,11 +193,14 @@ async def get_solduri_portofele(
             )
             tout_zi_map = {row[0]: row[1] for row in tout_zi.all() if row[1]}
 
-            zi_currencies = set(list(ali_zi_map.keys()) + list(ch_zi_map.keys()) + list(tin_zi_map.keys()) + list(tout_zi_map.keys()))
+            zi_currencies = set(list(ali_zi_map.keys()) + list(ch_zi_map.keys()) + list(inc_zi_map.keys()) + list(tin_zi_map.keys()) + list(tout_zi_map.keys()))
             sold_zi = {}
             for cur in zi_currencies:
-                val = (ali_zi_map.get(cur, Decimal("0")) - ch_zi_map.get(cur, Decimal("0"))
-                       + tin_zi_map.get(cur, Decimal("0")) - tout_zi_map.get(cur, Decimal("0")))
+                val = (ali_zi_map.get(cur, Decimal("0"))
+                       - ch_zi_map.get(cur, Decimal("0"))
+                       + inc_zi_map.get(cur, Decimal("0"))
+                       + tin_zi_map.get(cur, Decimal("0"))
+                       - tout_zi_map.get(cur, Decimal("0")))
                 if val != Decimal("0"):
                     sold_zi[cur] = val
             data.sold_zi_curenta = sold_zi

@@ -472,6 +472,22 @@ async def get_raport_zilnic(
         )
         p_cheltuieli = {row[0]: row[1] for row in ch_result.all() if row[1]}
 
+        # Get incasari (sens='Incasare') — adds to sold
+        inc_result = await db.execute(
+            select(Cheltuiala.moneda, func.coalesce(func.sum(Cheltuiala.suma), 0))
+            .outerjoin(Categorie, Cheltuiala.categorie_id == Categorie.id)
+            .where(
+                Cheltuiala.portofel_id == p.id,
+                Cheltuiala.exercitiu_id == exercitiu.id,
+                Cheltuiala.activ == True,
+                Cheltuiala.sens == 'Incasare',
+                Cheltuiala.neplatit == False,
+                or_(Categorie.afecteaza_sold == True, Cheltuiala.categorie_id == None)
+            )
+            .group_by(Cheltuiala.moneda)
+        )
+        p_incasari = {row[0]: row[1] for row in inc_result.all() if row[1]}
+
         # Get transfers IN grouped by dest currency (use moneda_dest/suma_dest when set)
         tin_result = await db.execute(
             select(Transfer).where(Transfer.portofel_dest_id == p.id, Transfer.exercitiu_id == exercitiu.id)
@@ -490,13 +506,14 @@ async def get_raport_zilnic(
         )
         p_transferuri_out = {row[0]: row[1] for row in tout_result.all() if row[1]}
 
-        # Compute per-currency sold: ali - chelt + transf_in - transf_out
+        # Compute per-currency sold: ali - chelt + incasari + transf_in - transf_out
         all_currencies = set(list(p_alimentari.keys()) + list(p_cheltuieli.keys()) +
-                            list(p_transferuri_in.keys()) + list(p_transferuri_out.keys()))
+                            list(p_incasari.keys()) + list(p_transferuri_in.keys()) + list(p_transferuri_out.keys()))
         p_sold: dict[str, Decimal] = {}
         for currency in all_currencies:
             val = (p_alimentari.get(currency, Decimal("0"))
                    - p_cheltuieli.get(currency, Decimal("0"))
+                   + p_incasari.get(currency, Decimal("0"))
                    + p_transferuri_in.get(currency, Decimal("0"))
                    - p_transferuri_out.get(currency, Decimal("0")))
             if val != Decimal("0"):
