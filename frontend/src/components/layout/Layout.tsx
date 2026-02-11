@@ -292,7 +292,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               <LogOut className="w-4 h-4" /> Ieșire
             </button>
           </div>
-          <p className="text-center text-[10px] text-stone-300 dark:text-stone-700 mt-2 select-none">v1.100</p>
+          <p className="text-center text-[10px] text-stone-300 dark:text-stone-700 mt-2 select-none">v1.101</p>
         </div>
       </aside>
 

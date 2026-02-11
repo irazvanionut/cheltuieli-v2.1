@@ -142,21 +142,21 @@ async def get_apeluri_primite(
     data: Optional[str] = Query(None, description="Data in format YYYYMMDD"),
     current_user=Depends(get_current_user),
 ):
-    """Get received calls from Asterisk queue_log for a given date (default: today)."""
-    if data:
-        file_date = data
+    """Get received calls from Asterisk queue_log for a given date (default: today).
+    queue_log = current day, queue_log-YYYYMMDD = archive."""
+    today = date.today().strftime("%Y%m%d")
+
+    if data and data != today:
+        # Historical date — use archived file
+        file_path = QUEUE_LOG_DIR / f"queue_log-{data}"
     else:
-        file_date = date.today().strftime("%Y%m%d")
-
-    file_path = QUEUE_LOG_DIR / f"queue_log-{file_date}"
-
-    # Fallback to queue_log (current/main file) if dated file doesn't exist
-    if not file_path.exists():
-        fallback = QUEUE_LOG_DIR / "queue_log"
-        if fallback.exists():
-            file_path = fallback
+        # Today — use the active queue_log file, fallback to dated file
+        data = today
+        file_path = QUEUE_LOG_DIR / "queue_log"
+        if not file_path.exists():
+            file_path = QUEUE_LOG_DIR / f"queue_log-{today}"
 
     result = parse_queue_log(file_path)
-    result["data"] = file_date
+    result["data"] = data
 
     return result

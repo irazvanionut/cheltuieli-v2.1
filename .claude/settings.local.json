@@ -19,7 +19,8 @@
       "Bash(python3:*)",
       "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzcwOTEzOTEzfQ.1CrXJ1Dq_I2BGt2aeoPXybooTxYgWPI8CR1yn_3MrwE\")",
       "Bash(chmod:*)",
-      "Bash(mount:*)"
+      "Bash(mount:*)",
+      "Bash(/opt/cheltuieli-v2.1/scripts/sync_queue_log.sh:*)"
     ]
   },
   "environmentVariables": [
