@@ -51,7 +51,7 @@ export const OllamaSettings: React.FC = () => {
 
   // Generate embeddings mutation
   const embeddingsMutation = useMutation({
-    mutationFn: () => api.generateEmbeddings(),
+    mutationFn: () => api.generateEmbeddings(true),
     onSuccess: (data) => {
       toast.success(`Embeddings generate: ${data.generated}/${data.total}`);
     },

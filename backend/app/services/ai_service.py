@@ -159,14 +159,12 @@ class AIService:
         results.sort(key=lambda x: x["similarity"], reverse=True)
         return results[:limit]
     
-    async def generate_embeddings_for_nomenclator(self, db: AsyncSession) -> Dict:
-        """Generate embeddings for all nomenclator items without embeddings"""
-        result = await db.execute(
-            select(Nomenclator).where(
-                Nomenclator.activ == True,
-                Nomenclator.embedding == None
-            )
-        )
+    async def generate_embeddings_for_nomenclator(self, db: AsyncSession, force: bool = False) -> Dict:
+        """Generate embeddings for all nomenclator items without embeddings (or all if force=True)"""
+        query = select(Nomenclator).where(Nomenclator.activ == True)
+        if not force:
+            query = query.where(Nomenclator.embedding == None)
+        result = await db.execute(query)
         items = result.scalars().all()
 
         generated = 0

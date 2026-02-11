@@ -138,8 +138,8 @@ class ApiService {
     return data;
   }
 
-  async generateEmbeddings(): Promise<{ total: number; generated: number; errors: number }> {
-    const { data } = await this.client.post('/nomenclator/generate-embeddings');
+  async generateEmbeddings(force = false): Promise<{ total: number; generated: number; errors: number }> {
+    const { data } = await this.client.post(`/nomenclator/generate-embeddings?force=${force}`);
     return data;
   }
 

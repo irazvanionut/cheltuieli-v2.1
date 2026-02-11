@@ -193,15 +193,17 @@ async def update_nomenclator(
 
 @router.post("/nomenclator/generate-embeddings")
 async def generate_embeddings(
+    force: bool = False,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_admin)
 ):
     """
-    Generează embeddings AI pentru toate itemele fără embedding
+    Generează embeddings AI pentru toate itemele fără embedding.
+    Cu force=true regenerează toate, inclusiv cele existente.
     """
     # Update AI settings from database before generating
     await ai_service.update_settings(db)
-    result = await ai_service.generate_embeddings_for_nomenclator(db)
+    result = await ai_service.generate_embeddings_for_nomenclator(db, force=force)
     return result
 
 

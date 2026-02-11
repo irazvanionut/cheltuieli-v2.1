@@ -100,7 +100,7 @@ export const NomenclatorSettings: React.FC = () => {
   });
 
   const embeddingsMutation = useMutation({
-    mutationFn: () => api.generateEmbeddings(),
+    mutationFn: () => api.generateEmbeddings(true),
     onSuccess: (data) => {
       toast.success(`Embeddings: ${data.generated}/${data.total} generate`);
     },
