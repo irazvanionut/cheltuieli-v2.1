@@ -10,6 +10,7 @@ import { DashboardPage } from '@/pages/DashboardPage';
 import { CheltuieliPage } from '@/pages/CheltuieliPage';
 import { RapoartePage } from '@/pages/RapoartePage';
 import { SettingsPage } from '@/pages/SettingsPage';
+import { ApeluriPrimitePage } from '@/pages/ApeluriPrimitePage';
 import { Spinner } from '@/components/ui';
 
 // Create React Query client
@@ -96,6 +97,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <SettingsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/apeluri/primite"
+              element={
+                <ProtectedRoute>
+                  <ApeluriPrimitePage />
                 </ProtectedRoute>
               }
             />

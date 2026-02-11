@@ -34,6 +34,7 @@ services:
       TZ: Europe/Bucharest
     volumes:
       - ./backend/app:/app/app
+      - ./data/asterisk:/mnt/asterisk:ro
     ports:
       - "8000:8000"
     depends_on:

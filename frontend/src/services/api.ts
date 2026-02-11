@@ -415,6 +415,17 @@ class ApiService {
   }
 
   // ============================================
+  // APELURI
+  // ============================================
+
+  async getApeluriPrimite(data?: string): Promise<any> {
+    const params: Record<string, any> = {};
+    if (data) params.data = data;
+    const { data: result } = await this.client.get('/apeluri/primite', { params });
+    return result;
+  }
+
+  // ============================================
   // CHAT AI
   // ============================================
 

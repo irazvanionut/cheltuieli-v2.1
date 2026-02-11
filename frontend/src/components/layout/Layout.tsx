@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { clsx } from 'clsx';
 import {
   LayoutDashboard,
@@ -25,6 +26,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { useAppStore, useIsAdmin, useIsSef } from '@/hooks/useAppStore';
+import api from '@/services/api';
 import { Badge } from '@/components/ui';
 import { AIChat } from '@/components/ai/AIChat';
 import { format } from 'date-fns';
@@ -41,10 +43,27 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isAdmin = useIsAdmin();
   const isSef = useIsSef();
 
+  const isOnApeluri = location.pathname.startsWith('/apeluri');
+
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     cheltuieli: true,
-    apeluri: false,
+    apeluri: true,
     online: false,
+  });
+
+  // Auto-expand apeluri group when navigating there
+  useEffect(() => {
+    if (isOnApeluri && !expandedGroups.apeluri) {
+      setExpandedGroups(prev => ({ ...prev, apeluri: true }));
+    }
+  }, [isOnApeluri]);
+
+  // Fetch call count for sidebar badge
+  const { data: apeluriData } = useQuery({
+    queryKey: ['apeluri-primite-count'],
+    queryFn: () => api.getApeluriPrimite(),
+    staleTime: 60000,
+    enabled: isOnApeluri || expandedGroups.apeluri,
   });
 
   const toggleGroup = (key: string) => {
@@ -57,10 +76,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       label: 'Cheltuieli V2',
       icon: Wallet,
       items: [
-        { name: 'Dashboard', href: '/', icon: LayoutDashboard, show: true },
-        { name: 'Cheltuieli', href: '/cheltuieli', icon: Receipt, show: true },
-        { name: 'Rapoarte', href: '/rapoarte', icon: FileText, show: isSef },
-        { name: 'Setări', href: '/settings', icon: Settings, show: isAdmin },
+        { name: 'Dashboard', href: '/', icon: LayoutDashboard, show: true, badge: null, badgeApeluri: null },
+        { name: 'Cheltuieli', href: '/cheltuieli', icon: Receipt, show: true, badge: null, badgeApeluri: null },
+        { name: 'Rapoarte', href: '/rapoarte', icon: FileText, show: isSef, badge: null, badgeApeluri: null },
+        { name: 'Setări', href: '/settings', icon: Settings, show: isAdmin, badge: null, badgeApeluri: null },
       ],
     },
     {
@@ -68,8 +87,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       label: 'Apeluri',
       icon: Phone,
       items: [
-        { name: 'Apeluri primite', href: '/apeluri/primite', icon: PhoneIncoming, show: true },
-        { name: 'Apeluri efectuate', href: '/apeluri/efectuate', icon: PhoneCall, show: true },
+        { name: 'Apeluri primite', href: '/apeluri/primite', icon: PhoneIncoming, show: true, badge: null, badgeApeluri: apeluriData?.summary || null },
+        { name: 'Apeluri efectuate', href: '/apeluri/efectuate', icon: PhoneCall, show: true, badge: null, badgeApeluri: null },
       ],
     },
     {
@@ -77,9 +96,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       label: 'Online',
       icon: Globe,
       items: [
-        { name: 'Comenzi', href: '/online/comenzi', icon: ShoppingCart, show: true },
-        { name: 'Statistici', href: '/online/statistici', icon: TrendingUp, show: true },
-        { name: 'Recenzii', href: '/online/recenzii', icon: MessageSquare, show: true },
+        { name: 'Comenzi', href: '/online/comenzi', icon: ShoppingCart, show: true, badge: null, badgeApeluri: null },
+        { name: 'Statistici', href: '/online/statistici', icon: TrendingUp, show: true, badge: null, badgeApeluri: null },
+        { name: 'Recenzii', href: '/online/recenzii', icon: MessageSquare, show: true, badge: null, badgeApeluri: null },
       ],
     },
   ];
@@ -207,7 +226,26 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                           )}
                         >
                           <item.icon className="w-4 h-4" />
-                          {item.name}
+                          <span className="flex-1">{item.name}</span>
+                          {item.badge != null && item.badge > 0 && (
+                            <span className="text-xs bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-stone-300 px-1.5 py-0.5 rounded-full font-mono">
+                              {item.badge}
+                            </span>
+                          )}
+                          {item.badgeApeluri && (
+                            <span className="flex items-center gap-1">
+                              {item.badgeApeluri.COMPLETAT > 0 && (
+                                <span className="text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded-full font-mono">
+                                  {item.badgeApeluri.COMPLETAT}
+                                </span>
+                              )}
+                              {(item.badgeApeluri.ABANDONAT > 0 || item.badgeApeluri.NEPRELUATE > 0) && (
+                                <span className="text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-1.5 py-0.5 rounded-full font-mono">
+                                  {(item.badgeApeluri.ABANDONAT || 0) + (item.badgeApeluri.NEPRELUATE || 0)}
+                                </span>
+                              )}
+                            </span>
+                          )}
                         </Link>
                       );
                     })}
