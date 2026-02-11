@@ -149,6 +149,27 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
       setShowNomModal(false);
       queryClient.invalidateQueries({ queryKey: ['nomenclator'] });
       toast.success('Denumire adăugată în nomenclator');
+
+      // Check for existing unassociated expenses with same denumire_custom
+      try {
+        const neasociate = await api.getNeasociate();
+        const match = neasociate.find(
+          (n) => n.denumire.toLowerCase() === created.denumire.toLowerCase()
+        );
+        if (match && match.count > 0) {
+          const doMerge = window.confirm(
+            `Există ${match.count} cheltuiel${match.count === 1 ? 'ă' : 'i'} necategorizat${match.count === 1 ? 'ă' : 'e'} cu denumirea „${match.denumire}". Dorești să le asociezi cu acest nomenclator?`
+          );
+          if (doMerge) {
+            const result = await api.asociazaNeasociate(match.denumire, created.id);
+            toast.success(`${result.updated} cheltuiel${result.updated === 1 ? 'ă asociată' : 'i asociate'}`);
+            queryClient.invalidateQueries({ queryKey: ['cheltuieli'] });
+            queryClient.invalidateQueries({ queryKey: ['raport'] });
+          }
+        }
+      } catch {
+        // Silently ignore — merge check is best-effort
+      }
     } catch (err: any) {
       toast.error(err.response?.data?.detail || 'Eroare la creare');
     } finally {
@@ -287,26 +308,40 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
                     <Spinner size="sm" />
                   </div>
                 ) : suggestions.length > 0 ? (
-                  suggestions.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => handleSelectSuggestion(item)}
-                      className="w-full px-4 py-2 text-left hover:bg-stone-100 dark:hover:bg-stone-800 flex items-center justify-between"
-                    >
-                      <div>
-                        <div className="font-medium text-stone-900 dark:text-stone-100">
-                          {item.denumire}
+                  <>
+                    {suggestions.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => handleSelectSuggestion(item)}
+                        className="w-full px-4 py-2 text-left hover:bg-stone-100 dark:hover:bg-stone-800 flex items-center justify-between"
+                      >
+                        <div>
+                          <div className="font-medium text-stone-900 dark:text-stone-100">
+                            {item.denumire}
+                          </div>
+                          <div className="text-xs text-stone-500">
+                            {item.categorie_nume} • {item.grupa_nume}
+                          </div>
                         </div>
-                        <div className="text-xs text-stone-500">
-                          {item.categorie_nume} • {item.grupa_nume}
-                        </div>
+                        <Badge variant="gray" className="text-xs">
+                          {Math.round(item.similarity * 100)}%
+                        </Badge>
+                      </button>
+                    ))}
+                    {!suggestions.some((s) => s.denumire.toLowerCase() === query.trim().toLowerCase()) && (
+                      <div className="p-2 border-t border-stone-200 dark:border-stone-700 text-center">
+                        <button
+                          type="button"
+                          onClick={handleOpenNomModal}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-400 rounded-lg transition-colors"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          Adaugă „{query.trim()}" în nomenclator
+                        </button>
                       </div>
-                      <Badge variant="gray" className="text-xs">
-                        {Math.round(item.similarity * 100)}%
-                      </Badge>
-                    </button>
-                  ))
+                    )}
+                  </>
                 ) : (
                   <div className="p-3 text-sm text-center">
                     <div className="text-stone-500 mb-2">Nu s-au găsit rezultate.</div>
