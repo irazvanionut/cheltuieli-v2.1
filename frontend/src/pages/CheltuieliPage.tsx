@@ -1099,7 +1099,7 @@ export const CheltuieliPage: React.FC = () => {
               </label>
               <select
                 value={formData.categorie_id || ''}
-                onChange={(e) => setFormData({ ...formData, categorie_id: e.target.value ? Number(e.target.value) : undefined })}
+                onChange={(e) => setFormData({ ...formData, categorie_id: e.target.value ? Number(e.target.value) : undefined, grupa_id: undefined })}
                 className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100"
               >
                 <option value="">Fara categorie</option>
@@ -1121,7 +1121,7 @@ export const CheltuieliPage: React.FC = () => {
                 className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100"
               >
                 <option value="">Fara grupa</option>
-                {grupe.map((g) => (
+                {(formData.categorie_id ? grupe.filter(g => g.categorie_id === formData.categorie_id) : grupe).map((g) => (
                   <option key={g.id} value={g.id}>
                     {g.nume}
                   </option>
