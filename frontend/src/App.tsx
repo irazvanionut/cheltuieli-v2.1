@@ -11,6 +11,7 @@ import { CheltuieliPage } from '@/pages/CheltuieliPage';
 import { RapoartePage } from '@/pages/RapoartePage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { ApeluriPrimitePage } from '@/pages/ApeluriPrimitePage';
+import { ApeluriTrendPage } from '@/pages/ApeluriTrendPage';
 import { Spinner } from '@/components/ui';
 
 // Create React Query client
@@ -105,6 +106,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ApeluriPrimitePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/apeluri/trend"
+              element={
+                <ProtectedRoute>
+                  <ApeluriTrendPage />
                 </ProtectedRoute>
               }
             />

@@ -114,7 +114,7 @@ const StatsSection: React.FC<{ stats: Stats }> = ({ stats }) => {
         <Card className="p-4 text-center">
           <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formatDuration(stats.asa)}</div>
           <div className="text-xs text-stone-500">ASA</div>
-          <div className="text-[10px] text-stone-400 mt-0.5">Timp mediu de asteptare pana la raspuns</div>
+          <div className="text-[10px] text-stone-400 mt-0.5">Timp mediu in coada pana la agent</div>
         </Card>
         <Card className="p-4 text-center">
           <div className="text-2xl font-bold text-stone-900 dark:text-stone-100">{formatDuration(stats.call_duration.avg)}</div>
@@ -122,7 +122,7 @@ const StatsSection: React.FC<{ stats: Stats }> = ({ stats }) => {
         </Card>
         <Card className="p-4 text-center">
           <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.waited_over_30}</div>
-          <div className="text-xs text-stone-500">Asteptare {'>'}30s</div>
+          <div className="text-xs text-stone-500">Coada {'>'} 30s</div>
           <div className="text-[10px] text-stone-400 mt-0.5">{stats.total > 0 ? Math.round(stats.waited_over_30 / stats.total * 100) : 0}% din total</div>
         </Card>
       </div>
@@ -133,7 +133,7 @@ const StatsSection: React.FC<{ stats: Stats }> = ({ stats }) => {
         <Card className="p-4">
           <h4 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-3 flex items-center gap-2">
             <Timer className="w-4 h-4 text-emerald-500" />
-            Asteptare (raspunse)
+            Timp in coada pana la agent (raspunse)
           </h4>
           <div className="space-y-2">
             {([
@@ -155,7 +155,7 @@ const StatsSection: React.FC<{ stats: Stats }> = ({ stats }) => {
         <Card className="p-4">
           <h4 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-3 flex items-center gap-2">
             <Timer className="w-4 h-4 text-red-500" />
-            Asteptare (abandonate)
+            Timp in coada pana la abandon
           </h4>
           <div className="space-y-2">
             {([
@@ -213,7 +213,7 @@ const StatsSection: React.FC<{ stats: Stats }> = ({ stats }) => {
               const answeredH = h.total > 0 ? (h.answered / h.total) * barH : 0;
               const abandonedH = barH - answeredH;
               return (
-                <div key={h.hour} className="flex-1 flex flex-col items-center justify-end h-full" title={`${h.label}: ${h.total} apeluri, ${h.answer_rate}% raspuns, ASA ${formatDuration(h.asa)}`}>
+                <div key={h.hour} className="flex-1 flex flex-col items-center justify-end h-full" title={`${h.label}: ${h.total} apeluri, ${h.answer_rate}% raspuns, ASA coada→agent ${formatDuration(h.asa)}`}>
                   <div className="text-[9px] text-stone-500 font-mono mb-0.5">{h.total}</div>
                   <div className="w-full flex flex-col">
                     {abandonedH > 0 && (
@@ -291,7 +291,7 @@ const StatsSection: React.FC<{ stats: Stats }> = ({ stats }) => {
           <Card className="p-4">
             <h4 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-3 flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-stone-500" />
-              Analiza ASA
+              Analiza ASA (timp in coada pana la agent)
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
@@ -371,7 +371,7 @@ export const ApeluriPrimitePage: React.FC = () => {
             )}
           </h1>
           <p className="text-stone-500 mt-1">
-            Sumar apeluri din coada Asterisk
+            Sumar apeluri din coada Asterisk — timpii de asteptare masoara intervalul din coada pana la agent (fara IVR)
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -479,7 +479,7 @@ export const ApeluriPrimitePage: React.FC = () => {
                               <th className="px-4 py-2 text-left text-xs font-semibold text-stone-500 uppercase tracking-wider">Agent</th>
                               <th className="px-4 py-2 text-right text-xs font-semibold text-stone-500 uppercase tracking-wider">
                                 <Clock className="w-3.5 h-3.5 inline mr-1" />
-                                Asteptare
+                                Coada
                               </th>
                               <th className="px-4 py-2 text-right text-xs font-semibold text-stone-500 uppercase tracking-wider">
                                 <Phone className="w-3.5 h-3.5 inline mr-1" />

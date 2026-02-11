@@ -17,3 +17,6 @@ YESTERDAY=$(date -d "yesterday" +%Y%m%d)
 if [ -f "$SRC/queue_log-$YESTERDAY" ] && [ ! -f "$DST/queue_log-$YESTERDAY" ]; then
     cp "$SRC/queue_log-$YESTERDAY" "$DST/queue_log-$YESTERDAY"
 fi
+
+# Copy Master.csv (CDR history) - daily at 9 AM via separate cron
+# This script handles queue_log only; Master.csv has its own cron entry

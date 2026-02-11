@@ -87,8 +87,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       label: 'Apeluri',
       icon: Phone,
       items: [
-        { name: 'Apeluri primite', href: '/apeluri/primite', icon: PhoneIncoming, show: true, badge: null, badgeApeluri: apeluriData?.summary || null },
-        { name: 'Apeluri efectuate', href: '/apeluri/efectuate', icon: PhoneCall, show: true, badge: null, badgeApeluri: null },
+        { name: 'Apeluri Azi', href: '/apeluri/primite', icon: PhoneIncoming, show: true, badge: null, badgeApeluri: apeluriData?.summary || null },
+        { name: 'Statistici & Trend', href: '/apeluri/trend', icon: TrendingUp, show: true, badge: null, badgeApeluri: null },
       ],
     },
     {

@@ -425,6 +425,13 @@ class ApiService {
     return result;
   }
 
+  async getApeluriTrend(days?: number): Promise<any> {
+    const params: Record<string, any> = {};
+    if (days) params.days = days;
+    const { data: result } = await this.client.get('/apeluri/trend', { params });
+    return result;
+  }
+
   // ============================================
   // CHAT AI
   // ============================================

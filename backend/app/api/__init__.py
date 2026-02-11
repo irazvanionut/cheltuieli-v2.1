@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api import auth, nomenclator, cheltuieli, portofele, rapoarte, settings, apeluri
+from app.api import auth, nomenclator, cheltuieli, portofele, rapoarte, settings, apeluri, apeluri_trend
 
 api_router = APIRouter()
 
@@ -12,3 +12,4 @@ api_router.include_router(portofele.router)
 api_router.include_router(rapoarte.router)
 api_router.include_router(settings.router)
 api_router.include_router(apeluri.router)
+api_router.include_router(apeluri_trend.router)
