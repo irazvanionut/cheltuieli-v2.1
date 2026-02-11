@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
@@ -39,7 +39,9 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
   const [moneda, setMoneda] = useState('RON');
   const [portofelId, setPortofelId] = useState<number | null>(null);
   const [neplatit, setNeplatit] = useState(false);
+  const [comentarii, setComentarii] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const autocompleteRef = useRef<HTMLDivElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Nomenclator add modal state
@@ -90,6 +92,17 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
       setPortofelId(portofele[0].id);
     }
   }, [portofele, portofelId]);
+
+  // Close suggestions on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (autocompleteRef.current && !autocompleteRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSelectSuggestion = (item: AutocompleteResult) => {
     setSelectedItem(item);
@@ -189,6 +202,10 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
         neplatit,
       };
 
+      if (comentarii.trim()) {
+        data.comentarii = comentarii.trim();
+      }
+
       if (selectedItem) {
         data.nomenclator_id = selectedItem.id;
       } else if (query.trim()) {
@@ -207,7 +224,8 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
       setAmount('');
       setMoneda('RON');
       setNeplatit(false);
-      
+      setComentarii('');
+
       onSuccess();
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Eroare la salvare');
@@ -224,9 +242,9 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
           Adaugă cheltuială
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-x-3 gap-y-2">
           {/* Denumire with autocomplete */}
-          <div className="md:col-span-5 relative">
+          <div className="md:col-span-6 relative" ref={autocompleteRef}>
             <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
               Denumire
             </label>
@@ -313,43 +331,38 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
             )}
           </div>
 
-          {/* Suma */}
-          <div className="md:col-span-1">
+          {/* Suma + Moneda */}
+          <div className="md:col-span-2">
             <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
               Suma
             </label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0.00"
-              className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-right font-mono"
-              required
-            />
-          </div>
-
-          {/* Moneda */}
-          <div className="md:col-span-1">
-            <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">
-              Moneda
-            </label>
-            <select
-              value={moneda}
-              onChange={(e) => setMoneda(e.target.value)}
-              className="w-full px-2 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900"
-            >
-              {monede.length > 0 ? monede.map((m) => (
-                <option key={m.code} value={m.code}>{m.code}</option>
-              )) : (
-                <>
-                  <option value="RON">RON</option>
-                  <option value="EUR">EUR</option>
-                  <option value="USD">USD</option>
-                </>
-              )}
-            </select>
+            <div className="flex gap-1">
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="0.00"
+                className="flex-1 min-w-0 px-2 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-right font-mono"
+                required
+              />
+              <select
+                value={moneda}
+                onChange={(e) => setMoneda(e.target.value)}
+                className="w-16 px-1 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-xs"
+              >
+                {monede.length > 0 ? monede.map((m) => (
+                  <option key={m.code} value={m.code}>{m.code}</option>
+                )) : (
+                  <>
+                    <option value="RON">RON</option>
+                    <option value="EUR">EUR</option>
+                    <option value="USD">USD</option>
+                  </>
+                )}
+              </select>
+            </div>
           </div>
 
           {/* Portofel */}
@@ -360,7 +373,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
             <select
               value={portofelId || ''}
               onChange={(e) => setPortofelId(Number(e.target.value))}
-              className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900"
+              className="w-full px-2 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900"
             >
               {portofele.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -370,16 +383,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
             </select>
           </div>
 
-          {/* Neplatit checkbox */}
-          <div className="md:col-span-1 flex items-end pb-2">
-            <Checkbox
-              checked={neplatit}
-              onChange={(e) => setNeplatit(e.target.checked)}
-              label="Neplătit"
-            />
-          </div>
-
-          {/* Submit */}
+          {/* Adaugă */}
           <div className="md:col-span-2 flex items-end">
             <Button
               type="submit"
@@ -390,6 +394,26 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
             >
               Adaugă
             </Button>
+          </div>
+
+          {/* Row 2: Comentarii sub Denumire */}
+          <div className="md:col-span-6">
+            <input
+              type="text"
+              value={comentarii}
+              onChange={(e) => setComentarii(e.target.value)}
+              placeholder="Comentarii (opțional)..."
+              className="w-full px-4 py-2 rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-sm"
+            />
+          </div>
+
+          {/* Neplatit sub Suma */}
+          <div className="md:col-span-2 flex items-center">
+            <Checkbox
+              checked={neplatit}
+              onChange={(e) => setNeplatit(e.target.checked)}
+              label="Neplătit"
+            />
           </div>
         </div>
       </form>
@@ -567,6 +591,7 @@ const ExpensesList: React.FC<ExpensesListProps> = ({
       (ch.portofel_nume || '').toLowerCase().includes(search) ||
       (ch.sens || '').toLowerCase().includes(search) ||
       (ch.operator_nume || '').toLowerCase().includes(search) ||
+      (ch.comentarii || '').toLowerCase().includes(search) ||
       String(ch.suma).includes(search)
     );
   });
@@ -662,6 +687,9 @@ const ExpensesList: React.FC<ExpensesListProps> = ({
                   <div className="font-medium text-stone-900 dark:text-stone-100">
                     {ch.denumire || ch.denumire_custom}
                   </div>
+                  {ch.comentarii && (
+                    <div className="text-xs text-stone-500 italic">{ch.comentarii}</div>
+                  )}
                   <div className="text-xs text-stone-500">
                     {format(new Date(ch.created_at), 'HH:mm', { locale: ro })}
                     {ch.operator_nume && ` • ${ch.operator_nume}`}
