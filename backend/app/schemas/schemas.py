@@ -207,7 +207,7 @@ class NomenclatorResponse(NomenclatorBase):
 
 
 class AutocompleteResult(BaseModel):
-    id: int
+    id: Optional[int] = None
     denumire: str
     categorie_id: Optional[int] = None
     categorie_nume: Optional[str] = None

@@ -65,7 +65,7 @@ export interface Nomenclator {
 }
 
 export interface AutocompleteResult {
-  id: number;
+  id?: number | null;
   denumire: string;
   categorie_id?: number;
   categorie_nume?: string;

@@ -12,6 +12,7 @@ import {
   RefreshCw,
   ArrowLeftRight,
   Banknote,
+  ChevronRight,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ro } from 'date-fns/locale';
@@ -227,10 +228,12 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
         data.comentarii = comentarii.trim();
       }
 
-      if (selectedItem) {
+      if (selectedItem && selectedItem.id) {
         data.nomenclator_id = selectedItem.id;
       } else if (query.trim()) {
         data.denumire_custom = query.trim();
+        if (selectedItem?.categorie_id) data.categorie_id = selectedItem.categorie_id;
+        if (selectedItem?.grupa_id) data.grupa_id = selectedItem.grupa_id;
       } else {
         toast.error('Introduceți denumirea');
         return;
@@ -309,9 +312,9 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
                   </div>
                 ) : suggestions.length > 0 ? (
                   <>
-                    {suggestions.map((item) => (
+                    {suggestions.map((item, idx) => (
                       <button
-                        key={item.id}
+                        key={item.id ?? `custom-${idx}`}
                         type="button"
                         onClick={() => handleSelectSuggestion(item)}
                         className="w-full px-4 py-2 text-left hover:bg-stone-100 dark:hover:bg-stone-800 flex items-center justify-between"
@@ -321,7 +324,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSuccess }) => {
                             {item.denumire}
                           </div>
                           <div className="text-xs text-stone-500">
-                            {item.categorie_nume} • {item.grupa_nume}
+                            {item.categorie_nume ? `${item.categorie_nume}${item.grupa_nume ? ` • ${item.grupa_nume}` : ''}` : !item.id ? 'Necategorizat' : ''}
                           </div>
                         </div>
                         <Badge variant="gray" className="text-xs">
@@ -862,6 +865,17 @@ const Summary: React.FC<SummaryProps> = ({ raport, isLoading, portofele, currenc
   // Update module-level CURRENCY_LABELS so formatSold/formatMoneda use it
   CURRENCY_LABELS = { ...CURRENCY_LABELS_DEFAULT, ...currencyLabels };
 
+  // Expanded categories
+  const [expandedCats, setExpandedCats] = useState<Set<number>>(new Set());
+  const toggleCat = (catId: number) => {
+    setExpandedCats(prev => {
+      const next = new Set(prev);
+      if (next.has(catId)) next.delete(catId);
+      else next.add(catId);
+      return next;
+    });
+  };
+
   // Alimentare modal
   const [showAlimentareModal, setShowAlimentareModal] = useState(false);
   const [aliForm, setAliForm] = useState({ portofel_id: 0, suma: '', moneda: 'RON', comentarii: '' });
@@ -1052,26 +1066,53 @@ const Summary: React.FC<SummaryProps> = ({ raport, isLoading, portofele, currenc
         <h3 className="font-semibold text-stone-900 dark:text-stone-100 mb-3">
           Pe Categorii
         </h3>
-        <div className="space-y-2">
-          {raport.categorii.map((cat) => (
-            <div
-              key={cat.categorie_id}
-              className="flex items-center justify-between py-1.5"
-            >
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: cat.categorie_culoare }}
-                />
-                <span className="text-stone-600 dark:text-stone-400">
-                  {cat.categorie_nume}
-                </span>
+        <div className="space-y-1">
+          {raport.categorii.map((cat) => {
+            const isExpanded = expandedCats.has(cat.categorie_id);
+            const hasGrupe = cat.grupe && cat.grupe.length > 0;
+            return (
+              <div key={cat.categorie_id}>
+                <button
+                  type="button"
+                  onClick={() => hasGrupe && toggleCat(cat.categorie_id)}
+                  className={`w-full flex items-center justify-between py-1.5 ${hasGrupe ? 'cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-800/50 rounded px-1 -mx-1' : ''}`}
+                >
+                  <div className="flex items-center gap-2">
+                    {hasGrupe && (
+                      <ChevronRight className={`w-3.5 h-3.5 text-stone-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                    )}
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: cat.categorie_culoare }}
+                    />
+                    <span className="text-stone-600 dark:text-stone-400">
+                      {cat.categorie_nume}
+                    </span>
+                  </div>
+                  <span className="font-mono text-stone-900 dark:text-stone-100">
+                    {formatSold(cat.total)}
+                  </span>
+                </button>
+                {isExpanded && hasGrupe && (
+                  <div className="ml-6 pl-3 border-l-2 border-stone-200 dark:border-stone-700 space-y-1 py-1">
+                    {cat.grupe.map((grupa) => (
+                      <div
+                        key={grupa.grupa_id ?? 'none'}
+                        className="flex items-center justify-between py-0.5"
+                      >
+                        <span className="text-sm text-stone-500 dark:text-stone-400">
+                          {grupa.grupa_nume || 'Fără grupă'}
+                        </span>
+                        <span className="font-mono text-sm text-stone-700 dark:text-stone-300">
+                          {formatSold(grupa.total)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              <span className="font-mono text-stone-900 dark:text-stone-100">
-                {formatSold(cat.total)}
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </Card>
 

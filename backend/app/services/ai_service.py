@@ -103,7 +103,7 @@ class AIService:
         """)
         result = await db.execute(sql, {"query": query, "limit": limit})
         rows = result.fetchall()
-        
+
         for row in rows:
             results.append({
                 "id": row.id,
@@ -116,7 +116,47 @@ class AIService:
                 "similarity": float(row.similarity) if row.similarity else 0.0,
                 "source": "trigram"
             })
-        
+
+        # Method 1b: Search in cheltuieli.denumire_custom (historical custom names)
+        seen_denumiri = {r["denumire"].lower() for r in results}
+        sql_custom = text("""
+            SELECT DISTINCT ON (LOWER(ch.denumire_custom))
+                ch.denumire_custom as denumire,
+                ch.categorie_id,
+                c.nume as categorie_nume,
+                ch.grupa_id,
+                g.nume as grupa_nume,
+                similarity(ch.denumire_custom, :query) as sim
+            FROM cheltuieli ch
+            LEFT JOIN categorii c ON ch.categorie_id = c.id
+            LEFT JOIN grupe g ON ch.grupa_id = g.id
+            WHERE ch.denumire_custom IS NOT NULL
+              AND ch.denumire_custom <> ''
+              AND ch.activ = true
+              AND (
+                  ch.denumire_custom ILIKE :query || '%'
+                  OR ch.denumire_custom % :query
+              )
+            ORDER BY LOWER(ch.denumire_custom), ch.created_at DESC
+            LIMIT :limit
+        """)
+        result_custom = await db.execute(sql_custom, {"query": query, "limit": limit})
+        rows_custom = result_custom.fetchall()
+
+        for row in rows_custom:
+            if row.denumire.lower() not in seen_denumiri:
+                results.append({
+                    "id": None,
+                    "denumire": row.denumire,
+                    "categorie_id": row.categorie_id,
+                    "categorie_nume": row.categorie_nume,
+                    "grupa_id": row.grupa_id,
+                    "grupa_nume": row.grupa_nume,
+                    "tip_entitate": None,
+                    "similarity": float(row.sim) if row.sim else 0.0,
+                    "source": "history"
+                })
+
         # Method 2: Vector search (if enabled and no good results)
         if len(results) < 3:
             try:
