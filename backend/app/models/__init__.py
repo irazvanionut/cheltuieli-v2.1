@@ -10,6 +10,8 @@ from app.models.models import (
     Transfer,
     Alimentare,
     ChatHistory,
+    ApeluriZilnic,
+    ApeluriDetalii,
 )
 
 __all__ = [
@@ -24,4 +26,6 @@ __all__ = [
     "Transfer",
     "Alimentare",
     "ChatHistory",
+    "ApeluriZilnic",
+    "ApeluriDetalii",
 ]

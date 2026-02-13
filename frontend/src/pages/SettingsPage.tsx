@@ -11,6 +11,7 @@ import {
   Palette,
   Calendar,
   DollarSign,
+  PhoneIncoming,
   ChevronRight,
   ArrowLeft,
 } from 'lucide-react';
@@ -25,6 +26,7 @@ import { OllamaSettings } from './settings/OllamaSettings';
 import { UISettings } from './settings/UISettings';
 import { ExercitiuSettings } from './settings/ExercitiuSettings';
 import { MonedaSettings } from './settings/MonedaSettings';
+import { IstoricApeluriSettings } from './settings/IstoricApeluriSettings';
 
 const settingsMenu = [
   { path: '/settings/exercitiu', name: 'Exercițiu', icon: Calendar, description: 'Închidere / deschidere zi' },
@@ -36,6 +38,7 @@ const settingsMenu = [
   { path: '/settings/monede', name: 'Monede', icon: DollarSign, description: 'Gestionare monede active' },
   { path: '/settings/ollama', name: 'Conexiune AI', icon: Bot, description: 'Configurare autocomplete AI' },
   { path: '/settings/ui', name: 'Interfață', icon: Palette, description: 'Temă și preferințe vizuale' },
+  { path: '/settings/istoric-apeluri', name: 'Istoric Apeluri', icon: PhoneIncoming, description: 'Vizualizare istoric apeluri salvate' },
 ];
 
 // Index page - shows all settings options
@@ -129,6 +132,7 @@ export const SettingsPage: React.FC = () => {
           <Route path="monede" element={<MonedaSettings />} />
           <Route path="ollama" element={<OllamaSettings />} />
           <Route path="ui" element={<UISettings />} />
+          <Route path="istoric-apeluri" element={<IstoricApeluriSettings />} />
         </Routes>
       </div>
     </div>

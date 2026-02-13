@@ -15,6 +15,9 @@ import {
   Timer,
   TrendingUp,
   AlertTriangle,
+  ArrowUpRight,
+  ArrowDownRight,
+  Minus,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -89,11 +92,164 @@ const formatDuration = (seconds: number): string => {
 };
 
 // ============================================
+// TREND COMPONENTS
+// ============================================
+
+interface TrendArrowProps {
+  current: number;
+  average: number;
+  invertColors?: boolean; // true when "up" is bad (abandon_rate, asa, waited_over_30)
+  suffix?: string;
+}
+
+const TrendArrow: React.FC<TrendArrowProps> = ({ current, average, invertColors = false, suffix = '' }) => {
+  if (!average || average === 0) return null;
+
+  const diff = current - average;
+  const pct = Math.round((diff / average) * 100);
+
+  if (pct === 0) {
+    return (
+      <div className="flex items-center gap-0.5 text-stone-400">
+        <Minus className="w-3 h-3" />
+        <span className="text-[10px]">0%</span>
+      </div>
+    );
+  }
+
+  const isUp = pct > 0;
+  const isGood = invertColors ? !isUp : isUp;
+
+  return (
+    <div className={clsx(
+      'flex items-center gap-0.5',
+      isGood ? 'text-emerald-500' : 'text-red-500'
+    )}>
+      {isUp ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+      <span className="text-[10px] font-medium">{Math.abs(pct)}%{suffix}</span>
+    </div>
+  );
+};
+
+interface SparklineProps {
+  data: number[];
+  width?: number;
+  height?: number;
+  color?: string;
+}
+
+const Sparkline: React.FC<SparklineProps> = ({ data, width = 80, height = 24, color = '#6B7280' }) => {
+  if (!data || data.length < 2) return null;
+
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+  const padding = 2;
+
+  const points = data.map((val, i) => {
+    const x = padding + (i / (data.length - 1)) * (width - 2 * padding);
+    const y = height - padding - ((val - min) / range) * (height - 2 * padding);
+    return `${x},${y}`;
+  }).join(' ');
+
+  return (
+    <svg width={width} height={height} className="inline-block">
+      <polyline
+        points={points}
+        fill="none"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* Last point dot */}
+      {data.length > 0 && (() => {
+        const lastX = padding + ((data.length - 1) / (data.length - 1)) * (width - 2 * padding);
+        const lastY = height - padding - ((data[data.length - 1] - min) / range) * (height - 2 * padding);
+        return <circle cx={lastX} cy={lastY} r="2" fill={color} />;
+      })()}
+    </svg>
+  );
+};
+
+interface TrendSectionProps {
+  trendData: { days: any[]; avg_7_days: Record<string, number> };
+}
+
+const TrendSection: React.FC<TrendSectionProps> = ({ trendData }) => {
+  const { days } = trendData;
+  if (!days || days.length < 2) return null;
+
+  const metrics = [
+    { key: 'answer_rate', label: 'Rata raspuns', suffix: '%', color: '#10B981' },
+    { key: 'asa', label: 'ASA (sec)', suffix: 's', color: '#3B82F6' },
+    { key: 'total', label: 'Total apeluri', suffix: '', color: '#6B7280' },
+  ];
+
+  const chartW = 280;
+  const chartH = 60;
+
+  return (
+    <Card className="p-4">
+      <h4 className="text-sm font-semibold text-stone-900 dark:text-stone-100 mb-3 flex items-center gap-2">
+        <TrendingUp className="w-4 h-4 text-stone-500" />
+        Trend ultimele {days.length} zile
+      </h4>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {metrics.map(({ key, label, suffix, color }) => {
+          const values = days.map((d: any) => d[key] || 0);
+          const min = Math.min(...values);
+          const max = Math.max(...values);
+          const range = max - min || 1;
+          const padding = 4;
+
+          const points = values.map((val: number, i: number) => {
+            const x = padding + (i / (values.length - 1)) * (chartW - 2 * padding);
+            const y = chartH - padding - ((val - min) / range) * (chartH - 2 * padding);
+            return `${x},${y}`;
+          }).join(' ');
+
+          const areaPoints = points + ` ${chartW - padding},${chartH - padding} ${padding},${chartH - padding}`;
+
+          return (
+            <div key={key}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-stone-500">{label}</span>
+                <span className="text-xs font-mono text-stone-700 dark:text-stone-300">
+                  {values[values.length - 1]}{suffix}
+                </span>
+              </div>
+              <svg width="100%" viewBox={`0 0 ${chartW} ${chartH}`} className="rounded">
+                <polygon points={areaPoints} fill={color} opacity="0.1" />
+                <polyline
+                  points={points}
+                  fill="none"
+                  stroke={color}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <div className="flex justify-between text-[9px] text-stone-400 mt-0.5">
+                <span>{days[0]?.data?.slice(5)}</span>
+                <span>{days[days.length - 1]?.data?.slice(5)}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+};
+
+// ============================================
 // STATS SECTION
 // ============================================
 
-const StatsSection: React.FC<{ stats: Stats }> = ({ stats }) => {
+const StatsSection: React.FC<{ stats: Stats; trendData?: { days: any[]; avg_7_days: Record<string, number> } | null }> = ({ stats, trendData }) => {
   const maxHourlyTotal = Math.max(...stats.hourly.map(h => h.total), 1);
+  const avg7 = trendData?.avg_7_days || {};
+  const trendDays = trendData?.days || [];
 
   return (
     <div className="space-y-4">
@@ -102,28 +258,70 @@ const StatsSection: React.FC<{ stats: Stats }> = ({ stats }) => {
         <Card className="p-4 text-center">
           <div className="text-2xl font-bold text-stone-900 dark:text-stone-100">{stats.total}</div>
           <div className="text-xs text-stone-500">Total apeluri</div>
+          <div className="flex items-center justify-center gap-2 mt-1">
+            <TrendArrow current={stats.total} average={avg7.total} />
+          </div>
+          {trendDays.length >= 2 && (
+            <div className="mt-1 flex justify-center">
+              <Sparkline data={trendDays.map((d: any) => d.total)} color="#78716c" />
+            </div>
+          )}
         </Card>
         <Card className="p-4 text-center">
           <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.answer_rate}%</div>
           <div className="text-xs text-stone-500">Rata raspuns ({stats.answered})</div>
+          <div className="flex items-center justify-center gap-2 mt-1">
+            <TrendArrow current={stats.answer_rate} average={avg7.answer_rate} />
+          </div>
+          {trendDays.length >= 2 && (
+            <div className="mt-1 flex justify-center">
+              <Sparkline data={trendDays.map((d: any) => d.answer_rate)} color="#10B981" />
+            </div>
+          )}
         </Card>
         <Card className="p-4 text-center">
           <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.abandon_rate}%</div>
           <div className="text-xs text-stone-500">Rata abandon ({stats.abandoned})</div>
+          <div className="flex items-center justify-center gap-2 mt-1">
+            <TrendArrow current={stats.abandon_rate} average={avg7.abandon_rate} invertColors />
+          </div>
+          {trendDays.length >= 2 && (
+            <div className="mt-1 flex justify-center">
+              <Sparkline data={trendDays.map((d: any) => d.abandon_rate)} color="#EF4444" />
+            </div>
+          )}
         </Card>
         <Card className="p-4 text-center">
           <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formatDuration(stats.asa)}</div>
           <div className="text-xs text-stone-500">ASA</div>
-          <div className="text-[10px] text-stone-400 mt-0.5">Timp mediu in coada pana la agent</div>
+          <div className="flex items-center justify-center gap-2 mt-1">
+            <TrendArrow current={stats.asa} average={avg7.asa} invertColors />
+          </div>
+          {trendDays.length >= 2 && (
+            <div className="mt-1 flex justify-center">
+              <Sparkline data={trendDays.map((d: any) => d.asa)} color="#3B82F6" />
+            </div>
+          )}
         </Card>
         <Card className="p-4 text-center">
           <div className="text-2xl font-bold text-stone-900 dark:text-stone-100">{formatDuration(stats.call_duration.avg)}</div>
           <div className="text-xs text-stone-500">Durata medie conv.</div>
+          <div className="flex items-center justify-center gap-2 mt-1">
+            <TrendArrow current={stats.call_duration.avg} average={avg7.call_duration_avg} />
+          </div>
+          {trendDays.length >= 2 && (
+            <div className="mt-1 flex justify-center">
+              <Sparkline data={trendDays.map((d: any) => d.call_duration_avg)} color="#78716c" />
+            </div>
+          )}
         </Card>
         <Card className="p-4 text-center">
           <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.waited_over_30}</div>
           <div className="text-xs text-stone-500">Coada {'>'} 30s</div>
           <div className="text-[10px] text-stone-400 mt-0.5">{stats.total > 0 ? Math.round(stats.waited_over_30 / stats.total * 100) : 0}% din total</div>
+          <div className="flex items-center justify-center gap-2 mt-1">
+            <TrendArrow current={stats.waited_over_30} average={avg7.waited_over_30} invertColors />
+          </div>
         </Card>
       </div>
 
@@ -324,6 +522,11 @@ const StatsSection: React.FC<{ stats: Stats }> = ({ stats }) => {
           </Card>
         );
       })()}
+
+      {/* Trend section */}
+      {trendData && trendData.days && trendData.days.length >= 2 && (
+        <TrendSection trendData={trendData} />
+      )}
     </div>
   );
 };
@@ -342,6 +545,12 @@ export const ApeluriPrimitePage: React.FC = () => {
     staleTime: 0,
     refetchOnMount: 'always',
     refetchInterval: 60000,
+  });
+
+  const { data: trendData } = useQuery({
+    queryKey: ['apeluri-trend-zilnic'],
+    queryFn: () => api.getApeluriTrendZilnic(14),
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const toggleStatus = (status: string) => {
@@ -437,7 +646,7 @@ export const ApeluriPrimitePage: React.FC = () => {
           </div>
 
           {/* Statistics */}
-          {data.stats && <StatsSection stats={data.stats} />}
+          {data.stats && <StatsSection stats={data.stats} trendData={trendData} />}
 
           {/* Expandable status sections */}
           <div className="space-y-2">

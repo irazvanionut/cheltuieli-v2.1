@@ -315,6 +315,53 @@ CREATE INDEX idx_chat_history_user ON chat_history(user_id);
 CREATE INDEX idx_chat_history_embedding ON chat_history USING ivfflat (embedding vector_cosine_ops) WITH (lists = 50);
 
 -- ============================================
+-- 12. APELURI ZILNIC (Sumar zilnic apeluri)
+-- ============================================
+
+CREATE TABLE apeluri_zilnic (
+    id SERIAL PRIMARY KEY,
+    data DATE NOT NULL UNIQUE,
+    total INTEGER DEFAULT 0,
+    answered INTEGER DEFAULT 0,
+    abandoned INTEGER DEFAULT 0,
+    answer_rate INTEGER DEFAULT 0,
+    abandon_rate INTEGER DEFAULT 0,
+    asa INTEGER DEFAULT 0,
+    waited_over_30 INTEGER DEFAULT 0,
+    hold_answered_avg INTEGER DEFAULT 0,
+    hold_answered_median INTEGER DEFAULT 0,
+    hold_answered_p90 INTEGER DEFAULT 0,
+    hold_abandoned_avg INTEGER DEFAULT 0,
+    hold_abandoned_median INTEGER DEFAULT 0,
+    hold_abandoned_p90 INTEGER DEFAULT 0,
+    call_duration_avg INTEGER DEFAULT 0,
+    call_duration_median INTEGER DEFAULT 0,
+    call_duration_p90 INTEGER DEFAULT 0,
+    hourly_data JSONB DEFAULT '[]',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================
+-- 13. APELURI DETALII (Apeluri individuale)
+-- ============================================
+
+CREATE TABLE apeluri_detalii (
+    id SERIAL PRIMARY KEY,
+    apeluri_zilnic_id INTEGER NOT NULL REFERENCES apeluri_zilnic(id) ON DELETE CASCADE,
+    callid VARCHAR(100),
+    caller_id VARCHAR(100),
+    agent VARCHAR(50),
+    status VARCHAR(20) NOT NULL,
+    ora VARCHAR(10),
+    hold_time INTEGER DEFAULT 0,
+    call_time INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_apeluri_zilnic_data ON apeluri_zilnic(data DESC);
+CREATE INDEX idx_apeluri_detalii_zilnic ON apeluri_detalii(apeluri_zilnic_id);
+
+-- ============================================
 -- FUNCTIONS & TRIGGERS
 -- ============================================
 

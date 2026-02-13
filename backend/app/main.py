@@ -2,16 +2,20 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import asyncio
+import json
 from datetime import datetime, date, time, timedelta
+from pathlib import Path
 
-from sqlalchemy import select
+from sqlalchemy import select, delete
 
 from app.core.config import settings
 from app.core.database import init_db, AsyncSessionLocal
-from app.models import Exercitiu
+from app.models import Exercitiu, ApeluriZilnic, ApeluriDetalii
 from app.api import api_router
+from app.api.apeluri import parse_queue_log, QUEUE_LOG_DIR
 
 AUTO_CLOSE_HOUR = 7  # 07:00
+SAVE_APELURI_HOUR = 23  # 23:00
 
 
 async def auto_close_exercitiu_loop():
@@ -74,17 +78,138 @@ async def _do_auto_close():
         await session.commit()
 
 
+async def save_apeluri_loop():
+    """Background task: save daily call data at 23:00."""
+    while True:
+        try:
+            now = datetime.now()
+            target = datetime.combine(now.date(), time(SAVE_APELURI_HOUR, 0))
+            if now >= target:
+                target += timedelta(days=1)
+            wait_secs = (target - now).total_seconds()
+            print(f"Apeluri save scheduler: next run at {target} (in {wait_secs:.0f}s)")
+            await asyncio.sleep(wait_secs)
+
+            await do_save_apeluri()
+        except asyncio.CancelledError:
+            print("Apeluri save scheduler stopped")
+            return
+        except Exception as e:
+            print(f"Apeluri save scheduler error: {e}")
+            await asyncio.sleep(60)
+
+
+async def do_save_apeluri(target_date: date | None = None):
+    """Parse queue_log for a date and upsert into apeluri_zilnic + apeluri_detalii."""
+    target = target_date or date.today()
+    today_str = target.strftime("%Y%m%d")
+
+    # Determine file path
+    if target == date.today():
+        file_path = QUEUE_LOG_DIR / "queue_log"
+        if not file_path.exists():
+            file_path = QUEUE_LOG_DIR / f"queue_log-{today_str}"
+    else:
+        file_path = QUEUE_LOG_DIR / f"queue_log-{today_str}"
+
+    result = parse_queue_log(file_path)
+    stats = result.get("stats", {})
+    calls = result.get("calls", [])
+
+    if not stats.get("total", 0):
+        print(f"Apeluri save: no calls found for {target}, skipping")
+        return
+
+    async with AsyncSessionLocal() as session:
+        # Check if record exists
+        existing = await session.execute(
+            select(ApeluriZilnic).where(ApeluriZilnic.data == target)
+        )
+        zilnic = existing.scalar_one_or_none()
+
+        if zilnic:
+            # Update existing
+            zilnic.total = stats.get("total", 0)
+            zilnic.answered = stats.get("answered", 0)
+            zilnic.abandoned = stats.get("abandoned", 0)
+            zilnic.answer_rate = stats.get("answer_rate", 0)
+            zilnic.abandon_rate = stats.get("abandon_rate", 0)
+            zilnic.asa = stats.get("asa", 0)
+            zilnic.waited_over_30 = stats.get("waited_over_30", 0)
+            zilnic.hold_answered_avg = stats.get("hold_answered", {}).get("avg", 0)
+            zilnic.hold_answered_median = stats.get("hold_answered", {}).get("median", 0)
+            zilnic.hold_answered_p90 = stats.get("hold_answered", {}).get("p90", 0)
+            zilnic.hold_abandoned_avg = stats.get("hold_abandoned", {}).get("avg", 0)
+            zilnic.hold_abandoned_median = stats.get("hold_abandoned", {}).get("median", 0)
+            zilnic.hold_abandoned_p90 = stats.get("hold_abandoned", {}).get("p90", 0)
+            zilnic.call_duration_avg = stats.get("call_duration", {}).get("avg", 0)
+            zilnic.call_duration_median = stats.get("call_duration", {}).get("median", 0)
+            zilnic.call_duration_p90 = stats.get("call_duration", {}).get("p90", 0)
+            zilnic.hourly_data = stats.get("hourly", [])
+            # Delete old details and re-insert
+            await session.execute(
+                delete(ApeluriDetalii).where(ApeluriDetalii.apeluri_zilnic_id == zilnic.id)
+            )
+        else:
+            # Create new
+            zilnic = ApeluriZilnic(
+                data=target,
+                total=stats.get("total", 0),
+                answered=stats.get("answered", 0),
+                abandoned=stats.get("abandoned", 0),
+                answer_rate=stats.get("answer_rate", 0),
+                abandon_rate=stats.get("abandon_rate", 0),
+                asa=stats.get("asa", 0),
+                waited_over_30=stats.get("waited_over_30", 0),
+                hold_answered_avg=stats.get("hold_answered", {}).get("avg", 0),
+                hold_answered_median=stats.get("hold_answered", {}).get("median", 0),
+                hold_answered_p90=stats.get("hold_answered", {}).get("p90", 0),
+                hold_abandoned_avg=stats.get("hold_abandoned", {}).get("avg", 0),
+                hold_abandoned_median=stats.get("hold_abandoned", {}).get("median", 0),
+                hold_abandoned_p90=stats.get("hold_abandoned", {}).get("p90", 0),
+                call_duration_avg=stats.get("call_duration", {}).get("avg", 0),
+                call_duration_median=stats.get("call_duration", {}).get("median", 0),
+                call_duration_p90=stats.get("call_duration", {}).get("p90", 0),
+                hourly_data=stats.get("hourly", []),
+            )
+            session.add(zilnic)
+            await session.flush()  # get zilnic.id
+
+        # Insert call details
+        for call in calls:
+            det = ApeluriDetalii(
+                apeluri_zilnic_id=zilnic.id,
+                callid=call.get("callid", ""),
+                caller_id=call.get("caller_id", ""),
+                agent=call.get("agent", ""),
+                status=call.get("status", ""),
+                ora=call.get("ora", ""),
+                hold_time=call.get("hold_time", 0),
+                call_time=call.get("call_time", 0),
+            )
+            session.add(det)
+
+        await session.commit()
+        print(f"Apeluri save: saved {target} — {stats.get('total', 0)} calls")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events"""
     # Startup
     await init_db()
-    task = asyncio.create_task(auto_close_exercitiu_loop())
+    task_close = asyncio.create_task(auto_close_exercitiu_loop())
+    task_apeluri = asyncio.create_task(save_apeluri_loop())
     yield
     # Shutdown
-    task.cancel()
+    task_close.cancel()
+    task_apeluri.cancel()
     try:
-        await task
+        await task_close
+    except asyncio.CancelledError:
+        pass
+    try:
+        await task_apeluri
     except asyncio.CancelledError:
         pass
 

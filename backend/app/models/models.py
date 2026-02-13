@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Numeric, Text, ForeignKey, Date
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from pgvector.sqlalchemy import Vector
@@ -208,7 +209,7 @@ class Alimentare(Base):
 
 class ChatHistory(Base):
     __tablename__ = "chat_history"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     message = Column(Text, nullable=False)
@@ -216,3 +217,47 @@ class ChatHistory(Base):
     embedding = Column(Vector(1024))
     context_used = Column(Text)  # JSON
     created_at = Column(DateTime, server_default=func.now())
+
+
+class ApeluriZilnic(Base):
+    __tablename__ = "apeluri_zilnic"
+
+    id = Column(Integer, primary_key=True, index=True)
+    data = Column(Date, unique=True, nullable=False)
+    total = Column(Integer, default=0)
+    answered = Column(Integer, default=0)
+    abandoned = Column(Integer, default=0)
+    answer_rate = Column(Integer, default=0)
+    abandon_rate = Column(Integer, default=0)
+    asa = Column(Integer, default=0)
+    waited_over_30 = Column(Integer, default=0)
+    hold_answered_avg = Column(Integer, default=0)
+    hold_answered_median = Column(Integer, default=0)
+    hold_answered_p90 = Column(Integer, default=0)
+    hold_abandoned_avg = Column(Integer, default=0)
+    hold_abandoned_median = Column(Integer, default=0)
+    hold_abandoned_p90 = Column(Integer, default=0)
+    call_duration_avg = Column(Integer, default=0)
+    call_duration_median = Column(Integer, default=0)
+    call_duration_p90 = Column(Integer, default=0)
+    hourly_data = Column(JSONB, default=[])
+    created_at = Column(DateTime, server_default=func.now())
+
+    detalii = relationship("ApeluriDetalii", back_populates="zilnic", cascade="all, delete-orphan")
+
+
+class ApeluriDetalii(Base):
+    __tablename__ = "apeluri_detalii"
+
+    id = Column(Integer, primary_key=True, index=True)
+    apeluri_zilnic_id = Column(Integer, ForeignKey("apeluri_zilnic.id", ondelete="CASCADE"), nullable=False)
+    callid = Column(String(100))
+    caller_id = Column(String(100))
+    agent = Column(String(50))
+    status = Column(String(20), nullable=False)
+    ora = Column(String(10))
+    hold_time = Column(Integer, default=0)
+    call_time = Column(Integer, default=0)
+    created_at = Column(DateTime, server_default=func.now())
+
+    zilnic = relationship("ApeluriZilnic", back_populates="detalii")

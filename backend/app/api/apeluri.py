@@ -1,10 +1,15 @@
-from fastapi import APIRouter, Depends, Query
-from datetime import datetime, date
+from fastapi import APIRouter, Depends, Query, HTTPException
+from datetime import datetime, date, timedelta
 from pathlib import Path
 from typing import Optional
 import statistics
 
-from app.core.security import get_current_user
+from sqlalchemy import select, func as sa_func, delete
+from sqlalchemy.orm import selectinload
+
+from app.core.security import get_current_user, require_admin
+from app.core.database import AsyncSessionLocal
+from app.models import ApeluriZilnic, ApeluriDetalii
 
 router = APIRouter(tags=["apeluri"])
 
@@ -253,3 +258,163 @@ async def get_apeluri_primite(
     result["data"] = data
 
     return result
+
+
+# ============================================
+# ISTORIC APELURI (from DB)
+# ============================================
+
+@router.get("/apeluri/istoric")
+async def get_apeluri_istoric(
+    data_start: Optional[str] = Query(None, description="YYYY-MM-DD"),
+    data_end: Optional[str] = Query(None, description="YYYY-MM-DD"),
+    limit: int = Query(30, ge=1, le=365),
+    current_user=Depends(get_current_user),
+):
+    """List saved daily summaries."""
+    async with AsyncSessionLocal() as session:
+        query = select(ApeluriZilnic).order_by(ApeluriZilnic.data.desc())
+
+        if data_start:
+            query = query.where(ApeluriZilnic.data >= date.fromisoformat(data_start))
+        if data_end:
+            query = query.where(ApeluriZilnic.data <= date.fromisoformat(data_end))
+
+        query = query.limit(limit)
+        result = await session.execute(query)
+        rows = result.scalars().all()
+
+        return [
+            {
+                "id": r.id,
+                "data": r.data.isoformat(),
+                "total": r.total,
+                "answered": r.answered,
+                "abandoned": r.abandoned,
+                "answer_rate": r.answer_rate,
+                "abandon_rate": r.abandon_rate,
+                "asa": r.asa,
+                "waited_over_30": r.waited_over_30,
+                "hold_answered_avg": r.hold_answered_avg,
+                "hold_answered_median": r.hold_answered_median,
+                "hold_answered_p90": r.hold_answered_p90,
+                "hold_abandoned_avg": r.hold_abandoned_avg,
+                "hold_abandoned_median": r.hold_abandoned_median,
+                "hold_abandoned_p90": r.hold_abandoned_p90,
+                "call_duration_avg": r.call_duration_avg,
+                "call_duration_median": r.call_duration_median,
+                "call_duration_p90": r.call_duration_p90,
+                "hourly_data": r.hourly_data,
+                "created_at": r.created_at.isoformat() if r.created_at else None,
+            }
+            for r in rows
+        ]
+
+
+@router.get("/apeluri/istoric/{id}")
+async def get_apeluri_istoric_detalii(
+    id: int,
+    current_user=Depends(get_current_user),
+):
+    """Get a specific day's summary + individual call details."""
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(ApeluriZilnic)
+            .options(selectinload(ApeluriZilnic.detalii))
+            .where(ApeluriZilnic.id == id)
+        )
+        zilnic = result.scalar_one_or_none()
+
+        if not zilnic:
+            raise HTTPException(status_code=404, detail="Record not found")
+
+        return {
+            "id": zilnic.id,
+            "data": zilnic.data.isoformat(),
+            "total": zilnic.total,
+            "answered": zilnic.answered,
+            "abandoned": zilnic.abandoned,
+            "answer_rate": zilnic.answer_rate,
+            "abandon_rate": zilnic.abandon_rate,
+            "asa": zilnic.asa,
+            "waited_over_30": zilnic.waited_over_30,
+            "hold_answered_avg": zilnic.hold_answered_avg,
+            "hold_answered_median": zilnic.hold_answered_median,
+            "hold_answered_p90": zilnic.hold_answered_p90,
+            "hold_abandoned_avg": zilnic.hold_abandoned_avg,
+            "hold_abandoned_median": zilnic.hold_abandoned_median,
+            "hold_abandoned_p90": zilnic.hold_abandoned_p90,
+            "call_duration_avg": zilnic.call_duration_avg,
+            "call_duration_median": zilnic.call_duration_median,
+            "call_duration_p90": zilnic.call_duration_p90,
+            "hourly_data": zilnic.hourly_data,
+            "detalii": [
+                {
+                    "id": d.id,
+                    "callid": d.callid,
+                    "caller_id": d.caller_id,
+                    "agent": d.agent,
+                    "status": d.status,
+                    "ora": d.ora,
+                    "hold_time": d.hold_time,
+                    "call_time": d.call_time,
+                }
+                for d in sorted(zilnic.detalii, key=lambda x: x.ora or "", reverse=True)
+            ],
+        }
+
+
+@router.get("/apeluri/trend-zilnic")
+async def get_apeluri_trend_zilnic(
+    days: int = Query(14, ge=2, le=90),
+    current_user=Depends(get_current_user),
+):
+    """Return daily trend data for the last N days + 7-day averages."""
+    async with AsyncSessionLocal() as session:
+        cutoff = date.today() - timedelta(days=days)
+        result = await session.execute(
+            select(ApeluriZilnic)
+            .where(ApeluriZilnic.data >= cutoff)
+            .order_by(ApeluriZilnic.data.asc())
+        )
+        rows = result.scalars().all()
+
+        data_points = []
+        for r in rows:
+            data_points.append({
+                "data": r.data.isoformat(),
+                "total": r.total,
+                "answered": r.answered,
+                "abandoned": r.abandoned,
+                "answer_rate": r.answer_rate,
+                "abandon_rate": r.abandon_rate,
+                "asa": r.asa,
+                "waited_over_30": r.waited_over_30,
+                "call_duration_avg": r.call_duration_avg,
+            })
+
+        # Calculate 7-day averages from the data
+        avg_7_days = {}
+        if len(data_points) >= 2:
+            last_7 = data_points[-7:] if len(data_points) >= 7 else data_points
+            for key in ["total", "answered", "abandoned", "answer_rate", "abandon_rate", "asa", "waited_over_30", "call_duration_avg"]:
+                vals = [d[key] for d in last_7]
+                avg_7_days[key] = round(sum(vals) / len(vals)) if vals else 0
+
+        return {
+            "days": data_points,
+            "avg_7_days": avg_7_days,
+        }
+
+
+@router.post("/apeluri/istoric/salveaza")
+async def salveaza_apeluri_manual(
+    data_str: Optional[str] = Query(None, description="YYYY-MM-DD, default today"),
+    current_user=Depends(require_admin),
+):
+    """Manually trigger saving call data for a specific date (admin only)."""
+    from app.main import do_save_apeluri
+
+    target = date.fromisoformat(data_str) if data_str else date.today()
+    await do_save_apeluri(target)
+    return {"status": "ok", "data": target.isoformat()}

@@ -432,6 +432,34 @@ class ApiService {
     return result;
   }
 
+  async getApeluriIstoric(params?: {
+    data_start?: string;
+    data_end?: string;
+    limit?: number;
+  }): Promise<any[]> {
+    const { data: result } = await this.client.get('/apeluri/istoric', { params });
+    return result;
+  }
+
+  async getApeluriIstoricDetalii(id: number): Promise<any> {
+    const { data: result } = await this.client.get(`/apeluri/istoric/${id}`);
+    return result;
+  }
+
+  async getApeluriTrendZilnic(days?: number): Promise<any> {
+    const params: Record<string, any> = {};
+    if (days) params.days = days;
+    const { data: result } = await this.client.get('/apeluri/trend-zilnic', { params });
+    return result;
+  }
+
+  async salveazaApeluriManual(data?: string): Promise<any> {
+    const params: Record<string, any> = {};
+    if (data) params.data_str = data;
+    const { data: result } = await this.client.post('/apeluri/istoric/salveaza', null, { params });
+    return result;
+  }
+
   // ============================================
   // CHAT AI
   // ============================================
