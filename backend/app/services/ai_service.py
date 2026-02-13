@@ -135,6 +135,7 @@ class AIService:
               AND ch.activ = true
               AND (
                   ch.denumire_custom ILIKE :query || '%'
+                  OR ch.denumire_custom ILIKE '%' || :query || '%'
                   OR ch.denumire_custom % :query
               )
             ORDER BY LOWER(ch.denumire_custom), ch.created_at DESC

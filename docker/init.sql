@@ -417,10 +417,13 @@ BEGIN
     WHERE n.activ = true
       AND (
           n.denumire ILIKE p_query || '%'
+          OR n.denumire ILIKE '%' || p_query || '%'
           OR n.denumire % p_query
       )
-    ORDER BY 
-        CASE WHEN n.denumire ILIKE p_query || '%' THEN 0 ELSE 1 END,
+    ORDER BY
+        CASE WHEN n.denumire ILIKE p_query || '%' THEN 0
+             WHEN n.denumire % p_query THEN 1
+             ELSE 2 END,
         sim DESC,
         n.frecventa_utilizare DESC,
         n.ultima_utilizare DESC NULLS LAST
