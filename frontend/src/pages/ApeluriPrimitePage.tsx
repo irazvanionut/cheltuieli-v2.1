@@ -246,7 +246,7 @@ const TrendSection: React.FC<TrendSectionProps> = ({ trendData }) => {
 // STATS SECTION
 // ============================================
 
-const StatsSection: React.FC<{ stats: Stats; trendData?: { days: any[]; avg_7_days: Record<string, number> } | null }> = ({ stats, trendData }) => {
+const StatsSection: React.FC<{ stats: Stats; uniqueCallers?: number; trendData?: { days: any[]; avg_7_days: Record<string, number> } | null }> = ({ stats, uniqueCallers, trendData }) => {
   const maxHourlyTotal = Math.max(...stats.hourly.map(h => h.total), 1);
   const avg7 = trendData?.avg_7_days || {};
   const trendDays = trendData?.days || [];
@@ -257,7 +257,7 @@ const StatsSection: React.FC<{ stats: Stats; trendData?: { days: any[]; avg_7_da
       <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
         <Card className="p-4 text-center">
           <div className="text-2xl font-bold text-stone-900 dark:text-stone-100">{stats.total}</div>
-          <div className="text-xs text-stone-500">Total apeluri</div>
+          <div className="text-xs text-stone-500">Total apeluri{uniqueCallers !== undefined && ` (${uniqueCallers} nr. unice)`}</div>
           <div className="flex items-center justify-center gap-2 mt-1">
             <TrendArrow current={stats.total} average={avg7.total} />
           </div>
@@ -646,7 +646,7 @@ export const ApeluriPrimitePage: React.FC = () => {
           </div>
 
           {/* Statistics */}
-          {data.stats && <StatsSection stats={data.stats} trendData={trendData} />}
+          {data.stats && <StatsSection stats={data.stats} uniqueCallers={new Set((data.calls || []).map(c => c.caller_id).filter(Boolean)).size} trendData={trendData} />}
 
           {/* Expandable status sections */}
           <div className="space-y-2">
