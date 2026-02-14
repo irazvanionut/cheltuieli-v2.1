@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { clsx } from 'clsx';
@@ -24,9 +24,11 @@ import {
   ShoppingCart,
   TrendingUp,
   MessageSquare,
+  Clock,
 } from 'lucide-react';
 import { useAppStore, useIsAdmin, useIsSef } from '@/hooks/useAppStore';
 import api from '@/services/api';
+import type { PontajEmployee } from '@/types';
 import { Badge } from '@/components/ui';
 import { AIChat } from '@/components/ai/AIChat';
 import { format } from 'date-fns';
@@ -44,19 +46,24 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isSef = useIsSef();
 
   const isOnApeluri = location.pathname.startsWith('/apeluri');
+  const isOnPontaj = location.pathname.startsWith('/pontaj');
 
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     cheltuieli: true,
     apeluri: true,
+    pontaj: false,
     online: false,
   });
 
-  // Auto-expand apeluri group when navigating there
+  // Auto-expand groups when navigating there
   useEffect(() => {
     if (isOnApeluri && !expandedGroups.apeluri) {
       setExpandedGroups(prev => ({ ...prev, apeluri: true }));
     }
-  }, [isOnApeluri]);
+    if (isOnPontaj && !expandedGroups.pontaj) {
+      setExpandedGroups(prev => ({ ...prev, pontaj: true }));
+    }
+  }, [isOnApeluri, isOnPontaj]);
 
   // Fetch call count for sidebar badge
   const { data: apeluriData } = useQuery({
@@ -65,6 +72,49 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     staleTime: 60000,
     enabled: isOnApeluri || expandedGroups.apeluri,
   });
+
+  // Fetch pontaj data for sidebar badge (uses same react-query cache as PontajPage)
+  const { data: pontajData } = useQuery({
+    queryKey: ['pontaj'],
+    queryFn: () => api.getPontaj(),
+    refetchInterval: 60000,
+  });
+
+  // Track filter changes from PontajPage via localStorage
+  const [pontajFilterVer, setPontajFilterVer] = useState(0);
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'pontaj-filters') setPontajFilterVer(v => v + 1);
+    };
+    window.addEventListener('storage', onStorage);
+    // Also poll for same-tab changes (storage event only fires cross-tab)
+    const interval = setInterval(() => setPontajFilterVer(v => v + 1), 2000);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const pontajFilteredCount = useMemo(() => {
+    if (!pontajData?.employees) return 0;
+    try {
+      const raw = localStorage.getItem('pontaj-filters');
+      if (!raw) return pontajData.employees.length;
+      const { positions, timeThreshold } = JSON.parse(raw) as { positions: string[]; timeThreshold: number };
+      const posSet = new Set(positions);
+      return pontajData.employees.filter((emp: PontajEmployee) => {
+        if (posSet.size > 0 && !posSet.has(emp.position)) return false;
+        if (emp.clocked_in_at) {
+          const hour = parseInt(emp.clocked_in_at.split(':')[0], 10);
+          if (!isNaN(hour) && hour < (timeThreshold ?? 10)) return false;
+        }
+        return true;
+      }).length;
+    } catch {
+      return pontajData.employees.length;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pontajData?.employees, pontajFilterVer]);
 
   const toggleGroup = (key: string) => {
     setExpandedGroups((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -89,6 +139,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       items: [
         { name: 'Apeluri Azi', href: '/apeluri/primite', icon: PhoneIncoming, show: true, badge: null, badgeApeluri: apeluriData?.summary || null },
         { name: 'Statistici & Trend', href: '/apeluri/trend', icon: TrendingUp, show: true, badge: null, badgeApeluri: null },
+      ],
+    },
+    {
+      key: 'pontaj',
+      label: 'Pontaj',
+      icon: Clock,
+      items: [
+        { name: 'Prezenta Azi', href: '/pontaj', icon: Clock, show: true, badge: pontajFilteredCount, badgeApeluri: null },
       ],
     },
     {

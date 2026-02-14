@@ -13,6 +13,7 @@ from app.core.database import init_db, AsyncSessionLocal
 from app.models import Exercitiu, ApeluriZilnic, ApeluriDetalii
 from app.api import api_router
 from app.api.apeluri import parse_queue_log, QUEUE_LOG_DIR
+from app.api.pontaj import pontaj_fetch_loop
 
 AUTO_CLOSE_HOUR = 7  # 07:00
 SAVE_APELURI_HOUR = 23  # 23:00
@@ -200,16 +201,22 @@ async def lifespan(app: FastAPI):
     await init_db()
     task_close = asyncio.create_task(auto_close_exercitiu_loop())
     task_apeluri = asyncio.create_task(save_apeluri_loop())
+    task_pontaj = asyncio.create_task(pontaj_fetch_loop())
     yield
     # Shutdown
     task_close.cancel()
     task_apeluri.cancel()
+    task_pontaj.cancel()
     try:
         await task_close
     except asyncio.CancelledError:
         pass
     try:
         await task_apeluri
+    except asyncio.CancelledError:
+        pass
+    try:
+        await task_pontaj
     except asyncio.CancelledError:
         pass
 

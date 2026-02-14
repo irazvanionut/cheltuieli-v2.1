@@ -251,6 +251,23 @@ export interface ChatResponse {
 }
 
 // ============================================
+// Pontaj Types
+// ============================================
+
+export interface PontajEmployee {
+  name: string;
+  clocked_in_at: string;
+  position: string;
+}
+
+export interface PontajResponse {
+  last_updated: string | null;
+  error: string | null;
+  employees: PontajEmployee[];
+  positions: string[];
+}
+
+// ============================================
 // UI Types
 // ============================================
 

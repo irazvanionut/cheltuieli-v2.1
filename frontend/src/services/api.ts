@@ -15,6 +15,7 @@ import type {
   RaportZilnic,
   Setting,
   OllamaStatus,
+  PontajResponse,
 } from '@/types';
 
 const API_URL = (import.meta as any).env.VITE_API_URL || '/api';
@@ -458,6 +459,20 @@ class ApiService {
     if (data) params.data_str = data;
     const { data: result } = await this.client.post('/apeluri/istoric/salveaza', null, { params });
     return result;
+  }
+
+  // ============================================
+  // PONTAJ
+  // ============================================
+
+  async getPontaj(): Promise<PontajResponse> {
+    const { data } = await this.client.get<PontajResponse>('/pontaj');
+    return data;
+  }
+
+  async refreshPontaj(): Promise<PontajResponse> {
+    const { data } = await this.client.post<PontajResponse>('/pontaj/refresh');
+    return data;
   }
 
   // ============================================

@@ -12,6 +12,7 @@ import { RapoartePage } from '@/pages/RapoartePage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { ApeluriPrimitePage } from '@/pages/ApeluriPrimitePage';
 import { ApeluriTrendPage } from '@/pages/ApeluriTrendPage';
+import { PontajPage } from '@/pages/PontajPage';
 import { Spinner } from '@/components/ui';
 
 // Create React Query client
@@ -114,6 +115,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ApeluriTrendPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/pontaj"
+              element={
+                <ProtectedRoute>
+                  <PontajPage />
                 </ProtectedRoute>
               }
             />

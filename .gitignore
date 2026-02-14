@@ -4,3 +4,5 @@ frontend/dist/
 data/asterisk/
 **/*.pyc
 null
+.claude
+CLAUDE.md
