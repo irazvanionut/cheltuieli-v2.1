@@ -25,6 +25,7 @@ import {
   TrendingUp,
   MessageSquare,
   Clock,
+  Lightbulb,
 } from 'lucide-react';
 import { useAppStore, useIsAdmin, useIsSef } from '@/hooks/useAppStore';
 import api from '@/services/api';
@@ -51,7 +52,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     cheltuieli: true,
     apeluri: true,
-    pontaj: false,
+    pontaj: true,
     online: false,
   });
 
@@ -138,6 +139,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       icon: Phone,
       items: [
         { name: 'Apeluri Azi', href: '/apeluri/primite', icon: PhoneIncoming, show: true, badge: null, badgeApeluri: apeluriData?.summary || null },
+        { name: 'Recomandari Apeluri', href: '/apeluri/recomandari', icon: Lightbulb, show: true, badge: null, badgeApeluri: null },
         { name: 'Statistici & Trend', href: '/apeluri/trend', icon: TrendingUp, show: true, badge: null, badgeApeluri: null },
       ],
     },

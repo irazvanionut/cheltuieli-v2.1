@@ -12,6 +12,7 @@ import { RapoartePage } from '@/pages/RapoartePage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { ApeluriPrimitePage } from '@/pages/ApeluriPrimitePage';
 import { ApeluriTrendPage } from '@/pages/ApeluriTrendPage';
+import { RecomandariApeluriPage } from '@/pages/RecomandariApeluriPage';
 import { PontajPage } from '@/pages/PontajPage';
 import { Spinner } from '@/components/ui';
 
@@ -107,6 +108,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ApeluriPrimitePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/apeluri/recomandari"
+              element={
+                <ProtectedRoute>
+                  <RecomandariApeluriPage />
                 </ProtectedRoute>
               }
             />

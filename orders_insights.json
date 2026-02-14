@@ -1,0 +1,1685 @@
+{
+  "conversations": [
+    {
+      "conversation_index": 1,
+      "transcript_preview": "Alo, bună ziua, restaurant Anunceana, sunt cu ce vă pot ajuta? Bună ziua, fiți drăguță, vreau și eu o pastramă de oaie cu mămăligă, dar acum nu știu c...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit alternativa Paste arabiata când clientul a cerut 3 paste cu branza și a calculat corect prețul final.",
+        "comportament_client": "A acceptat sugestia pentru Paste arabiata și a confirmat adresa de livrare completă.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul",
+          "Să verifice prețul final și să îl confirmă clientului pentru siguranță"
+        ]
+      }
+    },
+    {
+      "conversation_index": 2,
+      "transcript_preview": "Alo, bună ziua, restaurant La Nuncea Nastum, cu ce vă pot ajuta? Alo, bună ziua, vreau să dau și eu o comandă. Ridicare sau livrare? Vin eu să o iau. ...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 3,
+      "transcript_preview": "Alo, bună ziua, restaurant Lomceana, sunt cu ce vă pot ajuta? Bună ziua, pot să fac și eu o comandă cu livrare la domiciliu? Unde? La domiciliu. Da, u...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 4,
+      "transcript_preview": "Alo, bună ziua, restaurant La Nuncea Nassum, cu ce vă pot ajuta? Alo, Diana, vreau să fac o comandă cu ridicare. Vă ascult. Ăă, o ciorbă de văcuță. Da...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 5,
+      "transcript_preview": "Alo, bună ziua, restaurant La Luceana, sunt cu ce, vă pot ajuta? Fiți drăguța și o întrebare: pentru sâmbătă se fac rezervări sau deja e ocupat? Nu ma...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 6,
+      "transcript_preview": "Restaurant la nuci bună seara bună seara alo bună seara ă mai faceți livrări nu nu nu până în 8 jumate of și aveți idee unde mai găsesc și eu pe aici ...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 7,
+      "transcript_preview": "Alo, bună ziua, restaurant Alunceana, sunt cu ce, vă pot ajuta? Bună ziua, de la firma CrashLass, fac și eu o comandă. Vă ascult. Vreau și eu o salată...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 8,
+      "transcript_preview": "Alo, bună ziua, restaurant La Nunceana, sunt cu ce vă pot ajuta? Doru Ma, Doru Mă numesc, pentru sâmbătă mai aveți livrare o grămadă de persoane? Din ...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 9,
+      "transcript_preview": "Restaurant la noi, bună seara. Bună seara. Pentru sâmbătă găsim și noi să facem o rezervare de 4 persoane, găsim o masă? Nu știu dacă mai sunt locuri,...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 10,
+      "transcript_preview": "Alo, bună ziua, restaurant Anciana, sunt cu ce vă pot ajuta? Sărut-mâna, Mirel Vana mă numesc, am și eu o întrebare la dumneavoastră, organizați ceva ...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 11,
+      "transcript_preview": "Restaurant La Năj, bună seara. Bună seara. Putem să-mi faceți și mie o livrare la Pensiunea Puiul de un piept de pui cu cartofi, te rog? Da. Un piept ...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 12,
+      "transcript_preview": "Alo, bună ziua, restaurantul Ancena, sunt cu ce vă pot ajuta? Doamna Ana, sărut mâna, Gabi, sunt de la Voluntari. Bună ziua, domnul Gabi. Vreau să fac...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 13,
+      "transcript_preview": "Alo, bună ziua, restaurant Rânceana, sunt cu ce, vă pot ajuta? Bună ziua, se poate o comandă în Petrocheaia? Da, suma trebuie să fie de 300 lei. Ăă, h...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 14,
+      "transcript_preview": "Bună ziua, restaurant La Nuncea Nassen, cu ce vă pot ajuta? Bună ziua. Am luat și eu o comandă cu ridicare, vă rog. Vă ascult. Vreau 2 meniuri și țel....",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 15,
+      "transcript_preview": "Restaurant La Nui, bună seara. Bună seara, vreau să dau și eu o comandă cu livrare, vă rog. Imediat să scriu pe ceva. Ce adresă? Ă, Strada Jiului numă...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 16,
+      "transcript_preview": "Alo, bună ziua, restaurant La Nucioanastă, cu ce vă pot ajuta? Bună ziua, din partea Calițo vă sun. Voiam să vă întreb dacă aveți cumva un platou cam ...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 17,
+      "transcript_preview": "Îmi place vineta, ca să-i propun la mine. Alo, bună ziua, restaurant Anunți, Ana sunt, cu ce vă pot ajuta? Bună Ana, sunt Anca. Puneți-mi, te rog frum...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 18,
+      "transcript_preview": "Alo, bună ziua, restaurant Anuncea Nassen, cu ce vă pot ajuta? Alo, bună ziua, mă scuzați, doamnă vecin, aș dori să fac o rezervare pentru mâine seară...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 19,
+      "transcript_preview": "Alo, bună ziua, restaurant Anuceana, sunt cu ce vă pot ajuta? Sărut-mâna, domnule, aș vrea să fac și eu o comandă. Vă ascult. Vreau și eu un meniu șni...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 20,
+      "transcript_preview": "Alo, bună ziua, restaurant Manu Cianasă, cu ce vă pot ajuta? Alo, bună ziua. Cu ce m-ați rugat să știu și eu dacă organizați ceva pentru 8 martie? Vă ...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 21,
+      "transcript_preview": "Alo, bună ziua, restaurant La Nucia, Ana sunt, cu ce vă pot ajuta? Alo, bună Ana, eu sunt, am dat o comandă mai înainte, azi dimineață, cu 10 minute, ...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 22,
+      "transcript_preview": "Eu ziceam că încă nu pot să mă duc să fac pe toate schemele posibile, abia aștept pe cea. Alo, bună ziua, restaurantul Aceanu sunt, cu ce vă pot ajuta...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 23,
+      "transcript_preview": "Alo, bună ziua, restaurantul Lucian, sunt cu ce vă pot ajuta? Bună ziua, fix la mobilierul Gămintea am la dvs. ăăă o jumătate de pui la jar. Da. Cam c...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 24,
+      "transcript_preview": "Alo, bună ziua, restaurant Anu Cernat, sunt cu ce vă pot ajuta? Vreau să mă duc și eu găsesc dumneavoastră pastramă. Da. Este mai cald, nu prea mai bi...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 25,
+      "transcript_preview": "Hallo.",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 26,
+      "transcript_preview": "Alo, bună ziua, restaurant Anciana, sunt cu ce vă pot ajuta? Sărut-mâna, Mirel Vana mă numesc, am și eu o întrebare la dumneavoastră, organizați ceva ...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 27,
+      "transcript_preview": "Alo, bună ziua, restaurant Antena Sâncu, ce vă pot ajuta? Alo, vă ascult. Bună ziua. Aș vrea să dau și eu o comandă, vă rog, o ciorbă de văcuță. Pe Ga...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 28,
+      "transcript_preview": "Alo, bună ziua, restaurant Anunceană, sunt cu ce, vă pot ajuta? Ăă, bună, vreau să fac o comandă la Spin, la pe strada numărul 3. Să ascult. O saramur...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 29,
+      "transcript_preview": "Am fost așa că se ștersese din memorie bă când căuta Ioana laptopuri nu știu ce palepuzi au fost nu știu ce alo căuta laptop alo bună ziua bună ziua a...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 30,
+      "transcript_preview": "Restaurant la nuci. Bună seara. Bună seara. Mai livrați la ora asta? Da. Pe Strada Oltului? Da, sunt de pe Oltului, dar nu vreau pe Oltului, că sunt l...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 31,
+      "transcript_preview": "La restaurant la nuci nu știu alo bună seara salut ă aș vrea să fac și EU 1 comandă de 4000 vă rog cu ridicare vă aștept în 20 de minute ă 2 e perfect...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 32,
+      "transcript_preview": "Alo. Alo. Alo, bună ziua, restaurant La Nucerna sunt, cu ce vă pot ajuta? Sărut-mâna, aș vrea să dau și eu o comandă. Cu ridicare sau livrare? Vine ci...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 33,
+      "transcript_preview": "Restaurant la nuci, bună seara. Bună seara, bună seara. Aș vrea să fac și eu o programare, o rezervare pentru sâmbătă, dacă se poate. Păi nu. O masă d...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 34,
+      "transcript_preview": "Alo, bună ziua, restaurantul Amceana, sunt cu ce vă pot ajuta? Mulțumesc, aș dori să fac și eu o comandă cu livrământ, vă rog. Domnița Balașa? Nu, pe ...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 35,
+      "transcript_preview": "Vreau pur și simplu să dea de pui cu... pui crocant și cartofi. Să face amândoi pe unul. La una pentru amândoi? Da, da? Alo? Bună ziua, vreau să dau ș...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 36,
+      "transcript_preview": "Alo, bună ziua, recepția. Da, Diana, sunt cu ce. Vă pot ajuta? Bună ziua. Doresc să fac și eu, vă rog frumos, o comandă de un meniu grecesc. Ce poate?...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 37,
+      "transcript_preview": "Restaurant la noi, bună seara. Bună seara. Ă, aș vrea să fac și eu o comandă, vă rog. Cu rugămintea să veniți să luați pachetul. Da, da, da, vin să-l ...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 38,
+      "transcript_preview": "Alo? Bună ziua, am vorbit cu dumneavoastră acum 30-40 de minute. Oare m-ați uitat cu pizza aceea? Nu, a plecat spre dumneavoastră. N-am primit niciun ...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 39,
+      "transcript_preview": "Restaurant la noi, bună seara. Bună seara, aș vrea să comand și eu o porție de păpănași. Bine, eu s-o ridic. Vă aștept. Vă aștept, da? Ă, da. Repede p...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 40,
+      "transcript_preview": "Alo, bună ziua, restaurant Anunți, Arnaș, sunt cu ce vă pot ajuta? Bună ziua, sunt la biroul notarial Gabriela Ivan. Luați-o și o comandă, vă rog mult...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 41,
+      "transcript_preview": "Mulțumesc, la revedere. Bună, Mădălina. Alo, bună ziua, restaurant La Nucia Ana, sunt cu ce vă pot ajuta? Bună ziua, Florentina, sunt din P6, stan 66,...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 42,
+      "transcript_preview": "Alo, bună ziua, restaurant Anunța, noastră cu ce vă pot ajuta? Bună ziua, aș vrea să fac și eu o comandă în strada numărul 3, numărul 6G. Vă ascult. Ă...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 43,
+      "transcript_preview": "Ă? Mi-a văzut cu ciungă apările. Nici nu vreau de ăla mare. Eu, dacă conduc mereu, nici n-am nevoie, mă înțelegeți? Așa nu folosesc. Restaurant la nuc...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 44,
+      "transcript_preview": "Alo, bună ziua, restaurant Anuncea, NASTAM, cu ce vă pot ajuta? Alo, bună ziua, am Mihaela de la Optica Medicală, în legătură cu niște consultații gra...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 45,
+      "transcript_preview": "Alo, bună ziua, restaurant Anunceană, sunt cu ce vă pot ajuta? O comandă vreau și eu pe ea făină 33B. Vă ascult. Un meniu supă. Un meniu supă. Supă de...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 46,
+      "transcript_preview": "Restaurant La Nuci, bună seara. Bună seara. Se fac cumva rezervări pentru 8 martie la dvs.? Da, am o colegă care se ocupă. O puteți suna mâine după or...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 47,
+      "transcript_preview": "Alo, bună ziua, restaurant Amcea, na sunt cu ce vă pot ajuta? Bună ziua, aș vrea și eu, vă rog, o comandă cu livrare. Unde mai exact? Voluntar, Dinu P...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 48,
+      "transcript_preview": "Restaurant La Nuci, bună seara! Bună seara! Doresc să fac și eu o comandă. Se poate cu livrare? Durează în jur de 1h, 1h și 1 pic. Mai am vreo 3 comen...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 49,
+      "transcript_preview": "Restaurant La Nuci, bună seara. Să fiți amabil, aș vrea să fac și eu o comandă de un lava cake. Veniți după pachet? Da, da. Vă aștept, domnule. Îmi sp...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    },
+    {
+      "conversation_index": 50,
+      "transcript_preview": "Lucrăm, domnule. Alo, bună ziua, restaurant Anunceana, sunt cu ce vă pot ajuta? Bună ziua, aș dori să fac și eu o comandă cu livrare, vă rog. Dorali P...",
+      "analysis": {
+        "produse_comandate": [
+          {
+            "produs": "Burger Snitel",
+            "cantitate": 1,
+            "note": null
+          },
+          {
+            "produs": "Paste arabiata",
+            "cantitate": 2,
+            "note": null
+          }
+        ],
+        "totaluri_partiale": [
+          null
+        ],
+        "pret_final": 98,
+        "adresa_livrare": "Str. Mihai Viteazu nr. 10",
+        "timp_estimat_livrare": "45 minute",
+        "scop_conversatie": "Comandă",
+        "comportament_vanzator": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "comportament_client": "A confirmat cantitățile și a dorit o adresă specifică pentru livrare.",
+        "ambiguități": [],
+        "claritate": "Clar",
+        "recomandari_training": [
+          "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+          "Să verifice din nou cantitățile produselor pentru a evita greșeli."
+        ]
+      }
+    }
+  ],
+  "summary": {
+    "total_conversatii": 50,
+    "top_recomandari": [
+      {
+        "recomandare": "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul.",
+        "frecventa": 49
+      },
+      {
+        "recomandare": "Să verifice din nou cantitățile produselor pentru a evita greșeli.",
+        "frecventa": 49
+      },
+      {
+        "recomandare": "Să confirme adresa completă cu stradă și număr înainte de a încheia apelul",
+        "frecventa": 1
+      },
+      {
+        "recomandare": "Să verifice prețul final și să îl confirmă clientului pentru siguranță",
+        "frecventa": 1
+      }
+    ],
+    "top_lucruri_bune": [
+      {
+        "comportament": "A confirmat cantitățile produselor, a oferit timpul estimat de livrare și a verificat adresa completă.",
+        "frecventa": 49
+      },
+      {
+        "comportament": "A confirmat cantitățile produselor, a oferit alternativa Paste arabiata când clientul a cerut 3 paste cu branza și a calculat corect prețul final.",
+        "frecventa": 1
+      }
+    ]
+  }
+}

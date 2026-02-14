@@ -268,6 +268,43 @@ export interface PontajResponse {
 }
 
 // ============================================
+// Recomandari Apeluri Types
+// ============================================
+
+export interface RecomandariProdus {
+  produs: string;
+  cantitate: number;
+  note?: string | null;
+}
+
+export interface RecomandariAnalysis {
+  produse_comandate: RecomandariProdus[];
+  pret_final: number | null;
+  adresa_livrare: string | null;
+  timp_estimat_livrare: string | null;
+  scop_conversatie: string;
+  comportament_vanzator: string;
+  comportament_client: string;
+  recomandari_training: string[];
+}
+
+export interface RecomandariConversation {
+  conversation_index: number;
+  transcript_preview: string;
+  analysis: RecomandariAnalysis;
+}
+
+export interface RecomandariApeluri {
+  id: number;
+  data: string;
+  total_conversatii: number;
+  conversations: RecomandariConversation[];
+  top_recomandari: { recomandare: string; frecventa: number }[];
+  top_lucruri_bune: { comportament: string; frecventa: number }[];
+  created_at: string;
+}
+
+// ============================================
 // UI Types
 // ============================================
 

@@ -362,6 +362,22 @@ CREATE INDEX idx_apeluri_zilnic_data ON apeluri_zilnic(data DESC);
 CREATE INDEX idx_apeluri_detalii_zilnic ON apeluri_detalii(apeluri_zilnic_id);
 
 -- ============================================
+-- 14. RECOMANDARI APELURI (Insights comenzi)
+-- ============================================
+
+CREATE TABLE recomandari_apeluri (
+    id SERIAL PRIMARY KEY,
+    data DATE NOT NULL UNIQUE,
+    total_conversatii INTEGER DEFAULT 0,
+    conversations JSONB DEFAULT '[]',
+    top_recomandari JSONB DEFAULT '[]',
+    top_lucruri_bune JSONB DEFAULT '[]',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_recomandari_apeluri_data ON recomandari_apeluri(data DESC);
+
+-- ============================================
 -- FUNCTIONS & TRIGGERS
 -- ============================================
 

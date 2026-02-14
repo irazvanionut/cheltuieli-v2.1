@@ -1,0 +1,329 @@
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { clsx } from 'clsx';
+import {
+  Lightbulb,
+  ThumbsUp,
+  Package,
+  MapPin,
+  Calendar,
+  MessageSquare,
+  Loader2,
+} from 'lucide-react';
+import api from '@/services/api';
+import type { RecomandariApeluri, RecomandariConversation } from '@/types';
+
+type Tab = 'sumar' | 'produse' | 'adrese';
+
+export const RecomandariApeluriPage: React.FC = () => {
+  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<Tab>('sumar');
+
+  const { data: zileDisponibile = [] } = useQuery({
+    queryKey: ['recomandari-zile'],
+    queryFn: () => api.getRecomandariZileDisponibile(),
+  });
+
+  // Auto-select first available date
+  const effectiveDate = selectedDate || (zileDisponibile.length > 0 ? zileDisponibile[0] : '');
+
+  const { data, isLoading } = useQuery<RecomandariApeluri>({
+    queryKey: ['recomandari-apeluri', effectiveDate],
+    queryFn: () => api.getRecomandariApeluri(effectiveDate),
+    enabled: !!effectiveDate,
+  });
+
+  // Aggregate products from conversations
+  const produse = useMemo(() => {
+    if (!data?.conversations?.length) return [];
+    const map = new Map<string, { cantitate: number; comenzi: number }>();
+    for (const conv of data.conversations) {
+      const produse = conv.analysis?.produse_comandate || [];
+      const seen = new Set<string>();
+      for (const p of produse) {
+        if (!p.produs) continue;
+        const key = p.produs;
+        const existing = map.get(key) || { cantitate: 0, comenzi: 0 };
+        existing.cantitate += p.cantitate || 0;
+        if (!seen.has(key)) {
+          existing.comenzi += 1;
+          seen.add(key);
+        }
+        map.set(key, existing);
+      }
+    }
+    return Array.from(map.entries())
+      .map(([produs, stats]) => ({ produs, ...stats }))
+      .sort((a, b) => b.cantitate - a.cantitate);
+  }, [data?.conversations]);
+
+  // Aggregate addresses from conversations
+  const adrese = useMemo(() => {
+    if (!data?.conversations?.length) return [];
+    const map = new Map<string, { comenzi: number; valoare: number }>();
+    for (const conv of data.conversations) {
+      const addr = conv.analysis?.adresa_livrare;
+      if (!addr) continue;
+      const existing = map.get(addr) || { comenzi: 0, valoare: 0 };
+      existing.comenzi += 1;
+      existing.valoare += conv.analysis?.pret_final || 0;
+      map.set(addr, existing);
+    }
+    return Array.from(map.entries())
+      .map(([adresa, stats]) => ({ adresa, ...stats }))
+      .sort((a, b) => b.comenzi - a.comenzi);
+  }, [data?.conversations]);
+
+  const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
+    { key: 'sumar', label: 'Sumar', icon: MessageSquare },
+    { key: 'produse', label: 'Produse', icon: Package },
+    { key: 'adrese', label: 'Adrese', icon: MapPin },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100">
+            Recomandari Apeluri
+          </h1>
+          <p className="text-sm text-stone-500 dark:text-stone-400 mt-1">
+            Insights din conversatiile telefonice
+          </p>
+        </div>
+
+        {/* Date selector */}
+        <div className="flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-stone-400" />
+          <select
+            value={effectiveDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800 text-sm text-stone-900 dark:text-stone-100"
+          >
+            {zileDisponibile.length === 0 && (
+              <option value="">Nicio zi disponibila</option>
+            )}
+            {zileDisponibile.map((z: string) => (
+              <option key={z} value={z}>{z}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 bg-stone-100 dark:bg-stone-800 rounded-lg p-1">
+        {tabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={clsx(
+              'flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors',
+              activeTab === tab.key
+                ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 shadow-sm'
+                : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'
+            )}
+          >
+            <tab.icon className="w-4 h-4" />
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-stone-400" />
+        </div>
+      ) : !data || data.total_conversatii === 0 ? (
+        <div className="text-center py-20 text-stone-400">
+          <Lightbulb className="w-12 h-12 mx-auto mb-3 opacity-50" />
+          <p>Nu exista date pentru aceasta zi</p>
+        </div>
+      ) : (
+        <>
+          {activeTab === 'sumar' && <SumarTab data={data} />}
+          {activeTab === 'produse' && <ProduseTab produse={produse} />}
+          {activeTab === 'adrese' && <AdreseTab adrese={adrese} />}
+        </>
+      )}
+    </div>
+  );
+};
+
+// ============================================
+// SUMAR TAB
+// ============================================
+
+const SumarTab: React.FC<{ data: RecomandariApeluri }> = ({ data }) => (
+  <div className="space-y-6">
+    {/* Total card */}
+    <div className="bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800 p-6">
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+          <MessageSquare className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+        </div>
+        <div>
+          <p className="text-sm text-stone-500 dark:text-stone-400">Total Conversatii</p>
+          <p className="text-3xl font-bold text-stone-900 dark:text-stone-100">
+            {data.total_conversatii}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    {/* Top Recomandari */}
+    {data.top_recomandari?.length > 0 && (
+      <div className="bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800 p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Lightbulb className="w-5 h-5 text-amber-500" />
+          <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+            Top Recomandari Training
+          </h2>
+        </div>
+        <div className="space-y-3">
+          {data.top_recomandari.map((item, i) => (
+            <div
+              key={i}
+              className="flex items-start gap-3 p-3 rounded-lg bg-stone-50 dark:bg-stone-800/50"
+            >
+              <span className="flex-1 text-sm text-stone-700 dark:text-stone-300">
+                {item.recomandare}
+              </span>
+              <span className="shrink-0 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+                {item.frecventa}x
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {/* Top Lucruri Bune */}
+    {data.top_lucruri_bune?.length > 0 && (
+      <div className="bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800 p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <ThumbsUp className="w-5 h-5 text-emerald-500" />
+          <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+            Top Lucruri Bune
+          </h2>
+        </div>
+        <div className="space-y-3">
+          {data.top_lucruri_bune.map((item, i) => (
+            <div
+              key={i}
+              className="flex items-start gap-3 p-3 rounded-lg bg-stone-50 dark:bg-stone-800/50"
+            >
+              <span className="flex-1 text-sm text-stone-700 dark:text-stone-300">
+                {item.comportament}
+              </span>
+              <span className="shrink-0 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
+                {item.frecventa}x
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+  </div>
+);
+
+// ============================================
+// PRODUSE TAB
+// ============================================
+
+const ProduseTab: React.FC<{
+  produse: { produs: string; cantitate: number; comenzi: number }[];
+}> = ({ produse }) => (
+  <div className="bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
+    <div className="p-4 border-b border-stone-200 dark:border-stone-800">
+      <div className="flex items-center gap-2">
+        <Package className="w-5 h-5 text-blue-500" />
+        <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+          Produse Comandate
+        </h2>
+        <span className="text-sm text-stone-400">({produse.length})</span>
+      </div>
+    </div>
+    {produse.length === 0 ? (
+      <div className="p-8 text-center text-stone-400 text-sm">Nicio comanda</div>
+    ) : (
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-stone-50 dark:bg-stone-800/50 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">
+              <th className="px-4 py-3">Produs</th>
+              <th className="px-4 py-3 text-right">Total Cantitate</th>
+              <th className="px-4 py-3 text-right">Nr. Comenzi</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-stone-200 dark:divide-stone-800">
+            {produse.map((p, i) => (
+              <tr key={i} className="hover:bg-stone-50 dark:hover:bg-stone-800/30">
+                <td className="px-4 py-3 text-sm text-stone-900 dark:text-stone-100 font-medium">
+                  {p.produs}
+                </td>
+                <td className="px-4 py-3 text-sm text-stone-600 dark:text-stone-400 text-right font-mono">
+                  {p.cantitate}
+                </td>
+                <td className="px-4 py-3 text-sm text-stone-600 dark:text-stone-400 text-right font-mono">
+                  {p.comenzi}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </div>
+);
+
+// ============================================
+// ADRESE TAB
+// ============================================
+
+const AdreseTab: React.FC<{
+  adrese: { adresa: string; comenzi: number; valoare: number }[];
+}> = ({ adrese }) => (
+  <div className="bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
+    <div className="p-4 border-b border-stone-200 dark:border-stone-800">
+      <div className="flex items-center gap-2">
+        <MapPin className="w-5 h-5 text-rose-500" />
+        <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">
+          Adrese Livrare
+        </h2>
+        <span className="text-sm text-stone-400">({adrese.length})</span>
+      </div>
+    </div>
+    {adrese.length === 0 ? (
+      <div className="p-8 text-center text-stone-400 text-sm">Nicio adresa</div>
+    ) : (
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-stone-50 dark:bg-stone-800/50 text-left text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">
+              <th className="px-4 py-3">Adresa</th>
+              <th className="px-4 py-3 text-right">Nr. Comenzi</th>
+              <th className="px-4 py-3 text-right">Total Valoare</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-stone-200 dark:divide-stone-800">
+            {adrese.map((a, i) => (
+              <tr key={i} className="hover:bg-stone-50 dark:hover:bg-stone-800/30">
+                <td className="px-4 py-3 text-sm text-stone-900 dark:text-stone-100 font-medium">
+                  {a.adresa}
+                </td>
+                <td className="px-4 py-3 text-sm text-stone-600 dark:text-stone-400 text-right font-mono">
+                  {a.comenzi}
+                </td>
+                <td className="px-4 py-3 text-sm text-stone-600 dark:text-stone-400 text-right font-mono">
+                  {a.valoare > 0 ? `${a.valoare} lei` : '-'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </div>
+);

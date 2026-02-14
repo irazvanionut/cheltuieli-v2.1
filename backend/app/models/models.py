@@ -261,3 +261,15 @@ class ApeluriDetalii(Base):
     created_at = Column(DateTime, server_default=func.now())
 
     zilnic = relationship("ApeluriZilnic", back_populates="detalii")
+
+
+class RecomandariApeluri(Base):
+    __tablename__ = "recomandari_apeluri"
+
+    id = Column(Integer, primary_key=True, index=True)
+    data = Column(Date, unique=True, nullable=False)
+    total_conversatii = Column(Integer, default=0)
+    conversations = Column(JSONB, default=[])
+    top_recomandari = Column(JSONB, default=[])
+    top_lucruri_bune = Column(JSONB, default=[])
+    created_at = Column(DateTime, server_default=func.now())

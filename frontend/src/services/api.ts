@@ -462,6 +462,22 @@ class ApiService {
   }
 
   // ============================================
+  // RECOMANDARI APELURI
+  // ============================================
+
+  async getRecomandariApeluri(data?: string): Promise<any> {
+    const params: Record<string, any> = {};
+    if (data) params.data = data;
+    const { data: result } = await this.client.get('/recomandari-apeluri', { params });
+    return result;
+  }
+
+  async getRecomandariZileDisponibile(): Promise<string[]> {
+    const { data } = await this.client.get<string[]>('/recomandari-apeluri/zile-disponibile');
+    return data;
+  }
+
+  // ============================================
   // PONTAJ
   // ============================================
 

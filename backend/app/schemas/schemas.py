@@ -448,5 +448,27 @@ class ChatResponse(BaseModel):
     context_used: Optional[dict] = None
 
 
+# ============================================
+# RECOMANDARI APELURI SCHEMAS
+# ============================================
+
+class RecomandariApelCreate(BaseModel):
+    conversations: List[Dict] = []
+    summary: Optional[Dict] = None
+
+
+class RecomandariApelResponse(BaseModel):
+    id: int
+    data: date
+    total_conversatii: int = 0
+    conversations: List[Dict] = []
+    top_recomandari: List[Dict] = []
+    top_lucruri_bune: List[Dict] = []
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 # Forward references
 TokenResponse.model_rebuild()
