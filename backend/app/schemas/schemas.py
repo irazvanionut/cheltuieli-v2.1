@@ -464,6 +464,7 @@ class RecomandariApelResponse(BaseModel):
     conversations: List[Dict] = []
     top_recomandari: List[Dict] = []
     top_lucruri_bune: List[Dict] = []
+    tip_apeluri: Dict = {}
     created_at: datetime
 
     class Config:

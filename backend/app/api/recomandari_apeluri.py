@@ -25,6 +25,7 @@ async def upsert_recomandari(
     total_conversatii = summary.get("total_conversatii", len(conversations))
     top_recomandari = summary.get("top_recomandari", [])
     top_lucruri_bune = summary.get("top_lucruri_bune", [])
+    tip_apeluri = summary.get("tip_apeluri", {})
 
     result = await db.execute(
         select(RecomandariApeluri).where(RecomandariApeluri.data == data_date)
@@ -36,6 +37,7 @@ async def upsert_recomandari(
         existing.conversations = conversations
         existing.top_recomandari = top_recomandari
         existing.top_lucruri_bune = top_lucruri_bune
+        existing.tip_apeluri = tip_apeluri
         record_id = existing.id
     else:
         record = RecomandariApeluri(
@@ -44,6 +46,7 @@ async def upsert_recomandari(
             conversations=conversations,
             top_recomandari=top_recomandari,
             top_lucruri_bune=top_lucruri_bune,
+            tip_apeluri=tip_apeluri,
         )
         db.add(record)
         await db.flush()
@@ -74,6 +77,7 @@ async def get_recomandari(
             conversations=[],
             top_recomandari=[],
             top_lucruri_bune=[],
+            tip_apeluri={},
             created_at=datetime.now(),
         )
 

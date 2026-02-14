@@ -9,6 +9,7 @@ import {
   Calendar,
   MessageSquare,
   Loader2,
+  Phone,
 } from 'lucide-react';
 import api from '@/services/api';
 import type { RecomandariApeluri, RecomandariConversation } from '@/types';
@@ -157,18 +158,37 @@ export const RecomandariApeluriPage: React.FC = () => {
 
 const SumarTab: React.FC<{ data: RecomandariApeluri }> = ({ data }) => (
   <div className="space-y-6">
-    {/* Total card */}
+    {/* Total card + tip apeluri */}
     <div className="bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800 p-6">
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-          <MessageSquare className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+      <div className="flex items-center gap-6 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+            <MessageSquare className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div>
+            <p className="text-sm text-stone-500 dark:text-stone-400">Total Conversatii</p>
+            <p className="text-3xl font-bold text-stone-900 dark:text-stone-100">
+              {data.total_conversatii}
+            </p>
+          </div>
         </div>
-        <div>
-          <p className="text-sm text-stone-500 dark:text-stone-400">Total Conversatii</p>
-          <p className="text-3xl font-bold text-stone-900 dark:text-stone-100">
-            {data.total_conversatii}
-          </p>
-        </div>
+
+        {data.tip_apeluri && Object.keys(data.tip_apeluri).length > 0 && (
+          <div className="flex items-center gap-2 flex-wrap">
+            {Object.entries(data.tip_apeluri)
+              .sort(([, a], [, b]) => (b as number) - (a as number))
+              .map(([tip, count]) => (
+                <div
+                  key={tip}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-100 dark:bg-stone-800"
+                >
+                  <Phone className="w-3.5 h-3.5 text-stone-400" />
+                  <span className="text-sm text-stone-600 dark:text-stone-300 capitalize">{tip}</span>
+                  <span className="text-sm font-semibold text-stone-900 dark:text-stone-100">{count as number}</span>
+                </div>
+              ))}
+          </div>
+        )}
       </div>
     </div>
 

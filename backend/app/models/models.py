@@ -272,4 +272,5 @@ class RecomandariApeluri(Base):
     conversations = Column(JSONB, default=[])
     top_recomandari = Column(JSONB, default=[])
     top_lucruri_bune = Column(JSONB, default=[])
+    tip_apeluri = Column(JSONB, default={})
     created_at = Column(DateTime, server_default=func.now())

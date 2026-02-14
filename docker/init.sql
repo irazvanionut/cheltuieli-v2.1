@@ -372,6 +372,7 @@ CREATE TABLE recomandari_apeluri (
     conversations JSONB DEFAULT '[]',
     top_recomandari JSONB DEFAULT '[]',
     top_lucruri_bune JSONB DEFAULT '[]',
+    tip_apeluri JSONB DEFAULT '{}',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

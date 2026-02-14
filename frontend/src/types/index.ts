@@ -301,6 +301,7 @@ export interface RecomandariApeluri {
   conversations: RecomandariConversation[];
   top_recomandari: { recomandare: string; frecventa: number }[];
   top_lucruri_bune: { comportament: string; frecventa: number }[];
+  tip_apeluri: Record<string, number>;
   created_at: string;
 }
 
