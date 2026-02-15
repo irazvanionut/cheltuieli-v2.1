@@ -115,7 +115,7 @@ export const LoginPage: React.FC = () => {
 
             {/* Help text */}
             <p className="text-center text-xs text-stone-400 mt-6">
-              Cod implicit admin: 1234
+               
             </p>
           </form>
         </div>

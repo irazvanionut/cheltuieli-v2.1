@@ -26,6 +26,7 @@ import {
   MessageSquare,
   Clock,
   Lightbulb,
+  Star,
 } from 'lucide-react';
 import { useAppStore, useIsAdmin, useIsSef } from '@/hooks/useAppStore';
 import api from '@/services/api';
@@ -53,7 +54,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     cheltuieli: true,
     apeluri: true,
     pontaj: true,
-    online: false,
+    online: true,
   });
 
   // Auto-expand groups when navigating there
@@ -159,6 +160,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         { name: 'Comenzi', href: '/online/comenzi', icon: ShoppingCart, show: true, badge: null, badgeApeluri: null },
         { name: 'Statistici', href: '/online/statistici', icon: TrendingUp, show: true, badge: null, badgeApeluri: null },
         { name: 'Recenzii', href: '/online/recenzii', icon: MessageSquare, show: true, badge: null, badgeApeluri: null },
+        { name: 'Review Google', href: '/online/review-google', icon: Star, show: true, badge: null, badgeApeluri: null },
+        { name: 'Review Facebook', href: '/online/review-facebook', icon: Star, show: true, badge: null, badgeApeluri: null },
+        { name: 'Review TripAdvisor', href: '/online/review-tripadvisor', icon: Star, show: true, badge: null, badgeApeluri: null },
       ],
     },
   ];
@@ -352,7 +356,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               <LogOut className="w-4 h-4" /> Ieșire
             </button>
           </div>
-          <p className="text-center text-[10px] text-stone-300 dark:text-stone-700 mt-2 select-none">v1.101</p>
+          <p className="text-center text-[10px] text-stone-300 dark:text-stone-700 mt-2 select-none">v1.2</p>
         </div>
       </aside>
 
