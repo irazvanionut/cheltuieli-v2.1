@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query, Body
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, text
+from sqlalchemy import select, text, case
 from datetime import date, datetime
 
 from app.core.database import get_db
@@ -80,7 +80,16 @@ async def get_recomandari(
     # If ai_model is specified and valid, filter by it
     if ai_model and ai_model in ['Claude', 'Ollama']:
         query = query.where(RecomandariApeluri.ai_model == ai_model)
-    # Otherwise, return first record for that date (any model)
+    else:
+        # When "Any" is selected, prefer Claude over Ollama
+        # Order by: Claude=1, Ollama=2, others=3
+        query = query.order_by(
+            case(
+                (RecomandariApeluri.ai_model == 'Claude', 1),
+                (RecomandariApeluri.ai_model == 'Ollama', 2),
+                else_=3
+            )
+        )
 
     result = await db.execute(query)
     record = result.scalar_one_or_none()

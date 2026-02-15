@@ -31,6 +31,15 @@ export const CallDetailsModal: React.FC<CallDetailsModalProps> = ({
 }) => {
   const [expandedCalls, setExpandedCalls] = useState<Set<number>>(new Set());
 
+  // Debug: log conversations to see the actual structure
+  React.useEffect(() => {
+    if (isOpen && conversations.length > 0) {
+      console.log('CallDetailsModal conversations:', conversations);
+      console.log('First conversation:', conversations[0]);
+      console.log('All fields in first conversation:', Object.keys(conversations[0]));
+    }
+  }, [isOpen, conversations]);
+
   if (!isOpen) return null;
 
   const toggleExpand = (index: number) => {
@@ -77,9 +86,38 @@ export const CallDetailsModal: React.FC<CallDetailsModalProps> = ({
             <div className="space-y-3">
               {conversations.map((conv) => {
                 const isExpanded = expandedCalls.has(conv.conversation_index);
-                // Combine data and ora to create a date object
-                const dateTimeStr = `${conv.data}T${conv.ora}:00`;
-                const timestamp = parseISO(dateTimeStr);
+
+                // Try to get phone number from multiple possible field names
+                const phoneNumber = (conv as any).telefon ||
+                                    (conv as any).phone ||
+                                    (conv as any).caller_id ||
+                                    (conv as any).phone_number ||
+                                    'N/A';
+
+                // Try to get date from multiple sources
+                const conversationDate = conv.data ||
+                                        (conv as any).date ||
+                                        new Date().toISOString().split('T')[0];
+
+                // Try to get time from multiple sources
+                const conversationTime = conv.ora ||
+                                        (conv as any).time ||
+                                        (conv as any).hour ||
+                                        '00:00';
+
+                // Safely parse date and time with fallback
+                let timestamp: Date;
+                try {
+                  const dateTimeStr = `${conversationDate}T${conversationTime}:00`;
+                  timestamp = parseISO(dateTimeStr);
+                  // Check if date is valid
+                  if (isNaN(timestamp.getTime())) {
+                    timestamp = new Date();
+                  }
+                } catch (error) {
+                  console.error('Error parsing date:', error, conv);
+                  timestamp = new Date();
+                }
 
                 return (
                   <div
@@ -95,7 +133,7 @@ export const CallDetailsModal: React.FC<CallDetailsModalProps> = ({
                             <div className="flex items-center gap-2">
                               <Phone className="w-4 h-4 text-blue-500" />
                               <span className="text-sm font-mono font-semibold text-stone-900 dark:text-stone-100">
-                                {conv.telefon}
+                                {phoneNumber}
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
@@ -104,9 +142,11 @@ export const CallDetailsModal: React.FC<CallDetailsModalProps> = ({
                                 {format(timestamp, 'dd MMM yyyy, HH:mm', { locale: ro })}
                               </span>
                             </div>
-                            <span className="px-2 py-0.5 rounded text-xs font-medium bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300 capitalize">
-                              {conv.tip}
-                            </span>
+                            {conv.tip && (
+                              <span className="px-2 py-0.5 rounded text-xs font-medium bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300 capitalize">
+                                {conv.tip}
+                              </span>
+                            )}
                           </div>
                         </div>
 
@@ -128,17 +168,19 @@ export const CallDetailsModal: React.FC<CallDetailsModalProps> = ({
                     {isExpanded && (
                       <div className="border-t border-stone-200 dark:border-stone-700 p-4 space-y-4 bg-white dark:bg-stone-900">
                         {/* Transcript */}
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <MessageSquare className="w-4 h-4 text-amber-500" />
-                            <h4 className="text-sm font-semibold text-stone-900 dark:text-stone-100">
-                              Transcript
-                            </h4>
+                        {conv.transcript && (
+                          <div>
+                            <div className="flex items-center gap-2 mb-2">
+                              <MessageSquare className="w-4 h-4 text-amber-500" />
+                              <h4 className="text-sm font-semibold text-stone-900 dark:text-stone-100">
+                                Transcript
+                              </h4>
+                            </div>
+                            <p className="text-sm text-stone-600 dark:text-stone-400 leading-relaxed whitespace-pre-wrap">
+                              {conv.transcript}
+                            </p>
                           </div>
-                          <p className="text-sm text-stone-600 dark:text-stone-400 leading-relaxed whitespace-pre-wrap">
-                            {conv.transcript}
-                          </p>
-                        </div>
+                        )}
 
                         {/* Analysis sections */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-stone-200 dark:border-stone-700">

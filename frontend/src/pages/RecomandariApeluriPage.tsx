@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { clsx } from 'clsx';
 import {
@@ -18,9 +18,7 @@ import { CallDetailsModal } from '@/components/ui/CallDetailsModal';
 type Tab = 'sumar' | 'produse' | 'adrese';
 
 export const RecomandariApeluriPage: React.FC = () => {
-  // Default to today's date
-  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-  const [selectedDate, setSelectedDate] = useState<string>(today);
+  const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedAiModel, setSelectedAiModel] = useState<'Claude' | 'Ollama' | 'Any'>('Any');
   const [activeTab, setActiveTab] = useState<Tab>('sumar');
   const [modalState, setModalState] = useState<{
@@ -37,6 +35,13 @@ export const RecomandariApeluriPage: React.FC = () => {
     queryKey: ['recomandari-zile', selectedAiModel],
     queryFn: () => api.getRecomandariZileDisponibile(selectedAiModel === 'Any' ? undefined : selectedAiModel),
   });
+
+  // Auto-select the most recent date (first in the list) when dates load
+  useEffect(() => {
+    if (!selectedDate && zileDisponibile.length > 0) {
+      setSelectedDate(zileDisponibile[0]); // First date is most recent (desc order)
+    }
+  }, [zileDisponibile.length]);
 
   const { data, isLoading } = useQuery<RecomandariApeluri>({
     queryKey: ['recomandari-apeluri', selectedDate, selectedAiModel],
@@ -89,6 +94,9 @@ export const RecomandariApeluriPage: React.FC = () => {
   const handleFilterByTipApel = (tip: string, count: number) => {
     if (!data?.conversations) return;
     const filtered = data.conversations.filter((c) => c.tip === tip);
+    console.log('handleFilterByTipApel - Full data:', data);
+    console.log('handleFilterByTipApel - Filtered conversations:', filtered);
+    console.log('handleFilterByTipApel - First conversation:', filtered[0]);
     setModalState({
       isOpen: true,
       title: `${tip} (${count} apeluri)`,
