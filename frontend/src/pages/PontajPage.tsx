@@ -91,7 +91,7 @@ export const PontajPage: React.FC = () => {
             Prezenta Azi
           </h1>
           <p className="text-sm text-stone-500 mt-1">
-            Colegi pontati astazi
+            Colegi pontati astazi &mdash; {new Date().toLocaleDateString('ro-RO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
         </div>
         <button

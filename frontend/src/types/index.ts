@@ -257,6 +257,7 @@ export interface ChatResponse {
 export interface PontajEmployee {
   name: string;
   clocked_in_at: string;
+  clocked_in_date: string;
   position: string;
 }
 

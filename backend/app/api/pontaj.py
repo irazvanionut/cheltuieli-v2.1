@@ -142,19 +142,23 @@ def _extract_results(raw: Any) -> list:
     return []
 
 
-def _parse_clock_time(raw: str) -> str:
-    """Extract HH:MM:SS from various datetime formats."""
+def _parse_clock_datetime(raw: str) -> tuple[str, str]:
+    """Extract (YYYY-MM-DD, HH:MM:SS) from various datetime formats.
+
+    Returns (date_str, time_str). date_str may be empty if only time is available.
+    """
     if not raw:
-        return ""
+        return ("", "")
     try:
         if "T" in raw:
-            return raw.split("T")[1][:8]
-        if len(raw) >= 8 and raw[2] == ":" and raw[5] == ":":
-            return raw[:8]
+            parts = raw.split("T")
+            date_part = parts[0] if len(parts[0]) >= 10 else ""
+            time_part = parts[1][:8]
+            return (date_part[:10], time_part)
         dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
-        return dt.strftime("%H:%M:%S")
+        return (dt.strftime("%Y-%m-%d"), dt.strftime("%H:%M:%S"))
     except Exception:
-        return raw[:8] if len(raw) >= 8 else raw
+        return ("", raw[:8] if len(raw) >= 8 else raw)
 
 
 async def _fetch_pontaj_data() -> dict[str, Any]:
@@ -195,7 +199,7 @@ async def _fetch_pontaj_data() -> dict[str, Any]:
             name = item.get("_Name") or item.get("_name") or ""
             emp_id = item.get("id") or item.get("Id") or ""
             clocked_in_raw = item.get("_ClockedInAt") or item.get("_clockedInAt") or ""
-            clocked_in_at = _parse_clock_time(clocked_in_raw)
+            clocked_in_date, clocked_in_at = _parse_clock_datetime(clocked_in_raw)
 
             # Get position: ClockedIn fields → EmployeeProjection → ErpIdentityUser
             position = item.get("_RoleName") or item.get("_TitleName") or ""
@@ -207,8 +211,13 @@ async def _fetch_pontaj_data() -> dict[str, Any]:
             employees.append({
                 "name": name,
                 "clocked_in_at": clocked_in_at,
+                "clocked_in_date": clocked_in_date,
                 "position": position,
             })
+
+        # Filter: only employees clocked in today
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        employees = [e for e in employees if e["clocked_in_date"] == today_str or not e["clocked_in_date"]]
 
         employees.sort(key=lambda e: e["clocked_in_at"])
 
