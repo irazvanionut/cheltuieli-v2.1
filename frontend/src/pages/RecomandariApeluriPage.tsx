@@ -21,6 +21,7 @@ export const RecomandariApeluriPage: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedAiModel, setSelectedAiModel] = useState<'Claude' | 'Ollama' | 'Any'>('Any');
   const [activeTab, setActiveTab] = useState<Tab>('sumar');
+  const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
     title: string;
@@ -31,17 +32,66 @@ export const RecomandariApeluriPage: React.FC = () => {
     conversations: [],
   });
 
+  // Fetch all available dates (regardless of model)
   const { data: zileDisponibile = [] } = useQuery({
-    queryKey: ['recomandari-zile', selectedAiModel],
-    queryFn: () => api.getRecomandariZileDisponibile(selectedAiModel === 'Any' ? undefined : selectedAiModel),
+    queryKey: ['recomandari-zile-all'],
+    queryFn: () => api.getRecomandariZileDisponibile(undefined), // Get all dates
   });
 
-  // Auto-select the most recent date (first in the list) when dates load
+  // Fetch dates for Claude specifically
+  const { data: zileClaudeDisponibile = [] } = useQuery({
+    queryKey: ['recomandari-zile-claude'],
+    queryFn: () => api.getRecomandariZileDisponibile('Claude'),
+  });
+
+  // Fetch dates for Ollama specifically
+  const { data: zileOllamaDisponibile = [] } = useQuery({
+    queryKey: ['recomandari-zile-ollama'],
+    queryFn: () => api.getRecomandariZileDisponibile('Ollama'),
+  });
+
+  // Auto-select on initial load: newest date + appropriate model
   useEffect(() => {
-    if (!selectedDate && zileDisponibile.length > 0) {
-      setSelectedDate(zileDisponibile[0]); // First date is most recent (desc order)
+    if (isInitialLoad && zileDisponibile.length > 0) {
+      const newestDate = zileDisponibile[0]; // First is newest (desc order)
+      setSelectedDate(newestDate);
+
+      // Check which models have data for this date
+      const hasClaudeData = zileClaudeDisponibile.includes(newestDate);
+      const hasOllamaData = zileOllamaDisponibile.includes(newestDate);
+
+      if (hasClaudeData) {
+        setSelectedAiModel('Claude'); // Prefer Claude
+      } else if (hasOllamaData) {
+        setSelectedAiModel('Ollama');
+      } else {
+        setSelectedAiModel('Any'); // Fallback
+      }
+
+      setIsInitialLoad(false);
     }
-  }, [zileDisponibile.length]);
+  }, [zileDisponibile.length, zileClaudeDisponibile.length, zileOllamaDisponibile.length, isInitialLoad]);
+
+  // When date changes manually, auto-select appropriate model
+  useEffect(() => {
+    if (!isInitialLoad && selectedDate) {
+      const hasClaudeData = zileClaudeDisponibile.includes(selectedDate);
+      const hasOllamaData = zileOllamaDisponibile.includes(selectedDate);
+
+      // If both models have data, prefer Claude
+      if (hasClaudeData && hasOllamaData) {
+        setSelectedAiModel('Claude');
+      } else if (hasClaudeData) {
+        setSelectedAiModel('Claude');
+      } else if (hasOllamaData) {
+        setSelectedAiModel('Ollama');
+      }
+      // Otherwise keep current selection
+    }
+  }, [selectedDate, isInitialLoad]);
+
+  // Calendar ALWAYS shows all dates, regardless of selected model
+  const calendarDates = zileDisponibile;
 
   const { data, isLoading } = useQuery<RecomandariApeluri>({
     queryKey: ['recomandari-apeluri', selectedDate, selectedAiModel],
@@ -170,7 +220,7 @@ export const RecomandariApeluriPage: React.FC = () => {
           {/* Date Picker Calendar */}
           <DatePickerCalendar
             selectedDate={selectedDate}
-            availableDates={zileDisponibile}
+            availableDates={calendarDates}
             onSelectDate={setSelectedDate}
           />
         </div>
