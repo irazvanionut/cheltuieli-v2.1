@@ -15,10 +15,15 @@ router = APIRouter()
 async def upsert_recomandari(
     body: dict = Body(...),
     data: str = Query(..., description="Data in format YYYY-MM-DD"),
+    ai_model: str = Query("Claude", description="AI model used: Claude or Ollama"),
     db: AsyncSession = Depends(get_db),
 ):
     """Receives order insights JSON from external app and upserts into DB."""
     data_date = date.fromisoformat(data.strip())
+
+    # Validate ai_model
+    if ai_model not in ['Claude', 'Ollama']:
+        ai_model = 'Claude'
 
     conversations = body.get("conversations", [])
     summary = body.get("summary", {})
@@ -28,7 +33,10 @@ async def upsert_recomandari(
     tip_apeluri = summary.get("tip_apeluri", {})
 
     result = await db.execute(
-        select(RecomandariApeluri).where(RecomandariApeluri.data == data_date)
+        select(RecomandariApeluri).where(
+            RecomandariApeluri.data == data_date,
+            RecomandariApeluri.ai_model == ai_model
+        )
     )
     existing = result.scalar_one_or_none()
 
@@ -42,6 +50,7 @@ async def upsert_recomandari(
     else:
         record = RecomandariApeluri(
             data=data_date,
+            ai_model=ai_model,
             total_conversatii=total_conversatii,
             conversations=conversations,
             top_recomandari=top_recomandari,
@@ -52,27 +61,35 @@ async def upsert_recomandari(
         await db.flush()
         record_id = record.id
 
-    return {"status": "ok", "data": str(data_date), "id": record_id}
+    return {"status": "ok", "data": str(data_date), "ai_model": ai_model, "id": record_id}
 
 
 @router.get("/recomandari-apeluri", response_model=RecomandariApelResponse)
 async def get_recomandari(
     data: str = Query(None, description="Data in format YYYY-MM-DD"),
+    ai_model: str = Query(None, description="AI model: Claude, Ollama, or None for any"),
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    """Returns recomandari data for a specific date (defaults to today)."""
+    """Returns recomandari data for a specific date and AI model."""
     data_date = date.fromisoformat(data) if data else date.today()
 
-    result = await db.execute(
-        select(RecomandariApeluri).where(RecomandariApeluri.data == data_date)
-    )
+    # Build query
+    query = select(RecomandariApeluri).where(RecomandariApeluri.data == data_date)
+
+    # If ai_model is specified and valid, filter by it
+    if ai_model and ai_model in ['Claude', 'Ollama']:
+        query = query.where(RecomandariApeluri.ai_model == ai_model)
+    # Otherwise, return first record for that date (any model)
+
+    result = await db.execute(query)
     record = result.scalar_one_or_none()
 
     if not record:
         return RecomandariApelResponse(
             id=0,
             data=data_date,
+            ai_model=ai_model or 'Any',
             total_conversatii=0,
             conversations=[],
             top_recomandari=[],
@@ -86,13 +103,17 @@ async def get_recomandari(
 
 @router.get("/recomandari-apeluri/zile-disponibile")
 async def get_zile_disponibile(
+    ai_model: str = Query(None, description="Filter by AI model: Claude or Ollama"),
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    """Returns list of dates that have recomandari data."""
-    result = await db.execute(
-        select(RecomandariApeluri.data)
-        .order_by(RecomandariApeluri.data.desc())
-    )
-    dates = [str(row[0]) for row in result.fetchall()]
+    """Returns list of dates that have recomandari data, optionally filtered by AI model."""
+    query = select(RecomandariApeluri.data).order_by(RecomandariApeluri.data.desc())
+
+    if ai_model and ai_model in ['Claude', 'Ollama']:
+        query = query.where(RecomandariApeluri.ai_model == ai_model)
+
+    result = await db.execute(query)
+    # Get unique dates
+    dates = sorted(list(set(str(row[0]) for row in result.fetchall())), reverse=True)
     return dates

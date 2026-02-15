@@ -6,32 +6,42 @@ import {
   ThumbsUp,
   Package,
   MapPin,
-  Calendar,
   MessageSquare,
   Loader2,
   Phone,
 } from 'lucide-react';
 import api from '@/services/api';
 import type { RecomandariApeluri, RecomandariConversation } from '@/types';
+import { DatePickerCalendar } from '@/components/ui/DatePickerCalendar';
+import { CallDetailsModal } from '@/components/ui/CallDetailsModal';
 
 type Tab = 'sumar' | 'produse' | 'adrese';
 
 export const RecomandariApeluriPage: React.FC = () => {
-  const [selectedDate, setSelectedDate] = useState<string>('');
+  // Default to today's date
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  const [selectedDate, setSelectedDate] = useState<string>(today);
+  const [selectedAiModel, setSelectedAiModel] = useState<'Claude' | 'Ollama' | 'Any'>('Any');
   const [activeTab, setActiveTab] = useState<Tab>('sumar');
-
-  const { data: zileDisponibile = [] } = useQuery({
-    queryKey: ['recomandari-zile'],
-    queryFn: () => api.getRecomandariZileDisponibile(),
+  const [modalState, setModalState] = useState<{
+    isOpen: boolean;
+    title: string;
+    conversations: RecomandariConversation[];
+  }>({
+    isOpen: false,
+    title: '',
+    conversations: [],
   });
 
-  // Auto-select first available date
-  const effectiveDate = selectedDate || (zileDisponibile.length > 0 ? zileDisponibile[0] : '');
+  const { data: zileDisponibile = [] } = useQuery({
+    queryKey: ['recomandari-zile', selectedAiModel],
+    queryFn: () => api.getRecomandariZileDisponibile(selectedAiModel === 'Any' ? undefined : selectedAiModel),
+  });
 
   const { data, isLoading } = useQuery<RecomandariApeluri>({
-    queryKey: ['recomandari-apeluri', effectiveDate],
-    queryFn: () => api.getRecomandariApeluri(effectiveDate),
-    enabled: !!effectiveDate,
+    queryKey: ['recomandari-apeluri', selectedDate, selectedAiModel],
+    queryFn: () => api.getRecomandariApeluri(selectedDate, selectedAiModel === 'Any' ? undefined : selectedAiModel),
+    enabled: !!selectedDate,
   });
 
   // Aggregate products from conversations
@@ -75,6 +85,45 @@ export const RecomandariApeluriPage: React.FC = () => {
       .sort((a, b) => b.comenzi - a.comenzi);
   }, [data?.conversations]);
 
+  // Filter handlers
+  const handleFilterByTipApel = (tip: string, count: number) => {
+    if (!data?.conversations) return;
+    const filtered = data.conversations.filter((c) => c.tip === tip);
+    setModalState({
+      isOpen: true,
+      title: `${tip} (${count} apeluri)`,
+      conversations: filtered,
+    });
+  };
+
+  const handleFilterByRecomandare = (recomandare: string, count: number) => {
+    if (!data?.conversations) return;
+    const filtered = data.conversations.filter((c) =>
+      c.analysis?.recomandari_training?.includes(recomandare)
+    );
+    setModalState({
+      isOpen: true,
+      title: `Recomandare: ${recomandare}`,
+      conversations: filtered,
+    });
+  };
+
+  const handleFilterByLucruBun = (comportament: string, count: number) => {
+    if (!data?.conversations) return;
+    const filtered = data.conversations.filter((c) =>
+      c.analysis?.comportament_vanzator?.includes(comportament)
+    );
+    setModalState({
+      isOpen: true,
+      title: `Comportament bun: ${comportament}`,
+      conversations: filtered,
+    });
+  };
+
+  const handleCloseModal = () => {
+    setModalState({ isOpen: false, title: '', conversations: [] });
+  };
+
   const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
     { key: 'sumar', label: 'Sumar', icon: MessageSquare },
     { key: 'produse', label: 'Produse', icon: Package },
@@ -94,21 +143,28 @@ export const RecomandariApeluriPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Date selector */}
-        <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-stone-400" />
+        {/* Date and AI Model selectors */}
+        <div className="flex items-center gap-3">
+          {/* AI Model Dropdown */}
           <select
-            value={effectiveDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800 text-sm text-stone-900 dark:text-stone-100"
+            value={selectedAiModel}
+            onChange={(e) => {
+              setSelectedAiModel(e.target.value as 'Claude' | 'Ollama' | 'Any');
+              // Keep the same date selected, don't reset it
+            }}
+            className="px-3 py-2 rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800 text-sm text-stone-900 dark:text-stone-100 font-medium"
           >
-            {zileDisponibile.length === 0 && (
-              <option value="">Nicio zi disponibila</option>
-            )}
-            {zileDisponibile.map((z: string) => (
-              <option key={z} value={z}>{z}</option>
-            ))}
+            <option value="Any">Any</option>
+            <option value="Claude">Claude</option>
+            <option value="Ollama">Ollama</option>
           </select>
+
+          {/* Date Picker Calendar */}
+          <DatePickerCalendar
+            selectedDate={selectedDate}
+            availableDates={zileDisponibile}
+            onSelectDate={setSelectedDate}
+          />
         </div>
       </div>
 
@@ -143,11 +199,26 @@ export const RecomandariApeluriPage: React.FC = () => {
         </div>
       ) : (
         <>
-          {activeTab === 'sumar' && <SumarTab data={data} />}
+          {activeTab === 'sumar' && (
+            <SumarTab
+              data={data}
+              onFilterByTipApel={handleFilterByTipApel}
+              onFilterByRecomandare={handleFilterByRecomandare}
+              onFilterByLucruBun={handleFilterByLucruBun}
+            />
+          )}
           {activeTab === 'produse' && <ProduseTab produse={produse} />}
           {activeTab === 'adrese' && <AdreseTab adrese={adrese} />}
         </>
       )}
+
+      {/* Call Details Modal */}
+      <CallDetailsModal
+        isOpen={modalState.isOpen}
+        onClose={handleCloseModal}
+        title={modalState.title}
+        conversations={modalState.conversations}
+      />
     </div>
   );
 };
@@ -156,7 +227,19 @@ export const RecomandariApeluriPage: React.FC = () => {
 // SUMAR TAB
 // ============================================
 
-const SumarTab: React.FC<{ data: RecomandariApeluri }> = ({ data }) => (
+interface SumarTabProps {
+  data: RecomandariApeluri;
+  onFilterByTipApel: (tip: string, count: number) => void;
+  onFilterByRecomandare: (recomandare: string, count: number) => void;
+  onFilterByLucruBun: (comportament: string, count: number) => void;
+}
+
+const SumarTab: React.FC<SumarTabProps> = ({
+  data,
+  onFilterByTipApel,
+  onFilterByRecomandare,
+  onFilterByLucruBun,
+}) => (
   <div className="space-y-6">
     {/* Total card + tip apeluri */}
     <div className="bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800 p-6">
@@ -178,14 +261,15 @@ const SumarTab: React.FC<{ data: RecomandariApeluri }> = ({ data }) => (
             {Object.entries(data.tip_apeluri)
               .sort(([, a], [, b]) => (b as number) - (a as number))
               .map(([tip, count]) => (
-                <div
+                <button
                   key={tip}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-100 dark:bg-stone-800"
+                  onClick={() => onFilterByTipApel(tip, count as number)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors cursor-pointer"
                 >
                   <Phone className="w-3.5 h-3.5 text-stone-400" />
                   <span className="text-sm text-stone-600 dark:text-stone-300 capitalize">{tip}</span>
                   <span className="text-sm font-semibold text-stone-900 dark:text-stone-100">{count as number}</span>
-                </div>
+                </button>
               ))}
           </div>
         )}
@@ -203,9 +287,10 @@ const SumarTab: React.FC<{ data: RecomandariApeluri }> = ({ data }) => (
         </div>
         <div className="space-y-3">
           {data.top_recomandari.map((item, i) => (
-            <div
+            <button
               key={i}
-              className="flex items-start gap-3 p-3 rounded-lg bg-stone-50 dark:bg-stone-800/50"
+              onClick={() => onFilterByRecomandare(item.recomandare, item.frecventa)}
+              className="w-full flex items-start gap-3 p-3 rounded-lg bg-stone-50 dark:bg-stone-800/50 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors cursor-pointer text-left"
             >
               <span className="flex-1 text-sm text-stone-700 dark:text-stone-300">
                 {item.recomandare}
@@ -213,7 +298,7 @@ const SumarTab: React.FC<{ data: RecomandariApeluri }> = ({ data }) => (
               <span className="shrink-0 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
                 {item.frecventa}x
               </span>
-            </div>
+            </button>
           ))}
         </div>
       </div>
@@ -230,9 +315,10 @@ const SumarTab: React.FC<{ data: RecomandariApeluri }> = ({ data }) => (
         </div>
         <div className="space-y-3">
           {data.top_lucruri_bune.map((item, i) => (
-            <div
+            <button
               key={i}
-              className="flex items-start gap-3 p-3 rounded-lg bg-stone-50 dark:bg-stone-800/50"
+              onClick={() => onFilterByLucruBun(item.comportament, item.frecventa)}
+              className="w-full flex items-start gap-3 p-3 rounded-lg bg-stone-50 dark:bg-stone-800/50 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors cursor-pointer text-left"
             >
               <span className="flex-1 text-sm text-stone-700 dark:text-stone-300">
                 {item.comportament}
@@ -240,7 +326,7 @@ const SumarTab: React.FC<{ data: RecomandariApeluri }> = ({ data }) => (
               <span className="shrink-0 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
                 {item.frecventa}x
               </span>
-            </div>
+            </button>
           ))}
         </div>
       </div>

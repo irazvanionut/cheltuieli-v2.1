@@ -267,7 +267,8 @@ class RecomandariApeluri(Base):
     __tablename__ = "recomandari_apeluri"
 
     id = Column(Integer, primary_key=True, index=True)
-    data = Column(Date, unique=True, nullable=False)
+    data = Column(Date, nullable=False, index=True)
+    ai_model = Column(String(20), default='Claude', nullable=False)
     total_conversatii = Column(Integer, default=0)
     conversations = Column(JSONB, default=[])
     top_recomandari = Column(JSONB, default=[])

@@ -2,2631 +2,535 @@
   "conversations": [
     {
       "conversation_index": 1,
-      "transcript_preview": "Restaurant la Anui, buna seara. Buna seara. Mai aveti vreo masa disponibila de 2-3 persoane, nu? Nu, nu, nu, nu, nu, nu, nu. La revedere. Bine, multum...",
+      "data": "2026-01-01",
+      "ora": "12:06",
+      "telefon": "0758096227",
+      "tip": "altele - altele",
+      "transcript": "Joint.",
       "analysis": {
         "produse_comandate": [],
         "totaluri_partiale": null,
         "pret_final": null,
         "adresa_livrare": null,
         "timp_estimat_livrare": null,
-        "scop_conversatie": "refuz livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare, dar nu a fost clara",
-        "comportament_client": "Ezitari si refuz de a da detalii despre comanda",
-        "ambiguitati": [
-          "Nu",
-          "nu",
-          "nu"
-        ],
-        "claritate": "Scazuta din cauza ezitarilor clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii",
-          "Sa fie mai atent la detalii ale comenzii"
-        ],
-        "ezitari_client": [
-          "Nu",
-          "nu",
-          "nu"
-        ]
+        "tip_apel": {
+          "categorie": "altele",
+          "subtip": null,
+          "rezultat": "altele"
+        },
+        "sentiment_negativ": null,
+        "comportament_vanzator": "N/A - transcript prea scurt",
+        "comportament_client": "N/A - transcript prea scurt",
+        "ambiguitati": [],
+        "claritate": "Transcript prea scurt pentru analiza",
+        "recomandari_training": [],
+        "ezitari_client": []
       }
     },
     {
       "conversation_index": 2,
-      "transcript_preview": "Alo, buna ziua, restaurant Anceana, sunt cu ce va pot ajuta? Buna ziua, doamna draga, vreau sa dau si eu o comanda la dumneavoastra, sa vina acasa. Va...",
+      "data": "2026-01-01",
+      "ora": "13:46",
+      "telefon": "0755122535",
+      "tip": "altele - altele",
+      "transcript": "Da. Si am inteles, ca am rezicretat si eu sunt parca destul de imborbat, stii? Da, dar mie borcanul mi-a placut asa. Ia, sa-ti gustam. Si da, da, si sa ne tii la el fantastic. Imi place stramb modelul. Ba, adica, in mod normal, il vezi normal, la femeie e foarte fain, il porti pe mana ta. Frumos, efectiv. Da, e foarte bun. Hai sa mergem pe capital, sa testam orice capital. Noi n-avem pofta de mancare acum, nu stiu de ce. E bine ca ne scapam unde vrem, ca nici pe lume. Hai sa punem intr-o amestecura.",
       "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "mamaliguta cu branza si smantana",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "ciorba separat smantana",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "4 chifle",
-            "cantitate": 4,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
+        "produse_comandate": [],
+        "totaluri_partiale": null,
         "pret_final": null,
-        "adresa_livrare": "la Catena",
-        "timp_estimat_livrare": "maxim o ora jumatate",
-        "scop_conversatie": "comanda",
-        "comportament_vanzator": "A repetat comanda pentru confirmare si a cerut adresa de livrare.",
-        "comportament_client": "A ezitat in privinta cantitatii de chifle, dar a fost clar cu restul comenzii.",
+        "adresa_livrare": null,
+        "timp_estimat_livrare": null,
+        "tip_apel": {
+          "categorie": "altele",
+          "subtip": null,
+          "rezultat": "altele"
+        },
+        "sentiment_negativ": null,
+        "comportament_vanzator": "Nu se poate evalua - vanzatorul nu apare in transcript. Transcriptul contine doar o conversatie intre persoane care discuta despre un borcan si alte subiecte nerelate cu restaurantul.",
+        "comportament_client": "Clientul nu interactioneaza cu restaurantul in acest fragment. Conversatia pare a fi intre mai multe persoane care discuta despre un borcan, despre cum arata la femei, despre capital si despre lipsa poftei de mancare. Discutia este confuza si nu contine nicio solicitare clara catre restaurant.",
         "ambiguitati": [
-          "4 chifle",
-          "2 chifle"
+          "Transcriptul nu contine o conversatie cu restaurantul",
+          "Nu este clar daca aceasta este o inregistrare gresita sau o conversatie paralela",
+          "Contextul discutiei despre borcan, capital si lipsa poftei de mancare nu are legatura cu o comanda sau rezervare"
         ],
-        "claritate": "unele ezitari ale clientului",
+        "claritate": "Foarte scazuta - transcriptul nu contine o interactiune cu restaurantul. Pare a fi o conversatie privata intre mai multe persoane pe subiecte nerelate cu serviciile restaurantului. Nu exista nicio comanda, rezervare sau intrebare adresata personalului.",
         "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii.",
-          "Sa solicite adresa de livrare clar si precis."
+          "Verificarea sistemului de inregistrare pentru a se asigura ca se capteaza doar apelurile relevante catre restaurant",
+          "Implementarea unui filtru initial pentru a identifica apelurile care nu contin interactiuni cu personalul restaurantului"
         ],
         "ezitari_client": [
-          "Asa. Atat, va rog frumos.",
-          "Da, da."
+          "Discutia generala fara directie clara",
+          "Mentiunea ca nu au pofta de mancare sugereaza ezitare in a comanda"
         ]
       }
     },
     {
       "conversation_index": 3,
-      "transcript_preview": "Restaurant la noi, buna seara. Buna seara. Am si eu o rugaminte: mai aveti vreo masa de 4 persoane libera? Nu, nu, nu. Nu este nimic liber, nu? Nu. In...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "masa",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "mancare pentru 4 persoane",
-            "cantitate": null,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "rezervare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "Ezita la momentul rezervarii",
-        "ambiguitati": [
-          "Nu este nimic liber",
-          "In cat timp veniti?",
-          "Pe ce nume?"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii",
-          "Sa clarifice rapid orice ambiguitate"
-        ],
-        "ezitari_client": [
-          "Nu, nu, nu",
-          "In jumatate de ora"
-        ]
-      }
-    },
-    {
-      "conversation_index": 4,
-      "transcript_preview": "Buna? Da, da, da, dar nu ma inteleg, nu pot sa... Ala, va iau eu acum. N-am mai fost acolo de... ani de zile. Eu am fost acum 2 ani de zile. Renovat, ...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "pizza la nuci",
-            "cantitate": 1,
-            "note": null
-          },
-          {
-            "produs": "mascara",
-            "cantitate": 0,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": "la Strigan",
-        "timp_estimat_livrare": "20 de minute, jumatate de ora",
-        "scop_conversatie": "comanda",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "Ezitari frecvente, nehotarari",
-        "ambiguitati": [
-          "Nu ma inþnteleg",
-          "M-ai spus repetat o data?",
-          "Ia, ai sa ti-o tot"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii",
-          "Sa clarifice rapid orice ambiguitate"
-        ],
-        "ezitari_client": [
-          "Nu ma inþnteleg, nu pot sa25...",
-          "M-ai spus repetat o data?",
-          "Ia, ai sa ti-o tot",
-          "Buna seara, buna seara..."
-        ]
-      }
-    },
-    {
-      "conversation_index": 5,
-      "transcript_preview": "Alo? Alo, buna ziua. Ziua. A, vreau sa comand si eu 1 portie de sarmale si sa vin eu s-o iau. Fetelor, mai aveti sarmale la liber? Mai, mai aveti sarm...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "sarmale",
-            "cantitate": 1,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "refuz livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare, dar a fost clar ca nu mai avea produsul dorit.",
-        "comportament_client": "Ezitat inainte de a confirma comanda si a intrebat de doua ori despre disponibilitatea sarmalelor.",
-        "ambiguitati": [
-          "Mai, mai aveti sarmale la liber?",
-          "A, ma asteptam."
-        ],
-        "claritate": "Unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii.",
-          "Sa fie mai atenti la disponibilitatea produselor si sa nu promita ceva care nu pot oferi."
-        ],
-        "ezitari_client": [
-          "Mai, mai aveti sarmale la liber?",
-          "A, ma asteptam."
-        ]
-      }
-    },
-    {
-      "conversation_index": 6,
-      "transcript_preview": "Hei, Nicolae. Alo? Alo, stai si tu pe aici ca iti dau bateria. Alo. Un pic sa te contactez. Buna ziua. Mai aveam si eu. Buna ziua, vreau sa dau si eu ...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "o pizza cu 4 stadioni",
-            "cantitate": 1,
-            "note": null
-          },
-          {
-            "produs": "una speciala",
-            "cantitate": 1,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": "25-30 de minute",
-        "scop_conversatie": "comanda",
-        "comportament_vanzator": "A repetat comanda pentru confirmare si a clarificat sosul dorit.",
-        "comportament_client": "A ezitat sa salveze numarul vanzatorului, a intrebat daca este de la politie si a cerut sa-i fie explicat ce inseamna \"4 stadioni\".",
-        "ambiguitati": [
-          "4 stadioni",
-          "sos de rosii vs. ketchup"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii.",
-          "Sa clarifice expresiile ambigue folosite de clienti."
-        ],
-        "ezitari_client": [
-          "Salveaza numarul acolo sa-l ai.",
-          "Pai n-am ketchup, asta voiam sa zic."
-        ]
-      }
-    },
-    {
-      "conversation_index": 7,
-      "transcript_preview": "Ceapa chili! Buna ziua, restaurant La Nucea Nas, sunt cu ce va pot ajuta? Va salut, Mana. Am si eu o intrebare la dumneavoastra: diseara aveti ocupate...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "ceapa chili",
-            "cantitate": null,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "intrebare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "Ezita la intelegerea disponibilitatii mesei",
-        "ambiguitati": [
-          "diseara aveti ocupate toate meselele",
-          "Nu am inteles, spune-mi"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna disponibilitatea mesei inainte de a raspunde la o intrebare"
-        ],
-        "ezitari_client": [
-          "Nu am inteles, spune-mi",
-          "Na, de o saptamana nu mai aveti"
-        ]
-      }
-    },
-    {
-      "conversation_index": 8,
-      "transcript_preview": "Alo. Alo. Buna seara. Buna seara. Am sunat in legatura, daca puteti sa facem o comanda. Ce sa facem? O comanda. Ne este foarte foame. Ia spuneti, cu c...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "clatita cu nuci",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "maine avem cu nuci",
-            "cantitate": null,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "comanda",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "Ezitari in alegerea produsului si claritate scazuta",
-        "ambiguitati": [
-          "clatita cu nuci",
-          "maine avem cu nuci"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii"
-        ],
-        "ezitari_client": [
-          "De care clatita?",
-          "Pai da, pai da, dar noi ne"
-        ]
-      }
-    },
-    {
-      "conversation_index": 9,
-      "transcript_preview": "Alo, buna seara, restaurant La Nucia, Nassim. Cu ce va pot ajuta? Buna seara. 1 rezervare pentru maine seara? Reveniti maine dimineata cu 1 telefon la...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "rezervare",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "telefon",
-            "cantitate": null,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "rezervare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "Ezita la detalii despre muzica si orar de inchidere",
-        "ambiguitati": [
-          "muzica",
-          "orar de inchidere"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii",
-          "Sa clarifice rapid detalii importante"
-        ],
-        "ezitari_client": [
-          "Aveti si muzica?",
-          "La ce ora inchideti maine?"
-        ]
-      }
-    },
-    {
-      "conversation_index": 10,
-      "transcript_preview": "Restaurant la nuci, buna seara. Alo, buna seara. Sarna, sarna, sarna. Doresc sa fac si eu o rezervare. Sa nu fie pentru azi. A, pai pentru azi, de pe ...",
+      "data": "2026-01-01",
+      "ora": "14:17",
+      "telefon": "0744446667",
+      "tip": "altele - altele",
+      "transcript": "Uh-huh. It's from here. Somebody will give you something to eat or to— This is his shelter somehow.",
       "analysis": {
         "produse_comandate": [],
         "totaluri_partiale": null,
         "pret_final": null,
         "adresa_livrare": null,
         "timp_estimat_livrare": null,
-        "scop_conversatie": "refuz livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare si a refuzat livrarea.",
-        "comportament_client": "Ezita la confirmarea comenzii si nu este hotarat.",
+        "tip_apel": {
+          "categorie": "altele",
+          "subtip": null,
+          "rezultat": "altele"
+        },
+        "sentiment_negativ": null,
+        "comportament_vanzator": "Nu se poate evalua - transcriptul nu contine o conversatie clara intre vanzator si client. Pare a fi o inregistrare accidentala sau un fragment de conversatie nerelevanta pentru activitatea restaurantului.",
+        "comportament_client": "Nu se poate evalua - transcriptul nu contine o conversatie clara de la un client. Vorbirea pare a fi in limba engleza si se refera la un subiect complet nerelevant pentru comanda de mancare (cineva ofera adapost sau mancare cuiva).",
         "ambiguitati": [
-          "Sarna, sarna, sarna"
+          "Transcriptul este in limba engleza, nu in romana",
+          "Continutul nu are legatura cu activitatea restaurantului LaNuci",
+          "Nu este clar daca aceasta este o conversatie telefonica reala sau o inregistrare accidentala",
+          "Contextul vorbeste despre 'shelter' si 'give you something to eat' intr-un mod care nu pare a fi o comanda la restaurant"
         ],
-        "claritate": "Unele ezitari ale clientului",
+        "claritate": "Foarte scazuta - transcriptul nu reprezinta o conversatie relevanta pentru restaurantul LaNuci. Este in limba engleza si continutul nu are nicio legatura cu comenzi, rezervari sau serviciile restaurantului.",
         "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii.",
-          "Sa fie mai atent la replicile clientilor si sa nu presupuna."
-        ],
-        "ezitari_client": [
-          "Sarna, sarna, sarna"
-        ]
-      }
-    },
-    {
-      "conversation_index": 11,
-      "transcript_preview": "Un moment, un moment. A, sunteti impreuna? O secunda. E o masa libera acolo, daca... Restaurant la Nui, buna seara. Buna seara, vreau sa stiu si eu da...",
-      "analysis": {
-        "produse_comandate": [],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "refuz livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare, dar nu a fost concreta in detalii.",
-        "comportament_client": "Ezitari si intrebari repetitive despre disponibilitatea mesei.",
-        "ambiguitati": [
-          "O secunda",
-          "Nu, nu am nimic liber.",
-          "Ok. Imi pare rau."
-        ],
-        "claritate": "Unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna disponibilitatea mesei inainte de a oferi o solutie.",
-          "Sa fie mai concret si detaliat in raspunsuri."
-        ],
-        "ezitari_client": [
-          "Un moment, un moment. A, sunteti impreuna? O secunda.",
-          "Nu, nu am nimic liber.",
-          "Ok. Imi pare rau."
-        ]
-      }
-    },
-    {
-      "conversation_index": 12,
-      "transcript_preview": "Alo? Alo, buna ziua. Buna ziua, restaurant La Nucia Nassen, cu ce va pot ajuta? Da. As dori sa fac si eu o comanda in Ganeasa, Strada Rezervorului. Nu...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "meniu snitel",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "meniu la nuci",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "sarmale cu mamaliguta",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "iahnie de fasole simpla",
-            "cantitate": null,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": "Strada Rezervorului, nr. 20, Ganeasa",
-        "timp_estimat_livrare": "o ora",
-        "scop_conversatie": "comanda",
-        "comportament_vanzator": null,
-        "comportament_client": null,
-        "ambiguitati": [],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna adresa de livrare"
-        ],
-        "ezitari_client": [
-          "As dori sa fac si eu o comanda in Ganeasa, Strada Rezervorului.",
-          "Numarul 20, va ascult.",
-          "Un meniu snitel. Da.",
-          "Si sarmale cu mamaliguta. Da.",
-          "Iahnia de fasole simpla, da?"
-        ]
-      }
-    },
-    {
-      "conversation_index": 13,
-      "transcript_preview": "Alo, buna seara, restaurant La Nucia Nas, in cu ce va pot ajuta? Buna seara. Gasesc si eu o masa pentru 2 persoane? Momentan nu este nimic disponibil....",
-      "analysis": {
-        "produse_comandate": [],
-        "totaluri_partiale": null,
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "rezervare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare, dar nu a fost suficient de concret.",
-        "comportament_client": "Ezita la momentul in care trebuie sa ia o decizie (sa vina acolo sau sa astepte)",
-        "ambiguitati": [
-          "Sa vina acolo sa astepte sau cum se procedeaza?",
-          "Puteti veni, dar momentan nu este nimic disponibil"
-        ],
-        "claritate": "Unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii",
-          "Sa fie mai concret si explicit cand comunica informatii importante"
-        ],
-        "ezitari_client": [
-          "Sa vina acolo sa astepte sau cum se procedeaza?",
-          "Puteti veni, dar momentan nu este nimic disponibil"
-        ]
-      }
-    },
-    {
-      "conversation_index": 14,
-      "transcript_preview": "Va treceti la noi acasa? Daca doarmeau, cates. Restaurant la nuci, buna seara. Buna seara. As dori sa fac si eu o rezervare pentru seara asta, daca se...",
-      "analysis": {
-        "produse_comandate": [],
-        "totaluri_partiale": null,
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "refuz livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare, dar nu a fost concreta.",
-        "comportament_client": "Ezitari si intrebari repetitive despre disponibilitatea restaurantului.",
-        "ambiguitati": [
-          "cates",
-          "se poate",
-          "nu mai am nimic liber"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna disponibilitatea restaurantului inainte de a accepta o comanda.",
-          "Sa fie concret si clar in comunicarea cu clientii."
-        ],
-        "ezitari_client": [
-          "cates",
-          "se poate",
-          "nu mai am nimic liber"
-        ]
-      }
-    },
-    {
-      "conversation_index": 15,
-      "transcript_preview": "Restaurant la noi, buna seara. Buna seara, aveti vreo masa disponibila in aceasta seara? Nu, nu, cu cea mai mare placere, nu, nu, nu. Bine, bine, mult...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "masa disponibila",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "cea mai mare placere",
-            "cantitate": null,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "refuz livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "Ezita la confirmarea comenzii",
-        "ambiguitati": [
-          "Nu, nu, cu cea mai mare placere"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii"
-        ],
-        "ezitari_client": [
-          "Nu, nu",
-          "Cu cea mai mare placere"
-        ]
-      }
-    },
-    {
-      "conversation_index": 16,
-      "transcript_preview": "Nu ca vand un pic, ca am luat colectori. Mai vrei ceva, Sorin? N-am ascuns bine. Nu mai raspund. Nu mai raspunde. Buna seara, restaurantul Noci, alo. ...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "American Burger",
-            "cantitate": 4,
-            "note": null
-          },
-          {
-            "produs": "American Burger",
-            "cantitate": 1,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": "Galata 85A",
-        "timp_estimat_livrare": "25 de minute",
-        "scop_conversatie": "comanda",
-        "comportament_vanzator": "a repetat comanda pentru confirmare, a avut dificultati in a intelege cererea clientului",
-        "comportament_client": "a ezitat in a confirma cantitatea de produse, a fost nehotarat in privinta comenzii",
-        "ambiguitati": [
-          "2 sau 3 American Burger",
-          "40 de minute sau 25 de minute"
-        ],
-        "claritate": "unele ezitari ale clientului, vanzatorul a clarificat rapid",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii",
-          "Sa fie mai atent la cererile clientilor"
-        ],
-        "ezitari_client": [
-          "Nu ca vand un pic, ca am luat colectori.",
-          "Stati un pic ca nu mai am...",
-          "Dar a fost mai mare, 85A."
-        ]
-      }
-    },
-    {
-      "conversation_index": 17,
-      "transcript_preview": "Alo, buna ziua, restaurantul Amcea, n-astazi cu ce va pot ajuta? Buna ziua, Cristina Popa este numele meu. As dori sa fac si eu o rezervare pentru sea...",
-      "analysis": {
-        "produse_comandate": [],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "refuz livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "Ezita la finalizarea comenzii",
-        "ambiguitati": [
-          "Nu mai aveti nimic liber?",
-          "Nu, nu."
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii",
-          "Sa clarifice rapid situatia atunci cand este necesar"
-        ],
-        "ezitari_client": [
-          "Din pacate nu mai avem nimic liber de o saptamana de zile.",
-          "Nu, nu."
-        ]
-      }
-    },
-    {
-      "conversation_index": 18,
-      "transcript_preview": "La ma-ta ti-am vorbit? Pai discutam. Alo. Zicem alta. Auziti, mai as vrea sa adaug o portie de piure si o portie de cartofi umpluti. La pachetul pe vo...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "piure",
-            "cantitate": 1,
-            "note": null
-          },
-          {
-            "produs": "cartofi umpluti",
-            "cantitate": 1,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "comanda",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "Ezitari inainte de a confirma comenzile",
-        "ambiguitati": [
-          "Pachetul pe voluntari"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii"
-        ],
-        "ezitari_client": [
-          "Pai discutam. Alo.",
-          "Auziti, mai as vrea sa adaug..."
-        ]
-      }
-    },
-    {
-      "conversation_index": 19,
-      "transcript_preview": "Ma gandesc acum ca am cam atat. E, e doar ca e net pe aici. Probabil mi-e satul de... Alo? Ma auziti? Alo, saramanile? Da, va ascult. A, o rezervare l...",
-      "analysis": {
-        "produse_comandate": [],
-        "totaluri_partiale": null,
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "refuz livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare, dar nu a fost clara.",
-        "comportament_client": "Ezitari si intrebari repetitive.",
-        "ambiguitati": [
-          "net pe aici",
-          "probabil mi-e satul de"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii.",
-          "Sa fie mai atenti la claritatea comunicarii."
-        ],
-        "ezitari_client": [
-          "Ma gandesc acum ca am cam atat.",
-          "Probabil mi-e satul de...",
-          "Nimic, nimic, nu?"
-        ]
-      }
-    },
-    {
-      "conversation_index": 20,
-      "transcript_preview": "Alo, buna ziua, restaurant La Luncea Nas, in cu ce va pot ajuta? Da, buna ziua. As dori o comanda Strada Macului, numarul 6, va rog. Va ascult. 200 de...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "200 de pui cu galuste",
-            "cantitate": 1,
-            "note": null
-          },
-          {
-            "produs": "o ciorba de burta",
-            "cantitate": 1,
-            "note": null
-          },
-          {
-            "produs": "patru mici",
-            "cantitate": 4,
-            "note": null
-          },
-          {
-            "produs": "un pui cu piure in sos de",
-            "cantitate": 1,
-            "note": null
-          },
-          {
-            "produs": "un pui in vin",
-            "cantitate": 1,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": "Strada Macului, numarul 6",
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "comanda",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "A fost direct ejutat de vanzator",
-        "ambiguitati": [],
-        "claritate": "clara",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii"
+          "Verificarea sistemului de inregistrare pentru a evita capturarea conversatiilor nerelevante sau accidentale",
+          "Implementarea unui filtru de limba pentru a identifica automat apelurile in alte limbi decat romana",
+          "Stabilirea unui protocol clar pentru marcarea si excluderea inregistrarilor invalide din analiza"
         ],
         "ezitari_client": []
       }
     },
     {
-      "conversation_index": 21,
-      "transcript_preview": "Alo, buna ziua, restaurant La Nucioana, sunt cu ceva, pot ajuta? Buna ziua, o comanda cu livrare, va rog frumos. In Petrechioaia Vanatori. Da. Va ascu...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "ciorba de pui a la grec",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "ciorba de perisoare",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "focaccia de casa",
-            "cantitate": null,
-            "note": "tradisionala"
-          },
-          {
-            "produs": "tomahawk de porc",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "sarmale",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "sandrea dezosata de pui",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "piure",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "smantana",
-            "cantitate": null,
-            "note": "ro"
-          },
-          {
-            "produs": "salata de varza murata rorie",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "clatite brasovene",
-            "cantitate": 2,
-            "note": null
-          },
-          {
-            "produs": "papanas cu salata de, cu salata, cu dulceasa de visini",
-            "cantitate": null,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          292
-        ],
-        "pret_final": 292,
-        "adresa_livrare": "Petrechioaia Vanatori",
-        "timp_estimat_livrare": "o ora jumatate",
-        "scop_conversatie": "comanda cu livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "Ezitari frecvente, a fost nehotarat la unele detalii",
-        "ambiguitati": [
-          "Ciorba de pui a la grec",
-          "Focaccia tradisionala"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme antotdeauna totalul inainte de finalizarea comenzii",
-          "Sa clarifice rapid comanda pentru a evita ezitarile clientului"
-        ],
-        "ezitari_client": [
-          "O ciorba de pui a la grec.",
-          "Da. O ciorba de perisoare.",
-          "Focaccia tradisionala.",
-          "Da. Da.",
-          "Un tomahawk de porc.",
-          "Da. O poraie de sarmale.",
-          "Da. O sandrea dezosata de pui.",
-          "Da. Da.",
-          "O piure, o poraie de piure.",
-          "Da. O poraie de smantana, ro.",
-          "O salata de varza murata rorie.",
-          "Da. O poraie de clatite brasovene. Cu 2.",
-          "Poraie de brasovene.",
-          "O papanas cu salata de, cu salata, cu dulceasa de visini.",
-          "Asa.",
-          "O 2ora jumatate.",
-          "Ok, maxim o ora jumatate.",
-          "Da. Ma auzisi?",
-          "Da, da, da.",
-          "Da.",
-          "O suma totala este de 292, este in regula?"
-        ]
-      }
-    },
-    {
-      "conversation_index": 22,
-      "transcript_preview": "Ajung cu alea, Ioana. Este pentru ceapa. Restaurant la noi, buna seara. Buna seara. As dori si o pizza, un ganeasca. Si daca vine masa se ridica? Deci...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "ceapa",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "uganeasa",
-            "cantitate": null,
-            "note": "cu ce e"
-          },
-          {
-            "produs": "pizza",
-            "cantitate": 1,
-            "note": "din cea mare"
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": "Strada stefan cel Mare, numarul 71",
-        "timp_estimat_livrare": "cam o ora aproape",
-        "scop_conversatie": "comanda",
-        "comportament_vanzator": "A repetat comanda pentru confirmare, a clarificat rapid",
-        "comportament_client": "a ezitat la momentul deplasarii, a fost nehotarat la alegerea produsului",
-        "ambiguitati": [
-          "ce e cu ce doriu",
-          "una la 85 ce o aveti acum, nu mai e la 80"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii",
-          "Sa clarifice rapid comanda"
-        ],
-        "ezitari_client": [
-          "Atjung cu alea, Ioana. Este pentru ceapa.",
-          "Pai de aia preferam, preferam acasa mai bine."
-        ]
-      }
-    },
-    {
-      "conversation_index": 23,
-      "transcript_preview": "Restaurant la nuci, buna seara. Buna seara. Aa, mai aveti locuri libere? Nu, cu cea mai mare placere, nu. Nu? Nu, in seara asta nu. La revedere.",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "locuri libere",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "cea mai mare placere",
-            "cantitate": null,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "refuz livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "Ezitcii frecventi, nu a fost clar cu ceea ce doreste.",
-        "ambiguitati": [
-          "Nu",
-          "La revedere"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii.",
-          "Sa clarifice rapid ceea ce doreste clientul."
-        ],
-        "ezitari_client": [
-          "Nu",
-          "La revedere"
-        ]
-      }
-    },
-    {
-      "conversation_index": 24,
-      "transcript_preview": "Alo, buna ziua, restaurant La Nucia Nassen, cu ce va pot ajuta? Salut, doamna Dumitrascu Marian la telefon. Mai aveti mese libere pentru diseara? Din ...",
+      "conversation_index": 4,
+      "data": "2026-01-01",
+      "ora": "14:20",
+      "telefon": "0744446667",
+      "tip": "intrebare - altele",
+      "transcript": "Okay. What? How do they— they take care of him? Oh. Yeah, she's alert, but so. Okay, fine. Good. Have a good time. Good morning. Uh, before we start, I just want to confirm, um, it's opened on the fiscal website. Oh, okay. Yeah, yeah, it will go out too. New Year's Day, my effects opening hours. Yeah, because it's— When is the opening hours? From 10:00 to 23:00. Oh, nice. From 10:00 to 23:00. At 4:00 it is open. But normally all the rest of the school day night is open up, so you're not— you're staying because you're out. Evening, yeah. Most of them they are staying at home, eating something, and— Just sleeping. Sleeping before. But it was— it was. They are buying a lot of food for, uh, a lot of food, and all of them they made with a lot of things. Ah, for the— So it was. Yeah. غزال، غزال. Yeah. Orthodox? Uh, yeah. Yeah. Oh, Christian Orthodox, yes. Orthodox, excuse me. Yeah. Yeah, the Catholics not too much. We have.",
       "analysis": {
         "produse_comandate": [],
         "totaluri_partiale": null,
         "pret_final": null,
         "adresa_livrare": null,
         "timp_estimat_livrare": null,
-        "scop_conversatie": "refuz livrare",
-        "comportament_vanzator": "A fost direct si clar in refuzul livrarii.",
-        "comportament_client": "Ezita la confirmarea refuzului livrarii.",
-        "ambiguitati": [],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii"
-        ],
-        "ezitari_client": [
-          "Mai aveti mese libere pentru diseara?"
-        ]
-      }
-    },
-    {
-      "conversation_index": 25,
-      "transcript_preview": "Alo, buna ziua, restaurant La Nucia, in asta cu ce va pot ajuta? Buna ziua, pot sa fac si eu o comanda la dumneavoastra si sa ajungem in, nu stiu, in ...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "ciorba de burta",
-            "cantitate": 2,
-            "note": null
-          },
-          {
-            "produs": "meniuri snisel",
-            "cantitate": 2,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": "10 minute",
-        "scop_conversatie": "comanda",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "A ezitat la momentul de alegere a produselor",
+        "tip_apel": {
+          "categorie": "intrebare",
+          "subtip": null,
+          "rezultat": "altele"
+        },
+        "sentiment_negativ": null,
+        "comportament_vanzator": "Vanzatorul a raspuns politicos la intrebarea despre programul de functionare de Anul Nou. A oferit informatii clare: restaurantul este deschis de la 10:00 la 23:00 in ziua de Anul Nou. A explicat ca in mod normal restaurantul este deschis toata ziua si noaptea, dar de sarbatori multi oameni stau acasa. Tonul a fost prietenos si informativ.",
+        "comportament_client": "Clientul a sunat pentru a afla programul de functionare de Anul Nou. A pus intrebari clare despre orele de deschidere si a ascultat atent raspunsurile. Conversatia a deviat apoi catre discutii generale despre traditii de sarbatori, ortodoxie si obiceiuri culinare. Clientul a fost politicos si conversational, dar apelul nu a avut legatura cu o comanda concreta.",
         "ambiguitati": [
-          "2 ciorbe de burta si 2 meniuri snisel",
-          "20 de minute, 25"
+          "Transcriptul contine fragmente neclare si posibil gresit transcrise (ex: 'غزال، غزال' - text in araba)",
+          "Conversatia a deviat de la subiectul initial (program) catre discutii generale despre traditii si religie",
+          "Nu este clar daca clientul intentioneaza sa faca o rezervare sau comanda pentru Anul Nou"
         ],
-        "claritate": "unele ezitari ale clientului",
+        "claritate": "Scazuta. Transcriptul este fragmentat si contine portiuni neclare. Informatia despre programul de functionare (10:00-23:00) este singura parte clara si relevanta pentru restaurant. Restul conversatiei este o discutie informala fara legatura directa cu serviciile restaurantului.",
         "recomandari_training": [
-          "Sa confirme si totdeauna totalul innainte de finalizarea comenzii",
-          "Sa clarifice rapid comanda"
+          "Vanzatorul ar trebui sa redirectioneze conversatia catre scopul apelului dupa ce ofera informatia solicitata",
+          "Dupa ce comunica programul, vanzatorul ar putea intreba daca clientul doreste sa faca o rezervare sau comanda",
+          "Evitarea discutiilor prea lungi pe teme generale care nu sunt legate de serviciile restaurantului",
+          "Incheierea politicoasa a apelului dupa ce informatia a fost oferita, pentru a gestiona eficient timpul"
         ],
         "ezitari_client": [
-          "Pai depinde ce atti dori ca sa fie gata in 10 minute.",
-          "Da, lasaci atunci. Sau... hm?",
-          "Ce?"
+          "Clientul a deviat de la subiectul initial catre discutii generale despre traditii si religie",
+          "Nu a clarificat daca intentioneaza sa faca o rezervare sau comanda pentru Anul Nou"
         ]
       }
     },
     {
-      "conversation_index": 26,
-      "transcript_preview": "O secunda, va rog, o secunda. Maria? Maria, 6 persoane. Aa, una dintre cele 2. Restaurant la noi, va ascult. Aa, la mana, salata, sa dau comanda si sa...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "saramura de peste",
-            "cantitate": 2,
-            "note": null
-          },
-          {
-            "produs": "salata de vinete",
-            "cantitate": 2,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": "45 minute",
-        "scop_conversatie": "comanda",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "Ezitari ale clientului, a fost nehotarat",
-        "ambiguitati": [
-          "2 saramuri de peste øn 2 salate de vinete"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirmes intotdeauna totalul inainte de finalizarea comenzii"
-        ],
-        "ezitari_client": [
-          "2 saramuri de peste øn 2 salate de vinete"
-        ]
-      }
-    },
-    {
-      "conversation_index": 27,
-      "transcript_preview": "Daca nu am pachet cu livrare si stam lipsiti, atunci... Buna ziua, domnule Savaran, aici Nassim. Cu ce va pot ajuta? Vreau sa dau si eu o comanda pent...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "mici",
-            "cantitate": 30,
-            "note": null
-          },
-          {
-            "produs": "chifle",
-            "cantitate": 15,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          35
-        ],
-        "pret_final": null,
-        "adresa_livrare": "Chinatown H10 M18",
-        "timp_estimat_livrare": "o ora",
-        "scop_conversatie": "comanda",
-        "comportament_vanzator": "A repetat comanda pentru confirmare, a fost putin confuz in privinta adresei de livrare.",
-        "comportament_client": "Ezita la momentul platii si nu este clar daca clientul a inteles pretul final.",
-        "ambiguitati": [
-          "H... nu, H10 M18",
-          "nu conteaza ce sa fac acum"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii.",
-          "Sa clarifice adresa de livrare cu atentie."
-        ],
-        "ezitari_client": [
-          "Daca nu am pachet cu livrare si stam lipsiti...",
-          "nu conteaza ce sa fac acum",
-          "cash, cash. Cash.",
-          "H... nu, H10 M18"
-        ]
-      }
-    },
-    {
-      "conversation_index": 28,
-      "transcript_preview": "Restaurant la noi, buna seara. Buna seara. Vreau sa va intreb: mai aveti o masa de 6 persoane intr-o jumatate de ora? Stati un pic, stati, ca e galagi...",
+      "conversation_index": 5,
+      "data": "2026-01-01",
+      "ora": "16:12",
+      "telefon": "0731439934",
+      "tip": "altele - altele",
+      "transcript": "Bonjour, je vous appelle. Cliente. Daca n-am participat la solicitari, daca nu... Nu pot sa incerc sa fac ceva pe internet. Nu ma refer ca... Asa, acum merge. Mai ai sens sa-ti dau? Astia nu cred ca fac. Simbol si nu stiu ce ar insemna. Asta e viziunea mea personala. Ba, dar e de joc. 1 ianuarie. Bine. Voi ganditi ca eu nu pot sa stau.",
       "analysis": {
         "produse_comandate": [],
         "totaluri_partiale": null,
         "pret_final": null,
         "adresa_livrare": null,
         "timp_estimat_livrare": null,
-        "scop_conversatie": "refuz livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare, dar nu a oferit detalii despre disponibilitatea mesei.",
-        "comportament_client": "Ezitat si a intrebat de mai multe ori despre disponibilitatea mesei.",
+        "tip_apel": {
+          "categorie": "altele",
+          "subtip": null,
+          "rezultat": "altele"
+        },
+        "sentiment_negativ": null,
+        "comportament_vanzator": "Nu se poate evalua comportamentul vanzatorului deoarece transcriptul nu contine nicio interventie clara din partea unui angajat al restaurantului. Nu exista dialog structurat intre vanzator si client.",
+        "comportament_client": "Clientul vorbeste intr-o maniera extrem de confuza si dezorganizata. Amesteca limbi (franceza la inceput cu 'Bonjour'), face afirmatii neclare si fara legatura logica ('Nu pot sa incerc sa fac ceva pe internet', 'Asta e viziunea mea personala', '1 ianuarie'). Nu formuleaza nicio cerere concreta sau comanda. Discursul este haotic si lipsit de coerenta.",
         "ambiguitati": [
-          "Cea mai mare placere",
-          "Vita Asiatica"
+          "Nu se intelege scopul apelului - clientul nu formuleaza nicio cerere clara",
+          "Transcriptul contine fragmente fara sens logic sau legatura cu activitatea restaurantului",
+          "Nu este clar daca exista un vanzator prezent in conversatie sau daca este doar un monolog al clientului",
+          "Referinta la 'solicitari', 'internet', 'simbol', '1 ianuarie' ramane complet neclara"
         ],
-        "claritate": "unele ezitari ale clientului",
+        "claritate": "Foarte scazuta. Transcriptul este extrem de confuz, lipsit de structura si fara nicio comanda sau cerere identificabila. Nu se poate determina daca este un apel valid la restaurant sau o inregistrare eronata.",
         "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii.",
-          "Sa ofere detalii clare despre disponibilitatea mesei."
+          "Instruirea angajatilor sa identifice rapid apelurile confuze sau fara scop clar si sa incerce sa redirectioneze conversatia prin intrebari directe: 'Va pot ajuta cu o comanda?' sau 'Doriti sa faceti o rezervare?'",
+          "Dezvoltarea unui protocol pentru gestionarea apelurilor neclare: dupa 2-3 incercari de clarificare fara succes, angajatul sa poata incheia politicos apelul",
+          "Antrenarea echipei sa recunoasca semnele unui apel neproductiv si sa nu piarda timp excesiv incercand sa inteleaga cereri imposibil de descifrat",
+          "Implementarea unei proceduri de verificare: 'Ati sunat la restaurantul LaNuci din Afumati?' pentru a confirma ca apelantul a contactat numarul corect"
         ],
         "ezitari_client": [
-          "Vreau sa va intreb: mai aveti o masa de 6 persoane intr-o jumatate de ora?",
-          "Nu, nu, nu, nu, nu, nu am nimic liber."
+          "Clientul incepe cu 'Bonjour' apoi trece brusc la romana, sugerand confuzie sau ezitare in comunicare",
+          "Foloseste formulari incomplete si intrerupte: 'Daca n-am participat la solicitari, daca nu...'",
+          "Intrerupe propriul discurs cu 'Asa, acum merge' fara context",
+          "Pune intrebari retorice fara raspuns: 'Mai ai sens sa-ti dau?'",
+          "Face afirmatii neterminate: 'Astia nu cred ca fac' - fara sa specifice despre ce vorbeste"
         ]
       }
     },
     {
-      "conversation_index": 29,
-      "transcript_preview": "Restaurant La Nui, buna seara. Buna seara. As dori si eu sa fac o comanda cu livrare. Nu, nu mai am sofer. Sofer pana in, aa, pana in 08:30 avem. Si d...",
-      "analysis": {
-        "raw_response": "```json\n{\n  \"produse_comandate\": [\n    {\"produs\": \"jum\\u0103ri\", \"cantitate\": 2, \"note\": null},\n    {\"produs\": \"pui chinezesc\", \"cantitate\": 1, \"note\": \"s\\u00e0 fie mai bine f\\u00e3cut\"},\n    {\"produs\": \"mujdei\", \"cantitate\": 1, \"note\": null},\n    {\"produs\": \"pizza margherita\", \"cantitate\": 1, \"note\": \"f\\u00e3r\\u0103 ro\\u015fiile\"}\n  ],\n  \"totaluri_partiale\": [null],\n  \"pret_final\": null,\n  \"adresa_livrare\": null,\n  \"timp_estimat_livrare\": \"35 de minute\",\n  \"scop_conversatie\": \"comand\\u00e3 cu livrare\",\n  \"comportament_vanzator\": \"A repetat comanda pentru confirmare, a cerut detalii despre produsele comandate\",\n  \"comportament_client\": \"A ezitat la momentul de claritate sc\\u00e2zut\\u00e0, a fost nehot\\u0103r\\u00e2t la anumite puncte ale comenzii\",\n  \"ambiguitati\": [\"\\u00ca... Astept\", \"\\u00ca vreti, reveniti, cum doriti\"],\n  \"claritate\": \"unele ezitari ale clientului\",\n  \"recomandari_training\": [\n    \"S\\u00e0 confirme intotdeauna totalul inainte de finalizarea comenzii\",\n    \"S\\u00e0 clarifice rapid orice punct de neintelegere\"\n  ],\n  \"ezitari_client\": [\"\\u00ca... Astept\", \"\\u00ca vreti, reveniti, cum doriti\"]\n}\n```"
-      }
-    },
-    {
-      "conversation_index": 30,
-      "transcript_preview": "O luam in direct, te rog? Bravo. Restaurant la nuci, aseara. Buna seara, au mai aveti locuri? Nu, nu mai am locuri, nu, nu, de 1 saptamana nu mai am n...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "Restaurant la nuci",
-            "cantitate": null,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "refuz livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare, a refuzat clar posibilitatea de livrare.",
-        "comportament_client": "Ezita la confirmarea comenzii, nu este hotarat.",
-        "ambiguitati": [
-          "Nu mai am locuri",
-          "Cu cea mai mare placere"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii.",
-          "Sa fie clar si direct la refuzarea posibilitatii de livrare."
-        ],
-        "ezitari_client": [
-          "Nu, nu mai am locuri",
-          "Cu cea mai mare placere"
-        ]
-      }
-    },
-    {
-      "conversation_index": 31,
-      "transcript_preview": "Buna ziua, daca va doriti sa comandati acolo, de la ce data? De la noapte la 10:00. De la 10:00. Am comandat acolo si ii dau comanda. Aa, restaurant a...",
-      "analysis": {
-        "raw_response": "```json\n{\n  \"produse_comandate\": [\n    {\"produs\": \"american burger\", \"cantitate\": 2, \"note\": null},\n    {\"produs\": \"\\u0159ni\\u0219el de pui cu cartofi pr\\u00e3ji\\u0167i\", \"cantitate\": 1, \"note\": \"f\\u00e3r\\u0103 usturoi, f\\u00e3r\\u0103 br\\u00e2nz\\u00e225\"},\n    {\"produs\": \"\\u0159ni\\u0219el de pui cu cartofi pr\\u00e3ji\\u0167i\", \"cantitate\": 1, \"note\": null},\n    {\"produs\": \"pulpe de pui cu piure\", \"cantitate\": 1, \"note\": null},\n    {\"produs\": \"pulpe de pui cu cartofi pr\\u00e3ji\\u0167i\", \"cantitate\": 1, \"note\": \"cu cartofi cop\\u021bi\"},\n    {\"produs\": \"\\u0159mici\", \"cantitate\": 2, \"note\": null},\n    {\"produs\": \"cartofi umplu\\u0163i\", \"cantitate\": 1, \"note\": null},\n    {\"produs\": \"pui crocant cu cartofi cu br\\u00e2nz\\u00e225\", \"cantitate\": 1, \"note\": null}\n  ],\n  \"totaluri_partiale\": [null],\n  \"pret_final\": null,\n  \"adresa_livrare\": \"Galata 85A, Voluntari\",\n  \"timp_estimat_livrare\": \"in jur de 1h\",\n  \"scop_conversatie\": \"comand\\u00e3\",\n  \"comportament_vanzator\": \"a repetat comanda pentru confirmare\",\n  \"comportament_client\": \"a ezitat la unele puncte ale comenzii\",\n  \"ambiguitati\": [\"cartofi pr\\u00e3ji\\u0167i\", \"\\u0159ni\\u0219el de pui cu cartofi pr\\u00e3ji\\u0167i\"],\n  \"claritate\": \"unele ezit\\u0103ri ale clientului\",\n  \"recomandari_training\": [\"S\\u00e3 confirme \\u00intotdeauna totalul \\u00eenainte de finalizarea comenzii\", \"S\\u00e3 clarifice rapid orice ambiguitate\"],\n  \"ezitari_client\": [\n    \"\\u0159ni\\u0219el de pui cu cartofi pr\\u00e3ji\\u0167i, simpli, v\\u00e0 rog, adic\\u00e225 f\\u00e3r\\u0103 usturoi, f\\u00e3r\\u0103 br\\u00e2nz\\u00e225\",\n    \"cartofii s\\u00e225 simpli, v\\u00e0 rog, f\\u00e3r\\u0103 usturoi, f\\u00e3r\\u0103 br\\u00e2nz\\u00e225\",\n    \"\\u0159ni\\u0219el de pui cu cartofi pr\\u00e3ji\\u0167i, cu cartofi cop\\u021bi, m\\u00e0 scuza\\u021bi\",\n    \"Are cartofi cu usturoi?\",\n    \"At\\u00e2t, da\"\n  ]\n}\n```"
-      }
-    },
-    {
-      "conversation_index": 32,
-      "transcript_preview": "Restaurant la nunti. Buna ziua. Va rog, aa, o comanda as vrea sa fac cu... trecem noi sa luam comanda, ne trebuie livrare. O pizza cu pui si porumb ma...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "o pizza cu pui si porumb mare",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "quesadilla de pui",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "4 mici",
-            "cantitate": 4,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          99
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": "jumatate de ora",
-        "scop_conversatie": "comanda",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "Ezitari in privinta comenzii si a timpului estimat de livrare",
-        "ambiguitati": [
-          "99",
-          "pui si porumb"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii",
-          "Sa clarifice orice ambiguitate cu clientul"
-        ],
-        "ezitari_client": [
-          "Pui si porumb ai zis ca inseamna 99?",
-          "3... o jumatate de ora?"
-        ]
-      }
-    },
-    {
-      "conversation_index": 33,
-      "transcript_preview": "Salut, un pachet de tigari si care e latul? Alo, buna ziua, restaurant La Nucea Nassem, cu ce va pot ajuta? Buna ziua, doresc sa fac si eu o comanda. ...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "ciorbe de burta",
-            "cantitate": 2,
-            "note": null
-          },
-          {
-            "produs": "pilaf fore deasa",
-            "cantitate": 1,
-            "note": null
-          },
-          {
-            "produs": "chiftele de porc",
-            "cantitate": 1,
-            "note": null
-          },
-          {
-            "produs": "seafa",
-            "cantitate": 2,
-            "note": "bine facute"
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "comanda",
-        "comportament_vanzator": "A repetat comanda pentru confirmare, a clarificat rapid",
-        "comportament_client": "A ezitat la unele puncte de comanda",
-        "ambiguitati": [
-          "Nu am",
-          "Nu ai"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii"
-        ],
-        "ezitari_client": [
-          "Nu am",
-          "Nu ai"
-        ]
-      }
-    },
-    {
-      "conversation_index": 34,
-      "transcript_preview": "Restaurant la noi, buna seara. Buna seara. Aa, aveti vreo masa disponibila pentru 2 persoane? Nu, cu cea mai mare placere, dar nu, nu avem. E plin de ...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "masa disponibila pentru 2 persoane",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "cea mai mare placere",
-            "cantitate": null,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "rezervare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare si a explicat situatia.",
-        "comportament_client": "Ezitari frecvente, intrebari repetitive.",
-        "ambiguitati": [
-          "plin",
-          "ocupat",
-          "rezervat"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii.",
-          "Sa clarifice rapid situatia si sa ofere solutii."
-        ],
-        "ezitari_client": [
-          "Nu",
-          "Cu cea mai mare placere, dar nu",
-          "E plin de cateva zile.",
-          "Nu, e plin, e plin.",
-          "E ocupat, e plin.",
-          "Si daca se va se elibereaza, puteti?",
-          "Nu, nu, nu, nu, nu, nu am."
-        ]
-      }
-    },
-    {
-      "conversation_index": 35,
-      "transcript_preview": "Restaurant la noi, buna seara. Buna seara, imi cer scuze pentru deranj. Vreau sa stiu daca putem sa venim si noi la dumneavoastra, daca e deschis sau ...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "nimic",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "ceea mai mare placere",
-            "cantitate": null,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "refuz livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "Ezitari frecvente, a fost nehotaret",
-        "ambiguitati": [
-          "nimic",
-          "ceea mai mare placere"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii"
-        ],
-        "ezitari_client": [
-          "Nu, nu, nimic",
-          "Da, dar nu am nimic liber"
-        ]
-      }
-    },
-    {
-      "conversation_index": 36,
-      "transcript_preview": "Pasii aia de identitate o avea de la Sarah. Buna ziua, restaurant La Nucea Nasca, cu ce va pot ajuta? Buna ziua, aa, vreau si va rog frumos o pizza la...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "pizza la nuci",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "sos de ketchup",
-            "cantitate": null,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          50
-        ],
-        "pret_final": null,
-        "adresa_livrare": "Strada Stejarului nr. 13",
-        "timp_estimat_livrare": "o ora si un pic",
-        "scop_conversatie": "comanda",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "Ezita la adaugarea topping-ului",
-        "ambiguitati": [
-          "extra topping",
-          "sos de ketchup"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii",
-          "Sa clarifice rapid orice ambiguitate"
-        ],
-        "ezitari_client": [
-          "Vreau si va rog frumos o pizza la nuci, cu extra topping de porumb si un sos de ketchup.",
-          "A, stati ca punem extra topping-ul acum."
-        ]
-      }
-    },
-    {
-      "conversation_index": 37,
-      "transcript_preview": "Da, e corect. Suna dracul, dracu' nu raspunde. Restaurant la nuci, buna seara. Aa, buna seara. As vrea si eu sa rezerv o matru, o masa de 4 persoane, ...",
+      "conversation_index": 6,
+      "data": "2026-01-01",
+      "ora": "16:14",
+      "telefon": "0742081997",
+      "tip": "altele - altele",
+      "transcript": "Da, vad ce va zic poti. Uitati, si eu in stanga ce e? Asa ca e la 8, in schimb. Dar eu gasesc trecerea si pe carucior. Stiti ca eu sunt pe acolo? Pana cand am luat GPS-ul, nu mai ma tin de acolo. Nu ma tin. Dar daca intri, mergi degeaba? Am inteles. Deci faci rezervari, cred. Da, ia. De fapt, nu, ca ai dat, ai dat drumul la... Stai, caut-o, ca nu are luminile aprinse. In dreapta de tot. Aici. Mai in dreapta de tot. Inca o data? Da. Dar iti face rezervarea. Pai nu, el... de ce? Pai nu, ca ai dat si asta. Am invatat jocul. Nu, dar am invatat jocul ca daca nu e sub 0,6... N-are treaba, ca e... cand e... cand e rece.",
       "analysis": {
         "produse_comandate": [],
         "totaluri_partiale": null,
         "pret_final": null,
         "adresa_livrare": null,
         "timp_estimat_livrare": null,
-        "scop_conversatie": "refuz livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare, dar nu a fost concreta in detalii.",
-        "comportament_client": "Ezitari si intrebari repetitive despre disponibilitatea mesei.",
+        "tip_apel": {
+          "categorie": "altele",
+          "subtip": null,
+          "rezultat": "altele"
+        },
+        "sentiment_negativ": null,
+        "comportament_vanzator": "Nu se poate identifica comportamentul vanzatorului in acest transcript. Conversatia pare sa fie fragmentata sau inregistrata partial, fara replici clare din partea angajatului restaurantului.",
+        "comportament_client": "Clientul vorbeste intr-un mod foarte confuz si dezorganizat. Foloseste propozitii incomplete si schimba subiectul frecvent fara o logica clara. Mentiuni despre GPS, rezervari, luminile aprinse si cifre (0,6) apar fara context. Nu formuleaza o cerere clara sau o comanda concreta. Pare sa fie o conversatie tangentiala sau inregistrata accidental.",
         "ambiguitati": [
-          "Restaurant la nuci",
-          "cam intr-o jumatate de ora"
+          "Nu se intelege scopul apelului - nu este clar daca clientul doreste sa faca o rezervare, o comanda sau altceva",
+          "Referintele la GPS, luminile aprinse si directii (stanga, dreapta) nu au context",
+          "Mentiunea despre 0,6 si despre ceva care e rece nu poate fi interpretata",
+          "Nu se identifica replici clare ale vanzatorului, deci nu se poate stabili daca este o conversatie bilaterala"
         ],
-        "claritate": "Unele ezitari ale clientului",
+        "claritate": "Foarte scazuta. Transcriptul este extrem de confuz, fragmentat si lipsit de coerenta. Nu contine o conversatie structurata intre client si restaurant. Pare sa fie o inregistrare accidentala sau o conversatie in alta limba/context decat cel al unei comenzi telefonice.",
         "recomandari_training": [
-          "Sa confirme intotdeauna disponibilitatea mesei inainte de a oferi o rezervare.",
-          "Sa fie mai concreta in detalii despre comanda si disponibilitatea."
+          "Daca apelul este neclар sau clientul vorbeste confuz, angajatul trebuie sa intervina politicos si sa clarifice: 'Va rog frumos, cum va pot ajuta astazi? Doriti sa faceti o comanda sau o rezervare?'",
+          "In cazul in care clientul nu raspunde coerent sau pare sa fie o greseala, angajatul sa confirme: 'Ati sunat la restaurantul LaNuci din Afumati. Cu ce va pot ajuta?'",
+          "Daca apelul nu are legatura cu restaurantul, angajatul sa incheie politicos conversatia pentru a nu pierde timp: 'Multumesc pentru apel, o zi buna!'"
         ],
         "ezitari_client": [
-          "As vrea si eu sa rezerv o matru",
-          "Nu, nu, cu cea mai mare placere"
+          "Clientul nu formuleaza nicio cerere clara pe tot parcursul conversatiei",
+          "Schimba subiectul de mai multe ori fara sa finalizeze o idee",
+          "Foloseste propozitii incomplete si fragmente de ganduri"
         ]
       }
     },
     {
-      "conversation_index": 38,
-      "transcript_preview": "Buna, imi pare mult de pierdut. Alo, buna ziua, restaurant La Nucia noastra, cu ce va pot ajuta? Buna ziua, fiti draguta, am castigat si noi un vouche...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "voucher",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "restaurant La Nuci",
-            "cantitate": null,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": "Afumati, Bucurestiul 10, numarul 28",
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "comanda",
-        "comportament_vanzator": "A repetat comanda pentru confirmare si a clarificat rapid adresa.",
-        "comportament_client": "A ezitat in privinta numelui restaurantului, dar a fost prompt cu informatiile necesare.",
-        "ambiguitati": [
-          "restaurant La Nuci",
-          "Afumati"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii.",
-          "Sa solicite clarificari suplimentare atunci cand este necesar."
-        ],
-        "ezitari_client": [
-          "Pai pentru restaurant, dar imi spuneti unde este restaurantul, ce locatie are?",
-          "Daca este pentru restaurant, pentru altceva nu stiu."
-        ]
-      }
-    },
-    {
-      "conversation_index": 39,
-      "transcript_preview": "Buna seara, restaurant La Nuci. Buna seara. As dori sa fac si eu o comanda cu ridicare. Cu ridicare? Ia spuneti-mi, va rog. Da, da, da. Meniu snitel c...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "snitel cu ciorba de perisoare",
-            "cantitate": 1,
-            "note": null
-          },
-          {
-            "produs": "ciorba de burta",
-            "cantitate": 2,
-            "note": "ardei, chifle"
-          },
-          {
-            "produs": "sarmale cu mamaliguta",
-            "cantitate": 1,
-            "note": null
-          },
-          {
-            "produs": "fasole iasmie cu carnati",
-            "cantitate": 1,
-            "note": null
-          },
-          {
-            "produs": "clatite brasovene",
-            "cantitate": 1,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": "o ora",
-        "scop_conversatie": "comanda cu ridicare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare, a cerut numarul de telefon si numele clientului.",
-        "comportament_client": "Ezita la un moment dat din cauza muzicii tari si linistite",
-        "ambiguitati": [
-          "ciorbite",
-          "ardei, chifle"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii",
-          "Sa solicite numarul de telefon si numele clientului pentru a putea livra corect"
-        ],
-        "ezitari_client": [
-          "Ma scuzati, nu va inteleg bine, ca e muzica tare si linistita.",
-          "Zero? 003 la sfarsit."
-        ]
-      }
-    },
-    {
-      "conversation_index": 40,
-      "transcript_preview": "Alo, buna ziua, restaurant Anuntiana, sunt cu ce va pot ajuta? Buna ziua, as vrea sa fac si eu o rezervare pentru 4 persoane, afara pe terasa, diseara...",
-      "analysis": {
-        "produse_comandate": [],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "refuz livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "Ezita la confirmarea comenzii",
-        "ambiguitati": [
-          "Nu avem loc liber si pe terasa nu servim"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii"
-        ],
-        "ezitari_client": [
-          "Afara pe terasa, diseara la ora 6:30"
-        ]
-      }
-    },
-    {
-      "conversation_index": 41,
-      "transcript_preview": "Restaurant la noi, buna seara. Buna seara, gasim si noi o masa de 4 persoane la dvs.? Nu, nu, nu, nu, nu, e totul plin, da, imi pare rau. Bine, domnul...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "masa",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "comanda pentru confirmare",
-            "cantitate": null,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "refuz livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "Ezitari inainte de a confirma refuzul livrarii",
-        "ambiguitati": [
-          "Nu, nu, nu, nu, nu",
-          "da, imi pare rau"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii",
-          "Sa clarifice rapid orice ambiguitate"
-        ],
-        "ezitari_client": [
-          "Nu, nu, nu, nu, nu",
-          "da, imi pare rau"
-        ]
-      }
-    },
-    {
-      "conversation_index": 42,
-      "transcript_preview": "Restaurant la noi, buna seara. Buna seara. Aa, am si eu o rugaminte, m-ar interesa daca mai aveti locuri mese libere. Cate persoane? Voiam 4, dar nu s...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "locuri mese libere",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "2 persoane",
-            "cantitate": null,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "rezervare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare si a clarificat rapid.",
-        "comportament_client": "A ezitat in privinta numarului de persoane, dar a fost clar cu detalii.",
-        "ambiguitati": [
-          "4 nu cred ca aveti loc",
-          "2 maxim 3 as gasi"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii.",
-          "Sa solicite clar detalii despre numarul de persoane."
-        ],
-        "ezitari_client": [
-          "Cate persoane?",
-          "Voiam 4, dar nu sunt sigur",
-          "2 da.",
-          "3 da, dar 4 nu."
-        ]
-      }
-    },
-    {
-      "conversation_index": 43,
-      "transcript_preview": "Restaurant la nuci. Alo, buna ziua. Buna ziua, spuneti va rog. Vreau sa fac si eu o comanda de niste clatite brasovene, 1 sa vin eu sa le iau. Cate po...",
-      "analysis": {
-        "raw_response": "```json\n{\n  \"produse_comandate\": [\n    {\"produs\": \"cl\\u00e2tite bra\\u0219ovene\", \"cantitate\": 2, \"note\": null},\n    {\"produs\": \"papana\\u021bi\", \"cantitate\": 1, \"note\": null}\n  ],\n  \"totaluri_partiale\": [null],\n  \"pret_final\": null,\n  \"adresa_livrare\": null,\n  \"timp_estimat_livrare\": \"30 de minute\",\n  \"scop_conversatie\": \"comand\\u00e3\",\n  \"comportament_vanzator\": \"A repetat comanda pentru confirmare\",\n  \"comportament_client\": \"Ezit\\u00e2tor, a pus mai multe ori acela\\u015fi\",\n  \"ambiguitati\": [\"\\u00cih\\u00e3\", \"\\u00cdh\\u00e3\"],\n  \"claritate\": \"unele ezit\\u00e2ri ale clientului\",\n  \"recomandari_training\": [\n    \"S\\u00e0 confirme \\u00eentotdeauna totalul \\u00eenainte de finalizarea comenzii\"\n  ],\n  \"ezitari_client\": [\"Cate por\\u021bi dori\\u021bi?\", \"30 de minute, da?\"]\n}\n```"
-      }
-    },
-    {
-      "conversation_index": 44,
-      "transcript_preview": "Am venit aici. Inca nu stiu cum trebuie sa... Da. Alo, buna ziua, restaurant La Nuncea Nassan, cu ce va pot ajuta? Alo, buna ziua, de la Geolayla, am ...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "25 de portii de mancare",
-            "cantitate": 3,
-            "note": null
-          },
-          {
-            "produs": "",
-            "cantitate": 0,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "comanda",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "Ezita la finalizarea comenzii",
-        "ambiguitati": [
-          "Inca nu stiu cum trebuie sa...",
-          "Da. Alo, buna ziua"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii"
-        ],
-        "ezitari_client": [
-          "Inca nu stiu cum trebuie sa...",
-          "Da. Alo, buna ziua"
-        ]
-      }
-    },
-    {
-      "conversation_index": 45,
-      "transcript_preview": "Restaurant La Nuci, buna seara. Aa, buna seara, pot sa fac si eu, va rog, o rezervare pentru maine, orele 14:00? Cate persoane? 4. Pe ce nume? Adriana...",
+      "conversation_index": 7,
+      "data": "2026-01-01",
+      "ora": "17:49",
+      "telefon": "0769645575",
+      "tip": "altele - altele",
+      "transcript": "Ce trebuia? Am un proiect la spate, sa-l fac pe ala? Ce conteaza daca e pe masa, nu dai nimic?",
       "analysis": {
         "produse_comandate": [],
         "totaluri_partiale": null,
         "pret_final": null,
         "adresa_livrare": null,
         "timp_estimat_livrare": null,
-        "scop_conversatie": "rezervare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare si a explicat clar disponibilitatea mesei.",
-        "comportament_client": "A ezitat in privinta locului unde se afla masa, dar a fost in cele din urma multumit cu raspunsul.",
+        "tip_apel": {
+          "categorie": "altele",
+          "subtip": null,
+          "rezultat": "altele"
+        },
+        "sentiment_negativ": "Clientul vorbeste agresiv si jignitor, folosind expresii precum 'Ce trebuia?', 'sa-l fac pe ala?', 'Ce conteaza daca e pe masa, nu dai nimic?' intr-un ton ostil si necooperant.",
+        "comportament_vanzator": "Nu exista dialog din partea vanzatorului in acest transcript. Nu se poate evalua comportamentul acestuia.",
+        "comportament_client": "Clientul manifesta un comportament extrem de agresiv si necooperant. Foloseste un limbaj jignitor si ostil, pune intrebari retorice agresive si pare sa fie intr-o stare de conflict. Nu formuleaza nicio cerere clara sau comanda. Tonul este provocator si lipsit de respect.",
         "ambiguitati": [
-          "unde e ringul de dans",
-          "unde e intrarea din curte"
+          "Nu este clar contextul conversatiei - nu se intelege despre ce proiect vorbeste clientul",
+          "Nu se intelege la ce se refera cu 'pe masa' si 'nu dai nimic'",
+          "Lipseste complet contextul apelului - nu se stie daca este legat de restaurant sau este un apel gresit",
+          "Nu exista nicio referire la produse, servicii sau comenzi de la restaurant"
         ],
-        "claritate": "unele ezitari ale clientului",
+        "claritate": "Transcriptul este extrem de neclar si lipsit de context. Nu contine nicio informatie relevanta pentru activitatea restaurantului. Pare sa fie fie un fragment dintr-o conversatie mai ampla, fie un apel gresit, fie o inregistrare eronata. Nu se poate identifica scopul apelului sau legatura cu restaurantul LaNuci.",
         "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii.",
-          "Sa fie mai atent la detalii si sa nu presupuna ceea ce clientul intentioneaza sa spuna."
+          "Instruire pentru gestionarea apelurilor agresive: vanzatorii trebuie sa invete sa ramana calmi si profesionisti chiar si atunci cand clientii sunt ostili",
+          "Proceduri clare pentru identificarea si redirectionarea apelurilor gresite sau irelevante",
+          "Tehnici de de-escaladare a conflictelor: cum sa calmeze un client agitat si sa readuca conversatia intr-un cadru constructiv",
+          "Protocol pentru incheierea politicoasa a apelurilor care nu au legatura cu activitatea restaurantului",
+          "Training pentru recunoasterea rapida a situatiilor in care apelul nu este legat de comenzi sau servicii si cum sa se procedeze"
         ],
-        "ezitari_client": [
-          "unde e ringul de dans",
-          "unde e intrarea din curte"
-        ]
+        "ezitari_client": []
       }
     },
     {
-      "conversation_index": 46,
-      "transcript_preview": "Restaurant La Nui, buna seara. Buna seara, as vrea sa fac si eu o comanda cu livrare la domiciliu, va rog. Da, imediat. O secunda. Da, da? O secunda s...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "clatite brasovene",
-            "cantitate": 4,
-            "note": null
-          },
-          {
-            "produs": "pui la jar cu cartofi simpli",
-            "cantitate": 1,
-            "note": "fara branza25, fara usturoi"
-          },
-          {
-            "produs": "paste al forno",
-            "cantitate": 1,
-            "note": null
-          },
-          {
-            "produs": "rnisel cu orez cu legume",
-            "cantitate": 1,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": "Stefanestii de Jos, strada Bicaz, numarul 28",
-        "timp_estimat_livrare": "in jur de o ora",
-        "scop_conversatie": "comanda25",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "a ezitat la anumite puncte, a fost nehotarat",
-        "ambiguitati": [
-          "Bicaz 28?",
-          "Un numar de telefon? 0771. 0771. 396. 396. 324."
-        ],
-        "claritate": "unele ezita25ri ale clientului, vanzatorul a clarificat rapid",
-        "recomandari_training": [
-          "Sa confirme antotdeauna totalul inainte de finalizarea comenzii"
-        ],
-        "ezitari_client": [
-          "O secunda25, o secunda25.",
-          "Da, imediat. O secunda25.",
-          "Da, da?",
-          "Un numar de telefon? 0771. 0771. 396. 396. 324.",
-          "O secunda25, stati ca n-am...",
-          "Si pot... putem plati cu cardul la livrare?",
-          "Deci un snitel cu orez cu legume si fara limonada, da?"
-        ]
-      }
-    },
-    {
-      "conversation_index": 47,
-      "transcript_preview": "Alo? Alo, buna ziua! Alo, buna ziua, fiti amabila, as dori sa comand si eu la dumneavoastra un meniu la nuci si vin eu sa ridic de la dumneavoastra. D...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "meniu la nuci",
-            "cantitate": null,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "comanda",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "Ezita la confirmarea comenzii",
-        "ambiguitati": [
-          "meniu la nuci"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii"
-        ],
-        "ezitari_client": [
-          "As dori sa comand si eu la dumneavoastra un meniu la nuci"
-        ]
-      }
-    },
-    {
-      "conversation_index": 48,
-      "transcript_preview": "Alo, buna ziua, Restaurant La Nucia Nassen, cu ce va pot ajuta? Buna ziua, aa, as dori sa fac si eu o rezervare in seara aceasta, daca se poate. Din p...",
-      "analysis": {
-        "produse_comandate": [],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "refuz livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare, dar nu a fost concreta.",
-        "comportament_client": "Ezitari inainte de a anula comenzile.",
-        "ambiguitati": [
-          "Din pacate nu mai avem nimic liber de o saptamana."
-        ],
-        "claritate": "Unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii.",
-          "Sa fie mai concreta si sa nu repete comanda pentru confirmare."
-        ],
-        "ezitari_client": [
-          "As dori sa fac si eu o rezervare in seara aceasta, daca se poate."
-        ]
-      }
-    },
-    {
-      "conversation_index": 49,
-      "transcript_preview": "Alo, buna ziua, restaurantul Anunturilor, sunt Guce. Va pot ajuta? Alo, buna ziua. As vrea sa-mi dau si eu o comanda cu ridicare. Va ascult. As vrea s...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "ciorba de vacusa",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "si chifla",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "pulpa de pui la gratar",
-            "cantitate": null,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": "40 minute",
-        "scop_conversatie": "comanda cu ridicare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "Ezitari ale clientului, a fost nehotarat",
-        "ambiguitati": [
-          "Nu am sarmale",
-          "N-aveti?",
-          "Atat?"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme antotdeauna totalul inainte de finalizarea comenzii"
-        ],
-        "ezitari_client": [
-          "As vrea si eu o ciorba de vacuta.",
-          "Da. O chifla.",
-          "Atat?"
-        ]
-      }
-    },
-    {
-      "conversation_index": 50,
-      "transcript_preview": "Alo, buna ziua, restaurant La Nucia Nas, in cu ce va pot ajuta? Alo, buna ziua. Va rog, as vrea si o, o comanda cu livrare la domiciliu. Va ascult. Va...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "fecola de porc",
-            "cantitate": 1,
-            "note": null
-          },
-          {
-            "produs": "steak-uri de porc",
-            "cantitate": 2,
-            "note": null
-          },
-          {
-            "produs": "legume la gratar",
-            "cantitate": 1,
-            "note": null
-          },
-          {
-            "produs": "supa cu galuste",
-            "cantitate": 2,
-            "note": null
-          },
-          {
-            "produs": "papanasi cu fructe de padure",
-            "cantitate": 1,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          213,
-          260,
-          240
-        ],
-        "pret_final": 300,
-        "adresa_livrare": "Soseaua Bucuresti Nord, 10B",
-        "timp_estimat_livrare": "1 ora si jumatate",
-        "scop_conversatie": "comanda cu livrare la domiciliu",
-        "comportament_vanzator": "A repetat comanda pentru confirmare, a explicat clar conditiile de livrare",
-        "comportament_client": "A ezitat inainte de a da comanda, a intrebat despre detalii multiple",
-        "ambiguitati": [
-          "Bucuresti Nord",
-          "Pipera Piata"
-        ],
-        "claritate": "unele ezitari ale clientului, vanzatorul a clarificat rapid",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii",
-          "Sa explice conditiile de livrare clare si concis"
-        ],
-        "ezitari_client": [
-          "Bucuresti Nord",
-          "Pipera Piata",
-          "2 sau 4 Pepsi"
-        ]
-      }
-    },
-    {
-      "conversation_index": 51,
-      "transcript_preview": "Salutari, si totul e bine, multumesc. Pai da. De ce este? Alo, buna ziua, restaurantul Anuntat Noastra, cu ce va pot ajuta? Alo, buna ziua, de la Geol...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "meniul cu ciorba de porc si ceapa de porc la cuptor si piure si salata de muraturi",
-            "cantitate": 25,
-            "note": null
-          },
-          {
-            "produs": "sarmale",
-            "cantitate": 10,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          45,
-          46
-        ],
-        "pret_final": 1150,
-        "adresa_livrare": "Geolayla Market",
-        "timp_estimat_livrare": "o ora si jumatate",
-        "scop_conversatie": "comanda",
-        "comportament_vanzator": "A repetat comanda pentru confirmare, a oferit o alternativa la sarmale (piure cu ceapa la gratar)",
-        "comportament_client": "A ezitat si a fost nehotarat cand a primit respunsul ca nu au suficiente sarmale",
-        "ambiguitati": [
-          "25 de porai de sarmale",
-          "meniul cu ciorba si ceapa la gratar"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii",
-          "Sa ofere alternativi la produsele solicitate"
-        ],
-        "ezitari_client": [
-          "Pai da. De ce este?",
-          "Auzi, as vrea sa dau si eu comanda de 25 de portii de sarmale, aveti?",
-          "Si ai 25? Imediat verifica colega mea si va si zic.",
-          "Ce mai trebuia sa spun?",
-          "Pai si auziti ce mai aveti?",
-          "Cu piure cu niste ceapa la gratar.",
-          "Si ce mai convenabil acolo?",
-          "Ca banuiesc ca astea le aveti si la meniuri la parastase, nu?",
-          "Deci va dau 25, da?"
-        ]
-      }
-    },
-    {
-      "conversation_index": 52,
-      "transcript_preview": "Restaurant la noi, buna seara. Buna seara. Aveti cumva vreo masa disponibila in seara asta? Nu, cu cea mai mare placere, dar nu avem nimic, e totul pl...",
-      "analysis": {
-        "produse_comandate": [],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "refuz livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare, dar nu a oferit alternative sau detalii despre disponibilitatea produselor.",
-        "comportament_client": "Ezitat la finalizarea comenzii si s-a descurajat rapid.",
-        "ambiguitati": [
-          "Nu avem nimic",
-          "e totul plin de cateva zile"
-        ],
-        "claritate": "Unele ezitari ale clientului, vanzatorul a clarificat rapid",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii.",
-          "Sa ofere alternative sau detalii despre disponibilitatea produselor."
-        ],
-        "ezitari_client": [
-          "Nu, cu cea mai mare placere",
-          "Bine, multumesc"
-        ]
-      }
-    },
-    {
-      "conversation_index": 53,
-      "transcript_preview": "Alo, buna ziua, restaurant Alunceana, sunt cu ce va pot ajuta? Aa, buna ziua, as dori si eu, aa, 2 portii de tort Silvia la pachet. Raluca, ai tort Si...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "tort Silvia",
-            "cantitate": 2,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "comanda",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "Ezita la confirmarea comenzii",
-        "ambiguitati": [
-          "Ai tort Silvia?",
-          "Veniti sa ridicati?"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii"
-        ],
-        "ezitari_client": [
-          "Ai tort Silvia?",
-          "Veniti sa ridicati?"
-        ]
-      }
-    },
-    {
-      "conversation_index": 54,
-      "transcript_preview": "Restaurant la noi, buna seara. Buna seara. Spuneti-mi si mie, va rog, in seara mai poate de prima data la dumneavoastra si. Nu, nu am locuri, sa stiti...",
-      "analysis": {
-        "produse_comandate": [],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "refuz livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare, dar nu a oferit detalii despre produse sau pret.",
-        "comportament_client": "Ezitat si a intrebat de mai multe ori daca are locuri disponibile.",
-        "ambiguitati": [
-          "Nu am locuri",
-          "Sa stiti"
-        ],
-        "claritate": "Unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii.",
-          "Sa ofere detalii despre produse si preturi."
-        ],
-        "ezitari_client": [
-          "Nu, nu am locuri",
-          "Nu, sa stiti"
-        ]
-      }
-    },
-    {
-      "conversation_index": 55,
-      "transcript_preview": "Acum o la robot, cu hahaha.",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "robot",
-            "cantitate": null,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "refuz livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "Ezita la finalizarea comenzii",
-        "ambiguitati": [
-          "robot"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii"
-        ],
-        "ezitari_client": [
-          "Acum o la robot, cu hahaha."
-        ]
-      }
-    },
-    {
-      "conversation_index": 56,
-      "transcript_preview": "Alo, buna ziua, restaurant Anuntia, nascut, cu ce va pot ajuta? Buna ziua, as dori sa fac o comanda cu livrare la domiciliu, va rog. Va ascult. As dor...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "2 iahnii de fasole",
-            "cantitate": 2,
-            "note": null
-          },
-          {
-            "produs": "2 portii de orez cu legume",
-            "cantitate": 2,
-            "note": null
-          },
-          {
-            "produs": "O ciorba de burta",
-            "cantitate": 1,
-            "note": null
-          },
-          {
-            "produs": "Pastrama la gratar",
-            "cantitate": 1,
-            "note": null
-          },
-          {
-            "produs": "2 salate de varza murata",
-            "cantitate": 2,
-            "note": "Am doar varza rosie murata"
-          },
-          {
-            "produs": "O portie de ciuperci la gratar",
-            "cantitate": 1,
-            "note": null
-          },
-          {
-            "produs": "4 mici",
-            "cantitate": 4,
-            "note": null
-          },
-          {
-            "produs": "O hamtie",
-            "cantitate": 1,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          269
-        ],
-        "pret_final": 269,
-        "adresa_livrare": "Voluntari, strada Galata numarul 55, blocul D, apartament 7",
-        "timp_estimat_livrare": "o ora jumate",
-        "scop_conversatie": "comanda cu livrare la domiciliu",
-        "comportament_vanzator": "A repetat comanda pentru confirmare si a cerut adresa de livrare.",
-        "comportament_client": "A ezitat in mai multe randuri, dar a fost clar cu privire la produsele dorite.",
-        "ambiguitati": [
-          "Apartamentul este 7, nu 57.",
-          "Am doar varza rosie murata"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii.",
-          "Sa solicite adresa de livrare clar si sa nu o confunda cu altceva."
-        ],
-        "ezitari_client": [
-          "2, da.",
-          "2, 2, 2, da.",
-          "Da.",
-          "Asa e.",
-          "4 mici.",
-          "Si va rugam totalul ca sa stim cine, sa pregatim banii."
-        ]
-      }
-    },
-    {
-      "conversation_index": 57,
-      "transcript_preview": "Buna ziua, restaurantul Giana, sunt cu ce, va pot ajuta? Buna ziua, as vrea sa dau o comanda cu livrare, va rog. Ion Fo- Fonaci, numarul 3, voluntari?...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "ciorbita de vacuta",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "ciorbita de galuste",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "supa de pui cu galuste",
-            "cantitate": null,
-            "note": "fara carne de pui"
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": "Ion Fo-Fonaci, numarul 3",
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "comanda cu livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare si a clarificat rapid",
-        "comportament_client": "Ezitari in privinta comenzii, nu a fost hotarat",
-        "ambiguitati": [
-          "Ciorba de vaca",
-          "De galuste"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii",
-          "Sa clarifice rapid si precis comenzile"
-        ],
-        "ezitari_client": [
-          "Ciorba de vaca",
-          "De galuste"
-        ]
-      }
-    },
-    {
-      "conversation_index": 58,
-      "transcript_preview": "Alo, buna ziua, restaurantul Ciana, sunt cu ce va pot ajuta? Aa, buna ziua, as vrea sa fac, va rog, o rezervare astazi, la ora 10:00. Eu, frate, nu ma...",
-      "analysis": {
-        "produse_comandate": [],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "refuz livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "Ezita la finalizarea comenzii",
-        "ambiguitati": [
-          "Nu mai avem nimic liber"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii"
-        ],
-        "ezitari_client": [
-          "Nu mai avem nimic liber",
-          "Bine, multumesc."
-        ]
-      }
-    },
-    {
-      "conversation_index": 59,
-      "transcript_preview": "Alo, buna ziua, restaurant Anceana, sunt cu ce. Va pot ajuta? Buna ziua, vreau si eu un meniu pulpa cu cu cu ciorba de galuste. Un meniu supa? Deci av...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "ciorba de galuste",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "enciunul cu ciorba de pui a la grec ri vittile",
-            "cantitate": 1,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "comanda",
-        "comportament_vanzator": "A repetat comanda pentru confirmare, a fost putin confuz ri nu a clarificat preau totalul.",
-        "comportament_client": "Ezitator, a cerut mai multe informatiile despre meniu",
-        "ambiguitati": [
-          "ciorba de galuste",
-          "ciorba de burta"
-        ],
-        "claritate": "unele ezitari ale clientului, vanzatorul a clarificat rapid",
-        "recomandari_training": [
-          "Sa confirme encotdeauna totalul inainte de finalizarea comenzii",
-          "Sa fie mai atent la cererile clientului"
-        ],
-        "ezitari_client": [
-          "Vreau enciunul cu ciorba cu cu cu ciorba de galuste.",
-          "Deci aveti asa, imediat sa ma uit.",
-          "Aveti meniu supa ri pulpa, scrie."
-        ]
-      }
-    },
-    {
-      "conversation_index": 60,
-      "transcript_preview": "Alo, buna seara, restaurant La Nucea Nas in cu ce va pot ajuta? Buna seara, mai aveti locuri libere? Vrem si noi o masa de 5. Deci nu aveti nimic libe...",
-      "analysis": {
-        "produse_comandate": [],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "refuz livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare, dar nu a fost concreta.",
-        "comportament_client": "Ezita la confirmarea comenzii si refuza livrarea.",
-        "ambiguitati": [
-          "Nu aveti nimic liber?",
-          "Deci nu aveti nimic liber?"
-        ],
-        "claritate": "Unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii.",
-          "Sa fie mai concreta la confirmarea comenzilor."
-        ],
-        "ezitari_client": [
-          "Nu aveti nimic liber?",
-          "Deci nu aveti nimic liber?"
-        ]
-      }
-    },
-    {
-      "conversation_index": 61,
-      "transcript_preview": "Alo, buna ziua, restaurant La Nuncea! N-astazi cu ce va pot ajuta? Buna ziua. As dori sa fac si eu o comanda cu livrare. Aa, livrarea se va face pe......",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "snitel de pui",
-            "cantitate": 1,
-            "note": null
-          },
-          {
-            "produs": "piure cu cartofi",
-            "cantitate": 1,
-            "note": null
-          },
-          {
-            "produs": "ciorba de perisoare",
-            "cantitate": 1,
-            "note": null
-          },
-          {
-            "produs": "piept de curcan la gratar cu legume",
-            "cantitate": 1,
-            "note": null
-          },
-          {
-            "produs": "salata de icre cu focaccia",
-            "cantitate": 2,
-            "note": null
-          },
-          {
-            "produs": "pui Josper",
-            "cantitate": 1,
-            "note": null
-          },
-          {
-            "produs": "pui la jar",
-            "cantitate": 1,
-            "note": null
-          },
-          {
-            "produs": "savarine",
-            "cantitate": 4,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": "Soseaua de Centura, la depozitul de legume, in spatele Rompetrolului",
-        "timp_estimat_livrare": "maxim 1h30-2h",
-        "scop_conversatie": "comanda cu livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare si a fost clar in descrierea produselor.",
-        "comportament_client": "A ezitat la unele puncte, dar a fost hotarat in cele din urma.",
-        "ambiguitati": [
-          "Nu mai am meniu la nuci.",
-          "Atat?",
-          "Deci va mai trec pe langa asta de la icre inca o portie?"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii.",
-          "Sa fie mai atent la detalii in descrierea produselor."
-        ],
-        "ezitari_client": [
-          "Nu mai am meniu la nuci.",
-          "Atat?",
-          "Deci va mai trec pe langa asta de la icre inca o portie?"
-        ]
-      }
-    },
-    {
-      "conversation_index": 62,
-      "transcript_preview": "Alo, buna ziua, restaurant La Nucia Nas, in cum ce va pot ajuta? Buna ziua, vrem sa dam si noi o comanda cu ridicare. Imediat. Ridicare? Da, da. Va as...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "pizza speciala cu sos picant",
-            "cantitate": 1,
-            "note": null
-          },
-          {
-            "produs": "pui crocant",
-            "cantitate": 1,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "comanda",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "Ezita la confirmarea comenzii",
-        "ambiguitati": [
-          "ridicare",
-          "la tine"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii"
-        ],
-        "ezitari_client": [
-          "O pizza speciala cu sos picant.",
-          "Si un pui crocant.",
-          "Atat, da?"
-        ]
-      }
-    },
-    {
-      "conversation_index": 63,
-      "transcript_preview": "Restaurant la nuci, buna seara. Buna seara, aa, oare daca venim cam intr-o 20 de minute, jumatate de ora gasim vreo masa? Nu, nu, nu, nu am nimic libe...",
-      "analysis": {
-        "produse_comandate": [],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "refuz livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare, a refuzat o cerere de rezervare",
-        "comportament_client": "Ezitari in ceea ce priveste disponibilitatea mesei, nu a fost hotarat cu privire la comanda",
-        "ambiguitati": [
-          "20 de minute",
-          "jumatate de ora"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna disponibilitatea mesei inainte de a accepta o comanda",
-          "Sa fie mai atent la cererile clientilor si sa nu le refuze fara a clarifica situatia"
-        ],
-        "ezitari_client": [
-          "oare daca venim cam intr-o 20 de minute",
-          "nu, nu, nu, nu am nimic liber"
-        ]
-      }
-    },
-    {
-      "conversation_index": 64,
-      "transcript_preview": "Alo, buna dimineata, restaurant Anuncia Nastin, cu ce va pot ajuta? Alo, buna dimineata. Am vrea si noi o rezervare astazi, daca se mai poate. Din pac...",
-      "analysis": {
-        "produse_comandate": [],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": null,
-        "timp_estimat_livrare": null,
-        "scop_conversatie": "refuz livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare si a explicat situatia.",
-        "comportament_client": "Ezita la momentul de finalizare a comenzii.",
-        "ambiguitati": [
-          "rezervare",
-          "ora 2:00"
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii.",
-          "Sa clarifice situatia rapid si eficient."
-        ],
-        "ezitari_client": [
-          "Am vrea si noi o rezervare astazi, daca se mai poate.",
-          "Da, nici mai devreme, la ora 2:00?"
-        ]
-      }
-    },
-    {
-      "conversation_index": 65,
-      "transcript_preview": "Alo, buna ziua, restaurant La Luceana, sunt cu ceva, va pot ajuta? Buna ziua, as dori sa fac si eu o rezervare pentru diseara. Din pacate nu mai avem ...",
+      "conversation_index": 8,
+      "data": "2026-01-01",
+      "ora": "18:46",
+      "telefon": "491757569514",
+      "tip": "altele - altele",
+      "transcript": "La Popaz la Merinu, ele departe. Pe la Popaz la Merinu ne-am mancat carnasii, alea departe. Ala e spre Buzau.",
       "analysis": {
         "produse_comandate": [],
         "totaluri_partiale": null,
         "pret_final": null,
         "adresa_livrare": null,
         "timp_estimat_livrare": null,
-        "scop_conversatie": "refuz livrare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare si a explicat situatia.",
-        "comportament_client": "Ezitari inainte de a accepta refuzul livrarii.",
+        "tip_apel": {
+          "categorie": "altele",
+          "subtip": null,
+          "rezultat": "altele"
+        },
+        "sentiment_negativ": null,
+        "comportament_vanzator": "Nu se poate evalua - transcriptul nu contine interactiune cu vanzatorul. Apare doar o conversatie personala despre o locatie (Popaz la Merinu) si carnati consumati acolo.",
+        "comportament_client": "Clientul nu interactioneaza cu restaurantul. Vorbeste despre o experienta anterioara la un alt local (Popaz la Merinu, spre Buzau), mentionand ca a mancat carnati acolo. Tonul este informal, conversational, posibil vorbind cu o alta persoana, nu cu personalul restaurantului.",
         "ambiguitati": [
-          "Nimic",
-          "nimic, nimic, nimic"
+          "Nu este clar daca aceasta este o conversatie telefonica cu restaurantul LaNuci sau o discutie personala inregistrata din greseala",
+          "Nu exista nicio referire la LaNuci, la o comanda, rezervare sau intrebare legata de serviciile restaurantului",
+          "Contextul complet al conversatiei lipseste - nu se stie cine vorbeste si in ce circumstante"
         ],
-        "claritate": "unele ezitari ale clientului",
+        "claritate": "Transcriptul este foarte neclar in contextul unui apel la restaurant. Continutul nu are legatura cu activitatea LaNuci - este o conversatie despre o alta locatie (Popaz la Merinu) si o experienta culinara trecuta. Lipseste complet interactiunea client-restaurant.",
         "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii.",
-          "Sa fie mai atenti la cererile clientilor si sa nu-i lase cu impresia ca nu au nimic disponibil."
+          "Verificarea sistemului de inregistrare pentru a evita capturarea conversatiilor personale sau a apelurilor gresite",
+          "Implementarea unui protocol de identificare rapida a apelurilor care nu sunt destinate restaurantului",
+          "Instruirea personalului sa clarifice imediat daca apelantul doreste sa vorbeasca cu LaNuci sau a sunat din greseala"
         ],
-        "ezitari_client": [
-          "Nimic",
-          "nimic, nimic, nimic"
-        ]
+        "ezitari_client": []
       }
     },
     {
-      "conversation_index": 66,
-      "transcript_preview": "Alo, buna seara, restaurant La Nuci. Buna seara. Vorbiti... sa stiti ca nu va aud. Buna seara. Alo. Ma auziti? Spuneti, va rog. Vreau si eu 4 clatite ...",
+      "conversation_index": 9,
+      "data": "2026-01-01",
+      "ora": "18:50",
+      "telefon": "0770503479",
+      "tip": "altele - altele",
+      "transcript": "Ma iau jocul cu ele, au fost bine.",
       "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "4 clatite brasovene",
-            "cantitate": 1,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
-        "pret_final": null,
-        "adresa_livrare": "Strada stefan cel Mare, numarul 73",
-        "timp_estimat_livrare": "1 ora",
-        "scop_conversatie": "comanda",
-        "comportament_vanzator": "A repetat comanda pentru confirmare. A cerut adresa de livrare.",
-        "comportament_client": "A ezitat la momentul in care a fost intrebat daca doreste sa faca o comanda la pachet.",
-        "ambiguitati": [
-          "Nu va aud.",
-          "Vrei ri eu..."
-        ],
-        "claritate": "unele ezitari ale clientului",
-        "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii.",
-          "Sa clarifice rapid orice ambiguitate."
-        ],
-        "ezitari_client": [
-          "Nu va aud.",
-          "Vrei ri eu...",
-          "Imediat, asteptati 2 minute sa vina colegul meu"
-        ]
-      }
-    },
-    {
-      "conversation_index": 67,
-      "transcript_preview": "Alo, buna ziua, restaurant La Nucia Nastra, cu ce va pot ajuta? Buna ziua. O rezervare se poate in seara asta? Din pacate nu se poate, suntem full de ...",
-      "analysis": {
-        "produse_comandate": [
-          {
-            "produs": "rezervare",
-            "cantitate": null,
-            "note": null
-          },
-          {
-            "produs": "seara asta",
-            "cantitate": null,
-            "note": null
-          }
-        ],
-        "totaluri_partiale": [
-          null
-        ],
+        "produse_comandate": [],
+        "totaluri_partiale": null,
         "pret_final": null,
         "adresa_livrare": null,
         "timp_estimat_livrare": null,
-        "scop_conversatie": "rezervare",
-        "comportament_vanzator": "A repetat comanda pentru confirmare",
-        "comportament_client": "Ezita la momentul rezervarii",
+        "tip_apel": {
+          "categorie": "altele",
+          "subtip": null,
+          "rezultat": "altele"
+        },
+        "sentiment_negativ": null,
+        "comportament_vanzator": "Nu se poate evalua - transcriptul nu contine interactiune cu vanzatorul.",
+        "comportament_client": "Clientul face o afirmatie scurta, neclara, fara context. Nu se identifica o solicitare sau o comanda concreta. Mesajul pare a fi un fragment dintr-o conversatie mai ampla sau o replica izolata.",
         "ambiguitati": [
-          "seara asta"
+          "Transcriptul este extrem de scurt si lipsit de context",
+          "Nu este clar daca aceasta este o conversatie telefonica completa sau doar un fragment",
+          "Nu se intelege la ce se refera clientul prin 'ele' si 'au fost bine'",
+          "Nu exista nicio solicitare, intrebare sau comanda identificabila"
         ],
-        "claritate": "unele ezitari ale clientului",
+        "claritate": "Foarte scazuta - transcriptul nu ofera suficiente informatii pentru a identifica scopul apelului sau pentru a extrage date relevante. Lipseste contextul complet al conversatiei.",
         "recomandari_training": [
-          "Sa confirme intotdeauna totalul inainte de finalizarea comenzii"
+          "Verificarea sistemului de inregistrare pentru a se asigura ca transcripturile capteaza conversatii complete, nu fragmente",
+          "Implementarea unui protocol de verificare a calitatii inregistrarilor inainte de analiza",
+          "Instruirea personalului sa confirme ca inregistrarea functioneaza corect la inceputul apelului"
+        ],
+        "ezitari_client": []
+      }
+    },
+    {
+      "conversation_index": 10,
+      "data": "2026-01-01",
+      "ora": "19:53",
+      "telefon": "0731626618",
+      "tip": "altele - altele",
+      "transcript": "To dame, jenom se rozpinej v capu. Ted zmenime.",
+      "analysis": {
+        "produse_comandate": [],
+        "totaluri_partiale": null,
+        "pret_final": null,
+        "adresa_livrare": null,
+        "timp_estimat_livrare": null,
+        "tip_apel": {
+          "categorie": "altele",
+          "subtip": null,
+          "rezultat": "altele"
+        },
+        "sentiment_negativ": null,
+        "comportament_vanzator": "Nu se poate evalua - transcriptul nu contine interactiune clara cu un vanzator sau angajat al restaurantului.",
+        "comportament_client": "Nu se poate evalua - transcriptul este in limba ceha si nu contine o conversatie clara legata de restaurantul LaNuci. Continutul pare a fi o discutie informala, posibil inregistrata din greseala sau o conversatie paralela.",
+        "ambiguitati": [
+          "Transcriptul este integral in limba ceha, nu in romana",
+          "Nu exista nicio referire la restaurantul LaNuci, produse din meniu sau comenzi",
+          "Contextul conversatiei este neclar - pare a fi o discutie informala despre schimbarea sau ajustarea a ceva",
+          "Nu se poate identifica daca este un apel telefonic real la restaurant sau o inregistrare eronata"
+        ],
+        "claritate": "Foarte scazuta - transcriptul este complet in alta limba (ceha) si nu contine nicio informatie relevanta pentru analiza unui apel la restaurantul LaNuci. Nu exista comanda, rezervare, intrebare sau reclamatie identificabila.",
+        "recomandari_training": [
+          "Verificarea sistemului de inregistrare a apelurilor pentru a preveni capturarea conversatiilor in alte limbi sau a apelurilor eronate",
+          "Implementarea unui filtru de limba la nivelul sistemului de transcriere pentru identificarea rapida a apelurilor in limbi straine",
+          "Instruirea personalului sa confirme limba de comunicare la inceputul apelului si sa redirectioneze apelurile in limbi straine catre personal corespunzator, daca este disponibil"
+        ],
+        "ezitari_client": []
+      }
+    },
+    {
+      "conversation_index": 11,
+      "data": "2026-01-01",
+      "ora": "20:01",
+      "telefon": "0770497839",
+      "tip": "altele - altele",
+      "transcript": "Este. Da, ba, ca mai e unul. Iata, a picat. Este. Nu, nu. Nu da batul la mana acolo, adica pe mal, ma mai bag pe el cu tot.",
+      "analysis": {
+        "produse_comandate": [],
+        "totaluri_partiale": null,
+        "pret_final": null,
+        "adresa_livrare": null,
+        "timp_estimat_livrare": null,
+        "tip_apel": {
+          "categorie": "altele",
+          "subtip": null,
+          "rezultat": "altele"
+        },
+        "sentiment_negativ": null,
+        "comportament_vanzator": "Nu se poate evalua - transcriptul nu contine interactiune clara cu un vanzator sau angajat al restaurantului.",
+        "comportament_client": "Clientul vorbeste intr-un mod confuz si neclar, folosind expresii colocviale si argou (ba, batul la mana). Conversatia pare sa fie fragmentata sau inregistrata partial, fara context clar legat de o comanda sau solicitare specifica.",
+        "ambiguitati": [
+          "Transcriptul este extrem de fragmentat si lipsit de context",
+          "Nu se intelege daca este o conversatie telefonica completa sau doar un fragment",
+          "Nu exista nicio referire clara la produse, preturi sau servicii ale restaurantului",
+          "Expresiile folosite (batul la mana, pe mal, ma mai bag pe el) nu au legatura evidenta cu o comanda de mancare"
+        ],
+        "claritate": "Foarte scazuta - transcriptul este incomplet, fragmentat si lipsit de context relevant pentru o comanda la restaurant. Nu se poate identifica scopul apelului.",
+        "recomandari_training": [
+          "Verificarea calitatii inregistrarilor audio pentru a asigura capturarea completa a conversatiilor",
+          "Implementarea unui protocol de identificare rapida a scopului apelului la inceputul conversatiei",
+          "Instruirea personalului sa ceara clarificari imediate cand conversatia devine neclara sau deviaza de la subiect"
         ],
         "ezitari_client": [
-          "O rezervare se poate in seara asta?"
+          "Vorbire fragmentata si neclara pe tot parcursul transcriptului",
+          "Lipsa unei cereri sau intrebari coerente"
+        ]
+      }
+    },
+    {
+      "conversation_index": 12,
+      "data": "2026-01-01",
+      "ora": "20:06",
+      "telefon": "0733254254",
+      "tip": "intrebare - altele",
+      "transcript": "Cateva momente vor fi toate. Acum trecem. La Miruna. Sau cum o suna? Cine are pizzeria? Are deschis? La noi ce nu cred ca e deschis la noci. Doar ca. Dimineata. Crezi tu ca raspunde cineva? Nu raspunde nimeni.",
+      "analysis": {
+        "produse_comandate": [],
+        "totaluri_partiale": null,
+        "pret_final": null,
+        "adresa_livrare": null,
+        "timp_estimat_livrare": null,
+        "tip_apel": {
+          "categorie": "intrebare",
+          "subtip": null,
+          "rezultat": "altele"
+        },
+        "sentiment_negativ": null,
+        "comportament_vanzator": "Nu exista interactiune cu vanzatorul in acest transcript. Apelul nu a fost preluat de niciun angajat al restaurantului.",
+        "comportament_client": "Clientul discuta cu o alta persoana (probabil in masina sau in apropiere) despre posibilitatea de a comanda de la restaurantul LaNuci. Clientul pare nesigur daca restaurantul este deschis si mentioneaza ca nu crede ca cineva va raspunde. Tonul este informal si ezitant, fara agresivitate.",
+        "ambiguitati": [
+          "Nu este clar daca apelul a fost efectiv realizat catre restaurant sau daca transcriptul surprinde doar o conversatie preliminara",
+          "Referinta la 'Miruna' si 'pizzeria' nu este clara - posibil alte locatii sau persoane",
+          "Nu se intelege daca clientul a incercat efectiv sa sune sau doar discuta despre posibilitatea de a suna"
+        ],
+        "claritate": "Transcriptul este foarte neclar si fragmentat. Pare sa fie o conversatie intre doua persoane care discuta despre posibilitatea de a comanda, nu o conversatie efectiva cu restaurantul. Nu contine nicio comanda sau interactiune cu personalul.",
+        "recomandari_training": [
+          "Asigurarea ca liniile telefonice sunt monitorizate si preluate prompt in orele de functionare pentru a evita apeluri nepreluate",
+          "Verificarea programului de lucru si disponibilitatea personalului pentru preluarea apelurilor, mai ales in orele de varf sau dimineata",
+          "Implementarea unui sistem de mesagerie vocala sau raspuns automat care sa informeze clientii despre programul de functionare cand nu este nimeni disponibil"
+        ],
+        "ezitari_client": [
+          "Clientul ezita sa sune, presupunand ca nu va raspunde nimeni",
+          "Clientul nu este sigur daca restaurantul este deschis",
+          "Clientul discuta cu altcineva inainte de a lua decizia de a apela"
         ]
       }
     }
   ],
   "summary": {
-    "total_conversatii": 67,
+    "total_conversatii": 12,
     "tip_apeluri": {
-      "refuz livrare": 25,
-      "comanda": 23,
-      "rezervare": 7,
-      "comanda cu livrare": 3,
-      "comanda cu ridicare": 2,
-      "comanda cu livrare la domiciliu": 2,
-      "intrebare": 1,
-      "comanda25": 1
+      "altele - altele": 10,
+      "intrebare - altele": 2
     },
     "top_recomandari": [
       {
-        "recomandare": "Sa confirme intotdeauna totalul inainte de finalizarea comenzii",
-        "frecventa": 23
+        "recomandare": "Verificarea sistemului de inregistrare pentru a se asigura ca se capteaza doar apelurile relevante catre restaurant",
+        "frecventa": 1,
+        "conversation_indices": [
+          2
+        ]
       },
       {
-        "recomandare": "Sa confirme intotdeauna totalul inainte de finalizarea comenzii.",
-        "frecventa": 20
+        "recomandare": "Implementarea unui filtru initial pentru a identifica apelurile care nu contin interactiuni cu personalul restaurantului",
+        "frecventa": 1,
+        "conversation_indices": [
+          2
+        ]
       },
       {
-        "recomandare": "Sa confirme intotdeauna totalul inainte de finalizarea comenzii",
-        "frecventa": 5
+        "recomandare": "Verificarea sistemului de inregistrare pentru a evita capturarea conversatiilor nerelevante sau accidentale",
+        "frecventa": 1,
+        "conversation_indices": [
+          3
+        ]
       },
       {
-        "recomandare": "Sa clarifice rapid orice ambiguitate",
-        "frecventa": 3
+        "recomandare": "Implementarea unui filtru de limba pentru a identifica automat apelurile in alte limbi decat romana",
+        "frecventa": 1,
+        "conversation_indices": [
+          3
+        ]
       },
       {
-        "recomandare": "Sa confirme intotdeauna totalul inainte de finalizarea comenzii.",
-        "frecventa": 2
+        "recomandare": "Stabilirea unui protocol clar pentru marcarea si excluderea inregistrarilor invalide din analiza",
+        "frecventa": 1,
+        "conversation_indices": [
+          3
+        ]
       },
       {
-        "recomandare": "Sa confirme intotdeauna totalul inainte de finalizarea comenzii",
-        "frecventa": 2
+        "recomandare": "Vanzatorul ar trebui sa redirectioneze conversatia catre scopul apelului dupa ce ofera informatia solicitata",
+        "frecventa": 1,
+        "conversation_indices": [
+          4
+        ]
       },
       {
-        "recomandare": "Sa fie mai atent la detalii ale comenzii",
-        "frecventa": 1
+        "recomandare": "Dupa ce comunica programul, vanzatorul ar putea intreba daca clientul doreste sa faca o rezervare sau comanda",
+        "frecventa": 1,
+        "conversation_indices": [
+          4
+        ]
       },
       {
-        "recomandare": "Sa solicite adresa de livrare clar si precis.",
-        "frecventa": 1
+        "recomandare": "Evitarea discutiilor prea lungi pe teme generale care nu sunt legate de serviciile restaurantului",
+        "frecventa": 1,
+        "conversation_indices": [
+          4
+        ]
       },
       {
-        "recomandare": "Sa clarifice rapid orice ambiguitate",
-        "frecventa": 1
+        "recomandare": "Incheierea politicoasa a apelului dupa ce informatia a fost oferita, pentru a gestiona eficient timpul",
+        "frecventa": 1,
+        "conversation_indices": [
+          4
+        ]
       },
       {
-        "recomandare": "Sa fie mai atenti la disponibilitatea produselor si sa nu promita ceva care nu pot oferi.",
-        "frecventa": 1
+        "recomandare": "Instruirea angajatilor sa identifice rapid apelurile confuze sau fara scop clar si sa incerce sa redirectioneze conversatia prin intrebari directe: 'Va pot ajuta cu o comanda?' sau 'Doriti sa faceti o rezervare?'",
+        "frecventa": 1,
+        "conversation_indices": [
+          5
+        ]
       }
     ],
     "top_lucruri_bune": [
       {
-        "comportament": "A repetat comanda pentru confirmare",
-        "frecventa": 27
+        "comportament": "Nu se poate evalua - transcripturile nu contin interactiune clara cu vanzatorul sau angajatul restaurantului",
+        "frecventa": 10
       },
       {
-        "comportament": "A repetat comanda pentru confirmare, dar nu a fost concreta.",
-        "frecventa": 3
-      },
-      {
-        "comportament": "A repetat comanda pentru confirmare si a explicat situatia.",
-        "frecventa": 3
-      },
-      {
-        "comportament": "A repetat comanda pentru confirmare si a cerut adresa de livrare.",
-        "frecventa": 2
-      },
-      {
-        "comportament": "A repetat comanda pentru confirmare, dar nu a fost concreta in detalii.",
-        "frecventa": 2
-      },
-      {
-        "comportament": "A repetat comanda pentru confirmare, a clarificat rapid",
-        "frecventa": 2
-      },
-      {
-        "comportament": "A repetat comanda pentru confirmare, dar nu a fost clara",
-        "frecventa": 1
-      },
-      {
-        "comportament": "A repetat comanda pentru confirmare, dar a fost clar ca nu mai avea produsul dorit.",
-        "frecventa": 1
-      },
-      {
-        "comportament": "A repetat comanda pentru confirmare si a clarificat sosul dorit.",
-        "frecventa": 1
-      },
-      {
-        "comportament": "A repetat comanda pentru confirmare si a refuzat livrarea.",
+        "comportament": "Vanzatorul a raspuns politicos si a oferit informatii clare despre programul de functionare, cu ton prietenos si informativ",
         "frecventa": 1
       }
     ]

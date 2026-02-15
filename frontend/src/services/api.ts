@@ -465,15 +465,18 @@ class ApiService {
   // RECOMANDARI APELURI
   // ============================================
 
-  async getRecomandariApeluri(data?: string): Promise<any> {
+  async getRecomandariApeluri(data?: string, aiModel?: string): Promise<any> {
     const params: Record<string, any> = {};
     if (data) params.data = data;
+    if (aiModel) params.ai_model = aiModel;
     const { data: result } = await this.client.get('/recomandari-apeluri', { params });
     return result;
   }
 
-  async getRecomandariZileDisponibile(): Promise<string[]> {
-    const { data } = await this.client.get<string[]>('/recomandari-apeluri/zile-disponibile');
+  async getRecomandariZileDisponibile(aiModel?: string): Promise<string[]> {
+    const params: Record<string, any> = {};
+    if (aiModel) params.ai_model = aiModel;
+    const { data } = await this.client.get<string[]>('/recomandari-apeluri/zile-disponibile', { params });
     return data;
   }
 

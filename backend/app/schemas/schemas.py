@@ -460,6 +460,7 @@ class RecomandariApelCreate(BaseModel):
 class RecomandariApelResponse(BaseModel):
     id: int
     data: date
+    ai_model: str = 'Claude'
     total_conversatii: int = 0
     conversations: List[Dict] = []
     top_recomandari: List[Dict] = []

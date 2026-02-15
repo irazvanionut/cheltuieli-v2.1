@@ -291,13 +291,18 @@ export interface RecomandariAnalysis {
 
 export interface RecomandariConversation {
   conversation_index: number;
-  transcript_preview: string;
+  telefon: string; // Phone number
+  data: string; // Date in YYYY-MM-DD format
+  ora: string; // Time in HH:MM format
+  tip: string; // e.g., "altele - altele", "intrebare - altele"
+  transcript: string; // Full transcript
   analysis: RecomandariAnalysis;
 }
 
 export interface RecomandariApeluri {
   id: number;
   data: string;
+  ai_model: string; // 'Claude' or 'Ollama'
   total_conversatii: number;
   conversations: RecomandariConversation[];
   top_recomandari: { recomandare: string; frecventa: number }[];
