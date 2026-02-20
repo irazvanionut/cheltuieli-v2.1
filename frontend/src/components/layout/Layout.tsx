@@ -54,8 +54,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     cheltuieli: true,
     apeluri: true,
     pontaj: true,
-    online: true,
+    recenzii: true,
+    online: false,
   });
+
+  // Banner apeluri ratate - dismissed per sesiune
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   // Auto-expand groups when navigating there
   useEffect(() => {
@@ -67,12 +71,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   }, [isOnApeluri, isOnPontaj]);
 
-  // Fetch call count for sidebar badge
+  // Fetch call count for sidebar badge + banner
   const { data: apeluriData } = useQuery({
     queryKey: ['apeluri-primite-count'],
     queryFn: () => api.getApeluriPrimite(),
     staleTime: 60000,
-    enabled: isOnApeluri || expandedGroups.apeluri,
+    refetchInterval: 120000,
   });
 
   // Fetch pontaj data for sidebar badge (uses same react-query cache as PontajPage)
@@ -153,16 +157,23 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       ],
     },
     {
+      key: 'recenzii',
+      label: 'Recenzii',
+      icon: Star,
+      items: [
+        // { name: 'Recenzii', href: '/online/recenzii', icon: MessageSquare, show: true, badge: null, badgeApeluri: null },
+        { name: 'Review Google', href: '/online/review-google', icon: Star, show: true, badge: null, badgeApeluri: null },
+        // { name: 'Review Facebook', href: '/online/review-facebook', icon: Star, show: true, badge: null, badgeApeluri: null },
+        // { name: 'Review TripAdvisor', href: '/online/review-tripadvisor', icon: Star, show: true, badge: null, badgeApeluri: null },
+      ],
+    },
+    {
       key: 'online',
       label: 'Online',
       icon: Globe,
       items: [
         { name: 'Comenzi', href: '/online/comenzi', icon: ShoppingCart, show: true, badge: null, badgeApeluri: null },
         { name: 'Statistici', href: '/online/statistici', icon: TrendingUp, show: true, badge: null, badgeApeluri: null },
-        { name: 'Recenzii', href: '/online/recenzii', icon: MessageSquare, show: true, badge: null, badgeApeluri: null },
-        { name: 'Review Google', href: '/online/review-google', icon: Star, show: true, badge: null, badgeApeluri: null },
-        { name: 'Review Facebook', href: '/online/review-facebook', icon: Star, show: true, badge: null, badgeApeluri: null },
-        { name: 'Review TripAdvisor', href: '/online/review-tripadvisor', icon: Star, show: true, badge: null, badgeApeluri: null },
       ],
     },
   ];
@@ -376,6 +387,30 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           'lg:ml-64'
         )}
        >
+         {/* Banner apeluri ratate */}
+         {!bannerDismissed && apeluriData?.summary && ((apeluriData.summary.ABANDONAT ?? 0) + (apeluriData.summary.NEPRELUATE ?? 0)) > 0 && (
+           <div className="bg-red-600 dark:bg-red-700 text-white px-4 py-2 flex items-center justify-between gap-4">
+             <div className="flex items-center gap-2 text-sm font-medium">
+               <PhoneCall className="w-4 h-4 flex-shrink-0" />
+               <span>
+                 Apeluri ratate azi:&nbsp;
+                 <span className="font-bold">
+                   {(apeluriData.summary.ABANDONAT ?? 0) + (apeluriData.summary.NEPRELUATE ?? 0)}
+                 </span>
+                 {apeluriData.summary.ABANDONAT > 0 && (
+                   <span className="ml-2 opacity-80">({apeluriData.summary.ABANDONAT} abandonate)</span>
+                 )}
+               </span>
+             </div>
+             <button
+               onClick={() => setBannerDismissed(true)}
+               className="text-white/70 hover:text-white transition-colors flex-shrink-0"
+               title="Închide"
+             >
+               <X className="w-4 h-4" />
+             </button>
+           </div>
+         )}
          <div className="p-4 lg:p-6">{children}</div>
        </main>
 

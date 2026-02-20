@@ -6,3 +6,5 @@ data/asterisk/
 null
 .claude
 CLAUDE.md
+.set
+*.set
