@@ -15,6 +15,8 @@ import { ApeluriTrendPage } from '@/pages/ApeluriTrendPage';
 import { RecomandariApeluriPage } from '@/pages/RecomandariApeluriPage';
 import { PontajPage } from '@/pages/PontajPage';
 import { ReviewGooglePage } from '@/pages/online/ReviewGooglePage';
+import { AutomatizariPage } from '@/pages/online/AutomatizariPage';
+import { ScenePage } from '@/pages/online/ScenePage';
 import { Spinner } from '@/components/ui';
 
 // Create React Query client
@@ -141,6 +143,22 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ReviewGooglePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/automatizari"
+              element={
+                <ProtectedRoute>
+                  <AutomatizariPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/automatizari/scene"
+              element={
+                <ProtectedRoute>
+                  <ScenePage />
                 </ProtectedRoute>
               }
             />

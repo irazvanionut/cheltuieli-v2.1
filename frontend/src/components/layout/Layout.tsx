@@ -28,6 +28,7 @@ import {
   Clock,
   Lightbulb,
   Star,
+  Zap,
 } from 'lucide-react';
 import { useAppStore, useIsAdmin, useIsSef } from '@/hooks/useAppStore';
 import api from '@/services/api';
@@ -55,6 +56,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     cheltuieli: true,
     apeluri: true,
     pontaj: true,
+    automatizari: true,
     recenzii: true,
     online: false,
   });
@@ -131,7 +133,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pontajData?.employees, pontajFilterVer]);
 
+  const ALWAYS_EXPANDED = new Set(['automatizari']);
   const toggleGroup = (key: string) => {
+    if (ALWAYS_EXPANDED.has(key)) return;
     setExpandedGroups((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
@@ -171,6 +175,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       icon: Star,
       items: [
         { name: 'Review Google', href: '/online/review-google', icon: Star, show: true, badge: null, badgeApeluri: null },
+      ],
+    },
+    {
+      key: 'automatizari',
+      label: 'Automatizări',
+      icon: Zap,
+      items: [
+        { name: 'Automatizări', href: '/automatizari', icon: Zap, show: true, badge: null, badgeApeluri: null },
+        { name: 'Scene', href: '/automatizari/scene', icon: Lightbulb, show: true, badge: null, badgeApeluri: null },
       ],
     },
     {
@@ -282,10 +295,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 >
                   <group.icon className="w-4 h-4" />
                   <span className="flex-1 text-left">{group.label}</span>
-                  {isExpanded ? (
-                    <ChevronDown className="w-4 h-4 text-stone-400" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4 text-stone-400" />
+                  {!ALWAYS_EXPANDED.has(group.key) && (
+                    isExpanded
+                      ? <ChevronDown className="w-4 h-4 text-stone-400" />
+                      : <ChevronRight className="w-4 h-4 text-stone-400" />
                   )}
                 </button>
 
@@ -373,7 +386,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               <LogOut className="w-4 h-4" /> Ieșire
             </button>
           </div>
-          <p className="text-center text-[10px] text-stone-300 dark:text-stone-700 mt-2 select-none">v1.2</p>
+          <p className="text-center text-[10px] text-stone-300 dark:text-stone-700 mt-2 select-none">v2.0</p>
         </div>
       </aside>
 

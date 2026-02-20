@@ -556,6 +556,55 @@ class ApiService {
     });
     return data;
   }
+
+  // ============================================
+  // HOME ASSISTANT
+  // ============================================
+
+  async getHassGroups(): Promise<any[]> {
+    const { data } = await this.client.get('/hass/groups');
+    return data;
+  }
+
+  async createHassGroup(body: { name: string; interval_seconds: number }): Promise<any> {
+    const { data } = await this.client.post('/hass/groups', body);
+    return data;
+  }
+
+  async updateHassGroup(id: number, body: { name?: string; interval_seconds?: number }): Promise<void> {
+    await this.client.patch(`/hass/groups/${id}`, body);
+  }
+
+  async deleteHassGroup(id: number): Promise<void> {
+    await this.client.delete(`/hass/groups/${id}`);
+  }
+
+  async addHassEntity(groupId: number, body: { entity_id: string; friendly_name: string; is_master: boolean }): Promise<any> {
+    const { data } = await this.client.post(`/hass/groups/${groupId}/entities`, body);
+    return data;
+  }
+
+  async updateHassEntity(groupId: number, entityId: string, body: { is_master: boolean }): Promise<void> {
+    await this.client.patch(`/hass/groups/${groupId}/entities/${entityId}`, body);
+  }
+
+  async removeHassEntity(groupId: number, entityId: string): Promise<void> {
+    await this.client.delete(`/hass/groups/${groupId}/entities/${entityId}`);
+  }
+
+  async getHassAllEntities(): Promise<any[]> {
+    const { data } = await this.client.get('/hass/entities');
+    return data;
+  }
+
+  async getHassStates(entityIds: string[]): Promise<Record<string, { state: string; last_updated: string }>> {
+    const { data } = await this.client.post('/hass/states', { entity_ids: entityIds });
+    return data;
+  }
+
+  async callHassService(entityId: string, service: 'turn_on' | 'turn_off'): Promise<void> {
+    await this.client.post('/hass/service', { entity_id: entityId, service });
+  }
 }
 
 export const api = new ApiService();
