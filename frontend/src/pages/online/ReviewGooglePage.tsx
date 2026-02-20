@@ -14,6 +14,8 @@ import {
   ChevronDown,
   ChevronUp,
   ThumbsUp,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { format, parseISO, subDays, subMonths, subYears } from 'date-fns';
@@ -68,18 +70,25 @@ const SUBRATING_OPTIONS: { label: string; value: number | null; exact?: boolean 
 
 // ─── Star rating display ───────────────────────────────────────────────────
 
+function starColorFilled(value: number) {
+  if (value <= 2) return 'fill-red-500 text-red-500';
+  if (value === 3) return 'fill-amber-400 text-amber-400';
+  return 'fill-emerald-500 text-emerald-500';
+}
+
 const StarRating: React.FC<{ value: number; max?: number; size?: 'sm' | 'md' }> = ({
   value,
   max = 5,
   size = 'md',
 }) => {
   const sz = size === 'sm' ? 'w-3.5 h-3.5' : 'w-4 h-4';
+  const filled = starColorFilled(value);
   return (
     <span className="inline-flex items-center gap-0.5">
       {Array.from({ length: max }).map((_, i) => (
         <Star
           key={i}
-          className={clsx(sz, i < value ? 'fill-amber-400 text-amber-400' : 'text-stone-300 dark:text-stone-600')}
+          className={clsx(sz, i < value ? filled : 'text-stone-300 dark:text-stone-600')}
         />
       ))}
     </span>
@@ -236,29 +245,31 @@ const StatsBar: React.FC<{
             {dist.map(({ star, count }) => {
               const active = filterStar === star;
               const dimmed = filterStar !== null && !active;
+              const barColor = star <= 2 ? 'bg-red-500' : star === 3 ? 'bg-amber-400' : 'bg-emerald-500';
+              const starFill = star <= 2 ? 'fill-red-500 text-red-500' : star === 3 ? 'fill-amber-400 text-amber-400' : 'fill-emerald-500 text-emerald-500';
+              const activeBg = star <= 2 ? 'bg-red-50 dark:bg-red-900/20' : star === 3 ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-emerald-50 dark:bg-emerald-900/20';
+              const activeText = star <= 2 ? 'text-red-600 dark:text-red-400' : star === 3 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400';
               return (
                 <button
                   key={star}
                   onClick={() => onFilterStar(active ? null : star)}
                   className={clsx(
                     'w-full flex items-center gap-2 rounded px-1 py-0.5 transition-colors',
-                    active
-                      ? 'bg-amber-50 dark:bg-amber-900/20'
-                      : 'hover:bg-stone-50 dark:hover:bg-stone-800/60',
+                    active ? activeBg : 'hover:bg-stone-50 dark:hover:bg-stone-800/60',
                     dimmed && 'opacity-40',
                   )}
                 >
-                  <span className={clsx('text-xs w-3 text-right', active ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-stone-500')}>
+                  <span className={clsx('text-xs w-3 text-right font-semibold', active ? activeText : 'text-stone-500')}>
                     {star}
                   </span>
-                  <Star className="w-3 h-3 fill-amber-400 text-amber-400 flex-shrink-0" />
+                  <Star className={clsx('w-3 h-3 flex-shrink-0', starFill)} />
                   <div className="flex-1 bg-stone-100 dark:bg-stone-800 rounded-full h-2 overflow-hidden">
                     <div
-                      className={clsx('h-full rounded-full', active ? 'bg-amber-500' : 'bg-amber-400')}
+                      className={clsx('h-full rounded-full', barColor)}
                       style={{ width: reviews.length ? `${(count / reviews.length) * 100}%` : '0%' }}
                     />
                   </div>
-                  <span className={clsx('text-xs w-5 text-left', active ? 'text-amber-600 dark:text-amber-400 font-semibold' : 'text-stone-400')}>
+                  <span className={clsx('text-xs w-5 text-left', active ? activeText : 'text-stone-400')}>
                     {count}
                   </span>
                 </button>
@@ -572,6 +583,109 @@ const ReviewCard: React.FC<{ review: GoogleReview }> = ({ review }) => {
   );
 };
 
+// ─── Grid card (compact, for grid view) ───────────────────────────────────
+
+const ReviewCardGrid: React.FC<{ review: GoogleReview }> = ({ review }) => {
+  const [expanded, setExpanded] = useState(false);
+  const snippet = review.snippet || '';
+  const truncated = snippet.length > 130 ? snippet.slice(0, 130) + '…' : snippet;
+  const ratingBg =
+    review.rating >= 4
+      ? 'bg-emerald-500'
+      : review.rating === 3
+      ? 'bg-amber-500'
+      : 'bg-red-500';
+
+  return (
+    <Card className="p-4 flex flex-col gap-2.5 h-full">
+      {/* Header */}
+      <div className="flex items-start gap-2.5">
+        <div className="flex-shrink-0">
+          {review.user_thumbnail ? (
+            <img
+              src={review.user_thumbnail}
+              alt={review.user_name || ''}
+              className="w-9 h-9 rounded-full object-cover"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-stone-200 dark:bg-stone-700 flex items-center justify-center">
+              <User className="w-4 h-4 text-stone-400" />
+            </div>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1">
+            <span className="text-xs font-semibold text-stone-900 dark:text-stone-100 truncate">
+              {review.user_name || 'Anonim'}
+            </span>
+            {review.local_guide && <Award className="w-3 h-3 text-blue-500 flex-shrink-0" />}
+          </div>
+          <p className="text-[10px] text-stone-400">
+            {format(parseISO(review.iso_date), 'dd MMM yyyy', { locale: ro })}
+          </p>
+        </div>
+        {/* Rating badge */}
+        <div className={clsx('flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm', ratingBg)}>
+          {review.rating}
+        </div>
+      </div>
+
+      {/* Stars */}
+      <StarRating value={review.rating} size="sm" />
+
+      {/* Sub-ratings */}
+      {(review.food_rating !== null || review.service_rating !== null || review.atmosphere_rating !== null) && (
+        <div className="flex gap-1 flex-wrap">
+          <DetailRating icon={Utensils} label="M" value={review.food_rating} />
+          <DetailRating icon={HeartHandshake} label="S" value={review.service_rating} />
+          <DetailRating icon={Wind} label="A" value={review.atmosphere_rating} />
+        </div>
+      )}
+
+      {/* Snippet */}
+      {snippet && (
+        <div className="flex-1">
+          <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
+            {expanded ? snippet : truncated}
+          </p>
+          {snippet.length > 130 && (
+            <button
+              onClick={() => setExpanded((v) => !v)}
+              className="text-[10px] text-red-500 hover:underline mt-0.5"
+            >
+              {expanded ? 'Mai puțin' : 'Citește tot'}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Footer */}
+      <div className="flex items-center justify-between mt-auto pt-2 border-t border-stone-100 dark:border-stone-800">
+        <span className="text-[10px] text-stone-400">{review.date_text || ''}</span>
+        <div className="flex items-center gap-2">
+          {review.likes > 0 && (
+            <span className="text-[10px] text-stone-400 flex items-center gap-0.5">
+              <ThumbsUp className="w-2.5 h-2.5" />{review.likes}
+            </span>
+          )}
+          {review.review_link && (
+            <a
+              href={review.review_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[10px] text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 inline-flex items-center gap-0.5"
+            >
+              <ExternalLink className="w-3 h-3" />
+              Google
+            </a>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+};
+
 // ─── Refresh button with cooldown ──────────────────────────────────────────
 
 const RefreshButton: React.FC = () => {
@@ -665,13 +779,14 @@ const Pagination: React.FC<{
   totalPages: number;
   total: number;
   onPage: (p: number) => void;
-}> = ({ page, totalPages, total, onPage }) => {
-  if (totalPages <= 1) return null;
+  viewMode?: 'list' | 'grid';
+  onViewMode?: (m: 'list' | 'grid') => void;
+}> = ({ page, totalPages, total, onPage, viewMode, onViewMode }) => {
+  if (totalPages <= 1 && !onViewMode) return null;
 
-  const from = (page - 1) * PAGE_SIZE + 1;
-  const to = Math.min(page * PAGE_SIZE, total);
+  const from = totalPages > 1 ? (page - 1) * PAGE_SIZE + 1 : 1;
+  const to = totalPages > 1 ? Math.min(page * PAGE_SIZE, total) : total;
 
-  // Build page numbers: always show first, last, current ±1, with ellipsis
   const pages: (number | '…')[] = [];
   const add = new Set<number>();
   [1, page - 1, page, page + 1, totalPages].forEach((p) => {
@@ -688,39 +803,74 @@ const Pagination: React.FC<{
       <span className="text-xs text-stone-400">
         {from}–{to} din {total} recenzii
       </span>
-      <div className="flex items-center gap-1">
-        <button
-          onClick={() => onPage(page - 1)}
-          disabled={page === 1}
-          className="px-2 py-1 text-xs rounded-lg border border-stone-200 dark:border-stone-700 disabled:opacity-30 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
-        >
-          ‹
-        </button>
-        {pages.map((p, i) =>
-          p === '…' ? (
-            <span key={`e${i}`} className="px-1 text-xs text-stone-400">…</span>
-          ) : (
+      <div className="flex items-center gap-2">
+        {/* View toggle */}
+        {onViewMode && (
+          <div className="flex items-center bg-stone-100 dark:bg-stone-800 rounded-lg p-0.5 gap-0.5">
             <button
-              key={p}
-              onClick={() => onPage(p)}
+              onClick={() => onViewMode('list')}
+              title="Listă"
               className={clsx(
-                'w-7 h-7 text-xs rounded-lg transition-colors',
-                p === page
-                  ? 'bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-900 font-semibold'
-                  : 'border border-stone-200 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-400',
+                'p-1.5 rounded-md transition-colors',
+                viewMode === 'list'
+                  ? 'bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-100 shadow-sm'
+                  : 'text-stone-400 hover:text-stone-600 dark:hover:text-stone-300',
               )}
             >
-              {p}
+              <List className="w-3.5 h-3.5" />
             </button>
-          )
+            <button
+              onClick={() => onViewMode('grid')}
+              title="Carduri"
+              className={clsx(
+                'p-1.5 rounded-md transition-colors',
+                viewMode === 'grid'
+                  ? 'bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-100 shadow-sm'
+                  : 'text-stone-400 hover:text-stone-600 dark:hover:text-stone-300',
+              )}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+            </button>
+          </div>
         )}
-        <button
-          onClick={() => onPage(page + 1)}
-          disabled={page === totalPages}
-          className="px-2 py-1 text-xs rounded-lg border border-stone-200 dark:border-stone-700 disabled:opacity-30 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
-        >
-          ›
-        </button>
+
+        {/* Page buttons */}
+        {totalPages > 1 && (
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => onPage(page - 1)}
+              disabled={page === 1}
+              className="px-2 py-1 text-xs rounded-lg border border-stone-200 dark:border-stone-700 disabled:opacity-30 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+            >
+              ‹
+            </button>
+            {pages.map((p, i) =>
+              p === '…' ? (
+                <span key={`e${i}`} className="px-1 text-xs text-stone-400">…</span>
+              ) : (
+                <button
+                  key={p}
+                  onClick={() => onPage(p)}
+                  className={clsx(
+                    'w-7 h-7 text-xs rounded-lg transition-colors',
+                    p === page
+                      ? 'bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-900 font-semibold'
+                      : 'border border-stone-200 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-400',
+                  )}
+                >
+                  {p}
+                </button>
+              )
+            )}
+            <button
+              onClick={() => onPage(page + 1)}
+              disabled={page === totalPages}
+              className="px-2 py-1 text-xs rounded-lg border border-stone-200 dark:border-stone-700 disabled:opacity-30 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+            >
+              ›
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -736,6 +886,7 @@ export const ReviewGooglePage: React.FC = () => {
   const [filterServiceMin, setFilterServiceMin] = useState<number | null>(null);
   const [filterAtmosphereMin, setFilterAtmosphereMin] = useState<number | null>(null);
   const [page, setPage] = useState(1);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const { data: reviews = [], isLoading, isError } = useQuery({
     queryKey: ['google-reviews'],
@@ -869,17 +1020,29 @@ export const ReviewGooglePage: React.FC = () => {
             totalPages={totalPages}
             total={displayed.length}
             onPage={goToPage}
+            viewMode={viewMode}
+            onViewMode={setViewMode}
           />
-          <div className="space-y-3 mt-3">
-            {pageReviews.map((review) => (
-              <ReviewCard key={review.review_id} review={review} />
-            ))}
-          </div>
+          {viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
+              {pageReviews.map((review) => (
+                <ReviewCardGrid key={review.review_id} review={review} />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-3 mt-3">
+              {pageReviews.map((review) => (
+                <ReviewCard key={review.review_id} review={review} />
+              ))}
+            </div>
+          )}
           <Pagination
             page={page}
             totalPages={totalPages}
             total={displayed.length}
             onPage={goToPage}
+            viewMode={viewMode}
+            onViewMode={setViewMode}
           />
         </div>
       )}

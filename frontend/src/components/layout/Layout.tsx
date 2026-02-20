@@ -396,10 +396,17 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         )}
        >
          {/* Banner rating Google */}
-         {reviewsSummary?.count_overall != null && reviewsSummary.count_overall > 0 && (
+         {reviewsSummary?.count_overall != null && reviewsSummary.count_overall > 0 && (() => {
+           const t = reviewsSummary.trend_30d;
+           const bannerCls = t !== null && t < 0
+             ? 'bg-red-50 dark:bg-red-950/30 border-b border-red-200 dark:border-red-900/40 hover:bg-red-100 dark:hover:bg-red-950/50'
+             : t !== null && t > 0
+             ? 'bg-emerald-50 dark:bg-emerald-950/30 border-b border-emerald-200 dark:border-emerald-900/40 hover:bg-emerald-100 dark:hover:bg-emerald-950/50'
+             : 'bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-900/40 hover:bg-amber-100 dark:hover:bg-amber-950/50';
+           return (
            <Link
              to="/online/review-google"
-             className="bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-900/40 px-4 py-1.5 flex items-center gap-3 flex-wrap text-xs text-stone-700 dark:text-stone-300 hover:bg-amber-100 dark:hover:bg-amber-950/50 transition-colors"
+             className={`${bannerCls} px-4 py-1.5 flex items-center gap-3 flex-wrap text-xs text-stone-700 dark:text-stone-300 transition-colors`}
            >
              <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-400 flex-shrink-0" />
              <span className="flex items-center gap-1">
@@ -456,35 +463,63 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                </>
              )}
            </Link>
-         )}
+           );
+         })()}
 
-         {/* Banner apeluri ratate */}
-         {!bannerDismissed && apeluriData?.summary && ((apeluriData.summary.ABANDONAT ?? 0) + (apeluriData.summary.NEPRELUATE ?? 0)) > 0 && (
-           <div className="bg-red-600 dark:bg-red-700 text-white px-4 py-2 flex items-center justify-between gap-4">
-             <Link
-               to="/apeluri/primite"
-               className="flex items-center gap-2 text-sm font-medium flex-1 hover:opacity-90"
-             >
-               <PhoneCall className="w-4 h-4 flex-shrink-0" />
-               <span>
-                 Apeluri ratate azi:&nbsp;
-                 <span className="font-bold">
-                   {(apeluriData.summary.ABANDONAT ?? 0) + (apeluriData.summary.NEPRELUATE ?? 0)}
+         {/* Banner apeluri */}
+         {!bannerDismissed && apeluriData?.stats && (apeluriData.total ?? 0) > 0 && (() => {
+           const missed = (apeluriData.summary?.ABANDONAT ?? 0) + (apeluriData.summary?.NEPRELUATE ?? 0);
+           const hasMissed = missed > 0;
+           const stats = apeluriData.stats;
+           const fmtSec = (s: number) => s < 60 ? `${s}s` : `${Math.floor(s / 60)}m${s % 60 > 0 ? `${s % 60}s` : ''}`;
+           return (
+             <div className={`px-4 py-1.5 flex items-center justify-between gap-4 border-b transition-colors ${hasMissed ? 'bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-900/30' : 'bg-stone-50 dark:bg-stone-900/50 border-stone-200 dark:border-stone-800'}`}>
+               <Link
+                 to="/apeluri/primite"
+                 className="flex items-center gap-3 text-xs font-medium flex-1 flex-wrap hover:opacity-80 transition-opacity"
+               >
+                 <span className={`flex items-center gap-1.5 ${hasMissed ? 'text-orange-600 dark:text-orange-400' : 'text-stone-500 dark:text-stone-400'}`}>
+                   <PhoneCall className="w-3.5 h-3.5 flex-shrink-0" />
+                   <span>Apeluri azi:</span>
+                   <span className="font-bold text-stone-800 dark:text-stone-200">{apeluriData.total}</span>
                  </span>
-                 {apeluriData.summary.ABANDONAT > 0 && (
-                   <span className="ml-2 opacity-80">({apeluriData.summary.ABANDONAT} abandonate)</span>
+                 {hasMissed && (
+                   <span className="flex items-center gap-1 text-orange-600 dark:text-orange-400">
+                     <span>ratate:</span>
+                     <span className="font-bold">{missed}</span>
+                   </span>
                  )}
-               </span>
-             </Link>
-             <button
-               onClick={() => setBannerDismissed(true)}
-               className="text-white/70 hover:text-white transition-colors flex-shrink-0"
-               title="Închide"
-             >
-               <X className="w-4 h-4" />
-             </button>
-           </div>
-         )}
+                 <span className="text-stone-300 dark:text-stone-600">·</span>
+                 <span className="flex items-center gap-1 text-stone-500 dark:text-stone-400">
+                   <span>răspuns:</span>
+                   <span className="font-semibold text-stone-700 dark:text-stone-300">{stats.answer_rate}%</span>
+                 </span>
+                 <span className="text-stone-300 dark:text-stone-600">·</span>
+                 <span className="flex items-center gap-1 text-stone-500 dark:text-stone-400">
+                   <span>timp răsp:</span>
+                   <span className="font-semibold text-stone-700 dark:text-stone-300">{fmtSec(stats.asa)}</span>
+                 </span>
+                 <span className="text-stone-300 dark:text-stone-600">·</span>
+                 <span className="flex items-center gap-1 text-stone-500 dark:text-stone-400">
+                   <span>conv medie:</span>
+                   <span className="font-semibold text-stone-700 dark:text-stone-300">{fmtSec(stats.call_duration?.avg ?? 0)}</span>
+                 </span>
+                 <span className="text-stone-300 dark:text-stone-600">·</span>
+                 <span className="flex items-center gap-1 text-stone-500 dark:text-stone-400">
+                   <span>așteptat &gt;30s:</span>
+                   <span className="font-semibold text-stone-700 dark:text-stone-300">{stats.waited_over_30}</span>
+                 </span>
+               </Link>
+               <button
+                 onClick={() => setBannerDismissed(true)}
+                 className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors flex-shrink-0"
+                 title="Închide"
+               >
+                 <X className="w-4 h-4" />
+               </button>
+             </div>
+           );
+         })()}
          <div className="p-4 lg:p-6">{children}</div>
        </main>
 
