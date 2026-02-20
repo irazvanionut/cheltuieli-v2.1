@@ -171,8 +171,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       icon: Star,
       items: [
         { name: 'Review Google', href: '/online/review-google', icon: Star, show: true, badge: null, badgeApeluri: null },
-        { name: 'Review Facebook', href: '/online/review-facebook', icon: Star, show: true, badge: null, badgeApeluri: null },
-        { name: 'Review TripAdvisor', href: '/online/review-tripadvisor', icon: Star, show: true, badge: null, badgeApeluri: null },
       ],
     },
     {

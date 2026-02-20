@@ -538,6 +538,16 @@ class ApiService {
     return data;
   }
 
+  async getGoogleReviewsAnalysis(): Promise<{
+    result: { summary: any; analyzed: number; total: number; generated_at: string } | null;
+    last_analysis_at: string | null;
+    remaining_seconds: number;
+    cooldown_hours: number;
+  }> {
+    const { data } = await this.client.get('/google-reviews/analysis');
+    return data;
+  }
+
   async ingestGoogleReviews(file: File): Promise<IngestResult> {
     const formData = new FormData();
     formData.append('file', file);

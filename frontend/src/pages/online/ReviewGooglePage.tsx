@@ -16,6 +16,7 @@ import {
   ThumbsUp,
   LayoutGrid,
   List,
+  Sparkles,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { format, parseISO, subDays, subMonths, subYears } from 'date-fns';
@@ -686,6 +687,386 @@ const ReviewCardGrid: React.FC<{ review: GoogleReview }> = ({ review }) => {
   );
 };
 
+// ─── AI Analysis ──────────────────────────────────────────────────────────────
+
+interface ReviewSummary {
+  sentiment_general: string;
+  rezumat_executiv?: string;
+  recent_trend?: { direction: string; note?: string };
+  top_10_complaints?: { rank: number; complaint: string; frequency: number; severity: string }[];
+  positive_summary?: string;
+  people_mentioned?: { name: string; sentiment: string; context: string; appearances: number }[];
+  error?: string;
+}
+
+const SENTIMENT_LABEL: Record<string, { label: string; cls: string }> = {
+  pozitiv:  { label: 'Pozitiv',  cls: 'text-emerald-600 dark:text-emerald-400' },
+  negativ:  { label: 'Negativ',  cls: 'text-red-600 dark:text-red-400' },
+  neutru:   { label: 'Neutru',   cls: 'text-stone-500 dark:text-stone-400' },
+  mixt:     { label: 'Mixt',     cls: 'text-amber-600 dark:text-amber-400' },
+};
+
+const AIAnalysis: React.FC = () => {
+  const queryClient = useQueryClient();
+  const [open, setOpen] = React.useState(false);
+  const [running, setRunning] = React.useState(false);
+  const [progress, setProgress] = React.useState({ current: 0, total: 0 });
+  const [phase, setPhase] = React.useState<'analyzing' | 'neg_summary' | 'pos_summary'>('analyzing');
+  const [phaseCounts, setPhaseCounts] = React.useState({ neg: 0, pos: 0 });
+  const [errMsg, setErrMsg] = React.useState<string | null>(null);
+  const [remaining, setRemaining] = React.useState(0);
+  const [tick, setTick] = React.useState(0);
+  const esRef = React.useRef<EventSource | null>(null);
+
+  const { data: stored } = useQuery({
+    queryKey: ['google-reviews-analysis'],
+    queryFn: () => api.getGoogleReviewsAnalysis(),
+    staleTime: 60_000,
+  });
+
+  React.useEffect(() => {
+    if ((stored?.remaining_seconds ?? 0) === 0) return;
+    setRemaining(stored!.remaining_seconds);
+    const id = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(id);
+  }, [stored?.remaining_seconds]);
+
+  const displayRemaining = Math.max(0, remaining - tick);
+  const canRun = !running && (!!errMsg || displayRemaining === 0);
+
+  React.useEffect(() => () => { esRef.current?.close(); }, []);
+
+  const run = (force = false) => {
+    esRef.current?.close();
+    setRunning(true);
+    setProgress({ current: 0, total: 0 });
+    setErrMsg(null);
+    setPhase('analyzing');
+
+    const url = force ? '/api/google-reviews/analyze?force=true' : '/api/google-reviews/analyze';
+    const es = new EventSource(url);
+    esRef.current = es;
+
+    es.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'start') {
+          setProgress({ current: 0, total: msg.total });
+        } else if (msg.type === 'progress') {
+          setProgress({ current: msg.current, total: msg.total });
+        } else if (msg.type === 'phase') {
+          if (msg.name === 'neg_summary') {
+            setPhase('neg_summary');
+            setPhaseCounts((c) => ({ ...c, neg: msg.neg_count ?? 0 }));
+          } else if (msg.name === 'pos_summary') {
+            setPhase('pos_summary');
+            setPhaseCounts((c) => ({ ...c, pos: msg.pos_count ?? 0 }));
+          }
+        } else if (msg.type === 'cooldown') {
+          setRemaining(msg.remaining_seconds);
+          setTick(0);
+          setRunning(false);
+          es.close();
+        } else if (msg.type === 'done') {
+          if ((msg.analyzed ?? 0) === 0) {
+            setErrMsg('Nicio recenzie analizată — verifică configurația Ollama în Setări');
+            setRunning(false);
+            setRemaining(0);
+            setTick(0);
+          } else {
+            setRunning(false);
+            setTick(0);
+            queryClient.invalidateQueries({ queryKey: ['google-reviews-analysis'] });
+          }
+          es.close();
+        } else if (msg.type === 'error') {
+          setErrMsg(msg.message);
+          setRunning(false);
+          setRemaining(0);
+          setTick(0);
+          es.close();
+        }
+      } catch {}
+    };
+
+    es.onerror = () => {
+      setErrMsg('Conexiune pierdută cu serverul');
+      setRunning(false);
+      setRemaining(0);
+      setTick(0);
+      es.close();
+    };
+  };
+
+  const pct = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0;
+  const result = stored?.result ?? null;
+  const summary: ReviewSummary | null = result?.summary ?? null;
+  const analyzed: number = result?.analyzed ?? 0;
+  const generatedAt: string | null = result?.generated_at ?? null;
+  const sent = summary?.sentiment_general
+    ? (SENTIMENT_LABEL[summary.sentiment_general] ?? { label: summary.sentiment_general, cls: 'text-stone-500' })
+    : null;
+
+  const trendDir = summary?.recent_trend?.direction ?? '';
+  const trendIcon = trendDir === 'în creștere' ? '↑' : trendDir === 'în scădere' ? '↓' : trendDir ? '→' : null;
+  const trendCls = trendDir === 'în creștere' ? 'text-emerald-500' : trendDir === 'în scădere' ? 'text-red-500' : 'text-amber-500';
+
+  const fmtCooldown = (s: number) => {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    if (h > 0) return `${h}h ${m}m`;
+    if (m > 0) return `${m}m ${sec}s`;
+    return `${sec}s`;
+  };
+
+  const phaseLabel =
+    phase === 'analyzing'
+      ? `Analizez recenzia ${progress.current} din ${progress.total}…`
+      : phase === 'neg_summary'
+      ? `Rezumatul celor ${phaseCounts.neg} recenzii negative…`
+      : `Rezumatul celor ${phaseCounts.pos} recenzii pozitive…`;
+
+  return (
+    <Card className="mb-4 overflow-hidden">
+      {/* Header — always visible */}
+      <div
+        className="p-4 flex items-start justify-between cursor-pointer select-none"
+        onClick={() => !running && setOpen((o) => !o)}
+      >
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="font-semibold text-stone-800 dark:text-stone-200 flex items-center gap-2 text-sm">
+              <Sparkles className="w-4 h-4 text-purple-500" />
+              Analiză AI · 180 zile
+            </h3>
+            {analyzed > 0 && !running && (
+              <span className="text-xs text-stone-400">· {analyzed} recenzii</span>
+            )}
+            {sent && !running && (
+              <span className={clsx(
+                'text-xs font-semibold px-1.5 py-0.5 rounded-full',
+                sent.cls.includes('emerald') ? 'bg-emerald-50 dark:bg-emerald-900/20' :
+                sent.cls.includes('red') ? 'bg-red-50 dark:bg-red-900/20' :
+                sent.cls.includes('amber') ? 'bg-amber-50 dark:bg-amber-900/20' :
+                'bg-stone-100 dark:bg-stone-800',
+                sent.cls,
+              )}>
+                {sent.label}
+              </span>
+            )}
+            {trendIcon && !running && (
+              <span className={clsx('text-sm font-bold', trendCls)} title={summary?.recent_trend?.note}>
+                {trendIcon} {trendDir}
+              </span>
+            )}
+          </div>
+          {generatedAt && !running && (
+            <p className="text-[11px] text-stone-400 mt-0.5">
+              Generat: {format(parseISO(generatedAt), 'dd MMM yyyy HH:mm', { locale: ro })}
+              {displayRemaining > 0 && (
+                <span className="ml-2 text-amber-500">· disponibil în {fmtCooldown(displayRemaining)}</span>
+              )}
+            </p>
+          )}
+          {running && (
+            <p className="text-xs text-stone-400 mt-0.5 flex items-center gap-1.5">
+              <Sparkles className="w-3 h-3 text-purple-500 animate-pulse" />
+              {phaseLabel}
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+          {running ? (
+            <button
+              onClick={(e) => { e.stopPropagation(); esRef.current?.close(); setRunning(false); }}
+              className="text-xs text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
+            >
+              Anulează
+            </button>
+          ) : (
+            <button
+              onClick={(e) => { e.stopPropagation(); if (canRun) run(false); }}
+              disabled={!canRun}
+              title={displayRemaining > 0 ? `Cooldown activ — ${fmtCooldown(displayRemaining)}` : undefined}
+              className={clsx(
+                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
+                canRun
+                  ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                  : 'bg-stone-100 dark:bg-stone-800 text-stone-400 cursor-not-allowed',
+              )}
+            >
+              <Sparkles className="w-3 h-3" />
+              {summary ? 'Reanalyzează' : 'Analizează'}
+            </button>
+          )}
+          {!running && (
+            open
+              ? <ChevronUp className="w-4 h-4 text-stone-400" />
+              : <ChevronDown className="w-4 h-4 text-stone-400" />
+          )}
+        </div>
+      </div>
+
+      {/* Body — collapsible */}
+      {open && (
+        <div className="px-4 pb-4 border-t border-stone-100 dark:border-stone-800 pt-3">
+          {/* Progress */}
+          {running && (
+            <div className="mb-3">
+              {phase === 'analyzing' ? (
+                <>
+                  <div className="h-1.5 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-purple-500 rounded-full transition-all duration-500"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <p className="text-xs mt-1 text-right text-stone-400">{pct}%</p>
+                </>
+              ) : (
+                <div className="h-1.5 bg-purple-200 dark:bg-purple-900/30 rounded-full overflow-hidden">
+                  <div className="h-full bg-purple-500 rounded-full animate-pulse w-full" />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Error */}
+          {errMsg && !running && (
+            <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-2 mb-3">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />{errMsg}
+            </p>
+          )}
+
+          {/* No results yet */}
+          {!summary && !running && !errMsg && (
+            <p className="text-xs text-stone-400">
+              Analiza se rulează automat la 12:00 și 21:00. Poți rula manual cu cooldown de 3 ore.
+            </p>
+          )}
+
+          {/* Results */}
+          {summary && !running && (
+            <div className="space-y-4">
+              {/* Executive summary */}
+              {summary.rezumat_executiv && (
+                <div className="bg-purple-50 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-900/30 rounded-lg p-3">
+                  <p className="text-sm text-stone-700 dark:text-stone-300 leading-relaxed italic">
+                    „{summary.rezumat_executiv}"
+                  </p>
+                </div>
+              )}
+
+              {/* Recent trend */}
+              {summary.recent_trend && trendDir && (
+                <div className={clsx(
+                  'rounded-lg p-3 flex items-start gap-2',
+                  trendDir === 'în creștere'
+                    ? 'bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30'
+                    : trendDir === 'în scădere'
+                    ? 'bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30'
+                    : 'bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30',
+                )}>
+                  <span className={clsx('text-base font-bold flex-shrink-0 leading-tight', trendCls)}>{trendIcon}</span>
+                  <div>
+                    <p className={clsx('text-xs font-semibold', trendCls)}>{trendDir}</p>
+                    {summary.recent_trend.note && (
+                      <p className="text-xs text-stone-600 dark:text-stone-400 mt-0.5">{summary.recent_trend.note}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Top 10 complaints */}
+                {(summary.top_10_complaints?.length ?? 0) > 0 && (
+                  <div>
+                    <h4 className="text-[11px] font-semibold text-stone-400 uppercase tracking-wide mb-2">
+                      Top reclamații
+                    </h4>
+                    <ol className="space-y-1.5">
+                      {summary.top_10_complaints!.map((c) => (
+                        <li key={c.rank} className="flex items-start gap-2 text-sm">
+                          <span className="text-xs font-bold text-stone-400 w-5 flex-shrink-0 text-right mt-0.5">
+                            {c.rank}.
+                          </span>
+                          <span className="flex-1 text-stone-700 dark:text-stone-300">{c.complaint}</span>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <span className={clsx(
+                              'text-[10px] px-1.5 py-0.5 rounded font-bold',
+                              c.severity === 'high'
+                                ? 'bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+                                : c.severity === 'medium'
+                                ? 'bg-amber-100 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
+                                : 'bg-stone-100 dark:bg-stone-800 text-stone-500',
+                            )}>
+                              {c.severity === 'high' ? '!' : c.severity === 'medium' ? '~' : '·'}
+                            </span>
+                            <span className="text-xs bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded-full font-mono">
+                              ×{c.frequency}
+                            </span>
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+
+                {/* Right column: positive summary + people */}
+                <div className="space-y-4">
+                  {summary.positive_summary && (
+                    <div>
+                      <h4 className="text-[11px] font-semibold text-stone-400 uppercase tracking-wide mb-2">
+                        Ce funcționează bine
+                      </h4>
+                      <p className="text-sm text-stone-700 dark:text-stone-300 leading-relaxed">
+                        {summary.positive_summary}
+                      </p>
+                    </div>
+                  )}
+
+                  {(summary.people_mentioned?.length ?? 0) > 0 && (
+                    <div>
+                      <h4 className="text-[11px] font-semibold text-stone-400 uppercase tracking-wide mb-2">
+                        Persoane menționate
+                      </h4>
+                      <ul className="space-y-1.5">
+                        {summary.people_mentioned!.map((p, i) => (
+                          <li key={i} className="flex items-start gap-2 text-sm flex-wrap">
+                            <span className={clsx(
+                              'font-semibold flex-shrink-0',
+                              p.sentiment === 'pozitiv'
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : 'text-red-600 dark:text-red-400',
+                            )}>
+                              {p.name}
+                            </span>
+                            {p.appearances > 1 && (
+                              <span className="text-[10px] bg-stone-100 dark:bg-stone-800 text-stone-500 px-1.5 py-0.5 rounded-full font-mono flex-shrink-0">
+                                ×{p.appearances}
+                              </span>
+                            )}
+                            <span className="text-stone-500 dark:text-stone-400 text-xs">{p.context}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {summary.error && (
+                <p className="text-sm text-red-500">{summary.error}</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+};
+
 // ─── Refresh button with cooldown ──────────────────────────────────────────
 
 const RefreshButton: React.FC = () => {
@@ -967,6 +1348,9 @@ export const ReviewGooglePage: React.FC = () => {
           onFilterLocalGuide={() => setFilterLocalGuide((v) => !v)}
         />
       )}
+
+      {/* AI Analysis */}
+      {reviews.length > 0 && <AIAnalysis />}
 
       {/* Filter bar */}
       {reviews.length > 0 && (

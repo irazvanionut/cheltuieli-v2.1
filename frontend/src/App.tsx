@@ -15,8 +15,6 @@ import { ApeluriTrendPage } from '@/pages/ApeluriTrendPage';
 import { RecomandariApeluriPage } from '@/pages/RecomandariApeluriPage';
 import { PontajPage } from '@/pages/PontajPage';
 import { ReviewGooglePage } from '@/pages/online/ReviewGooglePage';
-import { ReviewFacebookPage } from '@/pages/online/ReviewFacebookPage';
-import { ReviewTripAdvisorPage } from '@/pages/online/ReviewTripAdvisorPage';
 import { Spinner } from '@/components/ui';
 
 // Create React Query client
@@ -143,22 +141,6 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ReviewGooglePage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/online/review-facebook"
-              element={
-                <ProtectedRoute>
-                  <ReviewFacebookPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/online/review-tripadvisor"
-              element={
-                <ProtectedRoute>
-                  <ReviewTripAdvisorPage />
                 </ProtectedRoute>
               }
             />

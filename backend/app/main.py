@@ -14,11 +14,12 @@ from app.models import Exercitiu, ApeluriZilnic, ApeluriDetalii
 from app.api import api_router
 from app.api.apeluri import parse_queue_log, QUEUE_LOG_DIR
 from app.api.pontaj import pontaj_fetch_loop
-from app.api.google_reviews import do_refresh as google_reviews_refresh
+from app.api.google_reviews import do_refresh as google_reviews_refresh, do_analysis as google_reviews_analyze
 
 AUTO_CLOSE_HOUR = 7  # 07:00
 SAVE_APELURI_HOUR = 23  # 23:00
 GOOGLE_REVIEWS_REFRESH_HOURS = [14, 21]  # 14:00 și 21:00
+GOOGLE_REVIEWS_ANALYSIS_HOURS = [12, 21]  # 12:00 și 21:00
 
 
 async def auto_close_exercitiu_loop():
@@ -196,6 +197,38 @@ async def do_save_apeluri(target_date: date | None = None):
         print(f"Apeluri save: saved {target} — {stats.get('total', 0)} calls")
 
 
+async def google_reviews_analysis_loop():
+    """Background task: auto-run AI analysis at 12:00 and 21:00."""
+    while True:
+        try:
+            now = datetime.now()
+            next_run = None
+            for hour in sorted(GOOGLE_REVIEWS_ANALYSIS_HOURS):
+                candidate = datetime.combine(now.date(), time(hour, 0))
+                if candidate > now:
+                    next_run = candidate
+                    break
+            if next_run is None:
+                next_run = datetime.combine(
+                    now.date() + timedelta(days=1),
+                    time(GOOGLE_REVIEWS_ANALYSIS_HOURS[0], 0)
+                )
+            wait_secs = (next_run - now).total_seconds()
+            print(f"Google Reviews Analysis scheduler: next run at {next_run} (in {wait_secs:.0f}s)")
+            await asyncio.sleep(wait_secs)
+
+            print("Google Reviews Analysis scheduler: starting...")
+            result = await google_reviews_analyze()
+            analyzed = result.get("analyzed", 0)
+            print(f"Google Reviews Analysis scheduler: done — {analyzed} reviews analyzed")
+        except asyncio.CancelledError:
+            print("Google Reviews Analysis scheduler stopped")
+            return
+        except Exception as e:
+            print(f"Google Reviews Analysis scheduler error: {e}")
+            await asyncio.sleep(300)
+
+
 async def google_reviews_refresh_loop():
     """Background task: auto-refresh Google Reviews at 14:00 and 21:00."""
     while True:
@@ -238,28 +271,16 @@ async def lifespan(app: FastAPI):
     task_apeluri = asyncio.create_task(save_apeluri_loop())
     task_pontaj = asyncio.create_task(pontaj_fetch_loop())
     task_google_reviews = asyncio.create_task(google_reviews_refresh_loop())
+    task_google_analysis = asyncio.create_task(google_reviews_analysis_loop())
     yield
     # Shutdown
-    task_close.cancel()
-    task_apeluri.cancel()
-    task_pontaj.cancel()
-    task_google_reviews.cancel()
-    try:
-        await task_close
-    except asyncio.CancelledError:
-        pass
-    try:
-        await task_apeluri
-    except asyncio.CancelledError:
-        pass
-    try:
-        await task_pontaj
-    except asyncio.CancelledError:
-        pass
-    try:
-        await task_google_reviews
-    except asyncio.CancelledError:
-        pass
+    for task in [task_close, task_apeluri, task_pontaj, task_google_reviews, task_google_analysis]:
+        task.cancel()
+    for task in [task_close, task_apeluri, task_pontaj, task_google_reviews, task_google_analysis]:
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
 
 
 app = FastAPI(
