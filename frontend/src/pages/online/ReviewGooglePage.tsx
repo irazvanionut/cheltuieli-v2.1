@@ -1080,7 +1080,6 @@ const RefreshButton: React.FC = () => {
   });
 
   const remaining = status?.remaining_seconds ?? 0;
-  const canRefresh = remaining === 0;
 
   const [tick, setTick] = useState(0);
   useEffect(() => {
@@ -1090,6 +1089,7 @@ const RefreshButton: React.FC = () => {
   }, [remaining]);
 
   const displayed = Math.max(0, remaining - tick);
+  const canRefresh = displayed === 0;
   const mins = Math.floor(displayed / 60);
   const secs = displayed % 60;
   const countdownLabel = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;

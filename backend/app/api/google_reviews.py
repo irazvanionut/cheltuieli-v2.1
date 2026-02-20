@@ -12,7 +12,7 @@ from app.models.models import GoogleReview, Setting
 
 router = APIRouter(tags=["google-reviews"])
 
-COOLDOWN_MINUTES = 10
+COOLDOWN_MINUTES = 0
 ANALYSIS_COOLDOWN_HOURS = 4
 SERPAPI_BASE = "https://serpapi.com/search.json"
 
@@ -108,7 +108,7 @@ async def do_refresh() -> dict:
 
         current_url = (
             f"{SERPAPI_BASE}?engine=google_maps_reviews"
-            f"&data_id={data_id}&hl=en&sort_by=newestFirst"
+            f"&data_id={data_id}&hl=en&sort_by=newestFirst&no_cache=true"
         )
 
         inserted = 0
