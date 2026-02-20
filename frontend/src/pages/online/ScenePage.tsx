@@ -32,7 +32,7 @@ export const ScenePage: React.FC = () => {
   const { data: allEntities = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['hass-all-entities-scene'],
     queryFn: () => api.getHassAllEntities(),
-    staleTime: 30_000,
+    staleTime: Infinity,
   });
 
   const scenes: HaScene[] = useMemo(() => {
