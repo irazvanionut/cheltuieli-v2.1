@@ -1,0 +1,70 @@
+{
+  "search_metadata": {
+    "id": "6997354a277143a499d51b4d",
+    "status": "Success",
+    "json_endpoint": "https://serpapi.com/searches/LVEYJqxZ32hXMdHtHYIBAQ/6997354a277143a499d51b4d.json",
+    "created_at": "2026-02-19 16:07:38 UTC",
+    "processed_at": "2026-02-19 16:07:38 UTC",
+    "google_maps_url": "https://www.google.com/maps/search/lanuci//?hl=en",
+    "raw_html_file": "https://serpapi.com/searches/LVEYJqxZ32hXMdHtHYIBAQ/6997354a277143a499d51b4d.html",
+    "prettify_html_file": "https://serpapi.com/searches/LVEYJqxZ32hXMdHtHYIBAQ/6997354a277143a499d51b4d.prettify",
+    "total_time_taken": 0.76
+  },
+  "search_parameters": {
+    "engine": "google_maps",
+    "type": "search",
+    "q": "lanuci",
+    "google_domain": "google.com",
+    "hl": "en"
+  },
+  "search_information": {
+    "local_results_state": "Showing results for type: \"place\" instead of type: \"search\"",
+    "query_displayed": "lanuci"
+  },
+  "place_results": {
+    "title": "La Nuci",
+    "place_id": "ChIJg214P2X3sUARI0GMnSw16Gk",
+    "data_id": "0x40b1f7653f786d83:0x69e8352c9d8c4123",
+    "data_cid": "7631408034317353251",
+    "reviews_link": "https://serpapi.com/search.json?data_id=0x40b1f7653f786d83%3A0x69e8352c9d8c4123&engine=google_maps_reviews&hl=en",
+    "photos_link": "https://serpapi.com/search.json?data_id=0x40b1f7653f786d83%3A0x69e8352c9d8c4123&engine=google_maps_photos&hl=en",
+    "gps_coordinates": {
+      "latitude": 44.5061232,
+      "longitude": 26.218809999999998
+    },
+    "place_id_search": "https://serpapi.com/search.json?engine=google_maps&google_domain=google.com&hl=en&place_id=ChIJg214P2X3sUARI0GMnSw16Gk",
+    "provider_id": "/g/1tfkjp28",
+    "thumbnail": "https://lh3.googleusercontent.com/p/AF1QipOFci20aP7fOChgmbu9qociy7sbj1JRkAKrx3iq=w114-h86-k-no",
+    "serpapi_thumbnail": "https://serpapi.com/images/url/HkWpyXicuxmXUVJSUGylr5-TYayXnp-fnpNaWpxalJyfV5KaV6KXnJ-rX6Dv6GYYmFng75acaWSQGGCe5u-ckZ6bVGpZmJ-cWWlenJRl6BWU7ehdVGGcWWhbbmhoopthYaabrZuXDwCy2yHA",
+    "rating": 4.6,
+    "type": [
+      "Restaurant",
+      "Catering",
+      "Event planner",
+      "Food delivery",
+      "Delivery Restaurant",
+      "Pizza delivery"
+    ],
+    "extensions": [
+      {
+        "accessibility": [
+          "Wheelchair accessible entrance",
+          "Wheelchair accessible parking lot",
+          "Wheelchair accessible restroom",
+          "Wheelchair accessible seating"
+        ]
+      }
+    ],
+    "address": "Strada Urziceni 28, 077120 București, Romania",
+    "website": "https://www.lanuci.ro/",
+    "phone": "+40 721 526 824",
+    "open_state": "Open · Closes 11 PM",
+    "plus_code": "G649+CG Bucharest, Romania",
+    "hours": [
+      {
+        "thursday": "10 AM–11 PM"
+      }
+    ],
+    "serpapi_posts_link": "https://serpapi.com/search.json?data_id=0x40b1f7653f786d83%3A0x69e8352c9d8c4123&engine=google_maps_posts"
+  }
+}

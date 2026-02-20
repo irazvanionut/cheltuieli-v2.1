@@ -14,9 +14,11 @@ from app.models import Exercitiu, ApeluriZilnic, ApeluriDetalii
 from app.api import api_router
 from app.api.apeluri import parse_queue_log, QUEUE_LOG_DIR
 from app.api.pontaj import pontaj_fetch_loop
+from app.api.google_reviews import do_refresh as google_reviews_refresh
 
 AUTO_CLOSE_HOUR = 7  # 07:00
 SAVE_APELURI_HOUR = 23  # 23:00
+GOOGLE_REVIEWS_REFRESH_HOURS = [14, 21]  # 14:00 și 21:00
 
 
 async def auto_close_exercitiu_loop():
@@ -194,6 +196,39 @@ async def do_save_apeluri(target_date: date | None = None):
         print(f"Apeluri save: saved {target} — {stats.get('total', 0)} calls")
 
 
+async def google_reviews_refresh_loop():
+    """Background task: auto-refresh Google Reviews at 14:00 and 21:00."""
+    while True:
+        try:
+            now = datetime.now()
+            # Find the next scheduled hour
+            next_run = None
+            for hour in sorted(GOOGLE_REVIEWS_REFRESH_HOURS):
+                candidate = datetime.combine(now.date(), time(hour, 0))
+                if candidate > now:
+                    next_run = candidate
+                    break
+            if next_run is None:
+                # All times today have passed, take first time tomorrow
+                next_run = datetime.combine(
+                    now.date() + timedelta(days=1),
+                    time(GOOGLE_REVIEWS_REFRESH_HOURS[0], 0)
+                )
+            wait_secs = (next_run - now).total_seconds()
+            print(f"Google Reviews scheduler: next run at {next_run} (in {wait_secs:.0f}s)")
+            await asyncio.sleep(wait_secs)
+
+            print("Google Reviews scheduler: starting auto-refresh...")
+            result = await google_reviews_refresh()
+            print(f"Google Reviews scheduler: done — {result}")
+        except asyncio.CancelledError:
+            print("Google Reviews scheduler stopped")
+            return
+        except Exception as e:
+            print(f"Google Reviews scheduler error: {e}")
+            await asyncio.sleep(300)  # retry in 5 min on error
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events"""
@@ -202,11 +237,13 @@ async def lifespan(app: FastAPI):
     task_close = asyncio.create_task(auto_close_exercitiu_loop())
     task_apeluri = asyncio.create_task(save_apeluri_loop())
     task_pontaj = asyncio.create_task(pontaj_fetch_loop())
+    task_google_reviews = asyncio.create_task(google_reviews_refresh_loop())
     yield
     # Shutdown
     task_close.cancel()
     task_apeluri.cancel()
     task_pontaj.cancel()
+    task_google_reviews.cancel()
     try:
         await task_close
     except asyncio.CancelledError:
@@ -217,6 +254,10 @@ async def lifespan(app: FastAPI):
         pass
     try:
         await task_pontaj
+    except asyncio.CancelledError:
+        pass
+    try:
+        await task_google_reviews
     except asyncio.CancelledError:
         pass
 

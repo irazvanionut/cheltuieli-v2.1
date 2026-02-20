@@ -1,0 +1,8 @@
+{
+  "api_key": "77d334e3717208049d09637ae0e8128627f389eae9e0223fe5d9c6d6524c54f1",
+  "data_id": "0x40b1f7653f786d83:0x69e8352c9d8c4123",
+  "hl": "en",
+  "max_pages": 5,
+  "output_prefix": "reviews_output",
+  "start_from_last_state": false
+}

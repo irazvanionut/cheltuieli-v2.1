@@ -275,3 +275,33 @@ class RecomandariApeluri(Base):
     top_lucruri_bune = Column(JSONB, default=[])
     tip_apeluri = Column(JSONB, default={})
     created_at = Column(DateTime, server_default=func.now())
+
+
+class GoogleReview(Base):
+    __tablename__ = "google_reviews"
+
+    id = Column(Integer, primary_key=True, index=True)
+    review_id = Column(String(512), unique=True, nullable=False, index=True)
+    rating = Column(Integer, nullable=False)
+    iso_date = Column(DateTime(timezone=True), nullable=False, index=True)
+    date_text = Column(String(100))
+    snippet = Column(Text)
+    snippet_translated = Column(Text)
+    # User info
+    user_name = Column(String(255))
+    user_link = Column(Text)
+    contributor_id = Column(String(100))
+    user_thumbnail = Column(Text)
+    local_guide = Column(Boolean, default=False)
+    user_reviews_count = Column(Integer, default=0)
+    user_photos_count = Column(Integer, default=0)
+    # Detail ratings
+    food_rating = Column(Integer)
+    service_rating = Column(Integer)
+    atmosphere_rating = Column(Integer)
+    # Extra details (price, noise, etc.)
+    details = Column(JSONB, default={})
+    images = Column(JSONB, default=[])
+    review_link = Column(Text)
+    likes = Column(Integer, default=0)
+    created_at = Column(DateTime, server_default=func.now())

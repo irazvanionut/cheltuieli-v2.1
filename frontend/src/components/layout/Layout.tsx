@@ -23,7 +23,8 @@ import {
   PhoneIncoming,
   ShoppingCart,
   TrendingUp,
-  MessageSquare,
+  TrendingDown,
+  Minus,
   Clock,
   Lightbulb,
   Star,
@@ -77,6 +78,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     queryFn: () => api.getApeluriPrimite(),
     staleTime: 60000,
     refetchInterval: 120000,
+  });
+
+  // Fetch Google Reviews summary for top banner
+  const { data: reviewsSummary } = useQuery({
+    queryKey: ['google-reviews-summary'],
+    queryFn: () => api.getGoogleReviewsSummary(),
+    staleTime: 300_000,
+    refetchInterval: 600_000,
   });
 
   // Fetch pontaj data for sidebar badge (uses same react-query cache as PontajPage)
@@ -161,10 +170,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       label: 'Recenzii',
       icon: Star,
       items: [
-        // { name: 'Recenzii', href: '/online/recenzii', icon: MessageSquare, show: true, badge: null, badgeApeluri: null },
         { name: 'Review Google', href: '/online/review-google', icon: Star, show: true, badge: null, badgeApeluri: null },
-        // { name: 'Review Facebook', href: '/online/review-facebook', icon: Star, show: true, badge: null, badgeApeluri: null },
-        // { name: 'Review TripAdvisor', href: '/online/review-tripadvisor', icon: Star, show: true, badge: null, badgeApeluri: null },
+        { name: 'Review Facebook', href: '/online/review-facebook', icon: Star, show: true, badge: null, badgeApeluri: null },
+        { name: 'Review TripAdvisor', href: '/online/review-tripadvisor', icon: Star, show: true, badge: null, badgeApeluri: null },
       ],
     },
     {
@@ -387,10 +395,76 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           'lg:ml-64'
         )}
        >
+         {/* Banner rating Google */}
+         {reviewsSummary?.count_overall != null && reviewsSummary.count_overall > 0 && (
+           <Link
+             to="/online/review-google"
+             className="bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-900/40 px-4 py-1.5 flex items-center gap-3 flex-wrap text-xs text-stone-700 dark:text-stone-300 hover:bg-amber-100 dark:hover:bg-amber-950/50 transition-colors"
+           >
+             <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-400 flex-shrink-0" />
+             <span className="flex items-center gap-1">
+               <span className="text-stone-400">Rating Google:</span>
+               <span className="font-bold text-stone-900 dark:text-stone-100">{reviewsSummary.avg_overall}</span>
+               <span className="text-stone-400">({reviewsSummary.count_overall})</span>
+               {reviewsSummary.avg_today !== null && (
+                 <>
+                   <span className="text-stone-300 dark:text-stone-600 mx-0.5">·</span>
+                   <span className="text-stone-400">azi:</span>
+                   <span className="font-semibold text-stone-800 dark:text-stone-200">{reviewsSummary.avg_today}</span>
+                   <span className="text-stone-400">({reviewsSummary.count_today})</span>
+                 </>
+               )}
+             </span>
+
+             {reviewsSummary.avg_as_of_60d !== null && reviewsSummary.trend_60d !== null && (
+               <>
+                 <span className="text-stone-300 dark:text-stone-600">·</span>
+                 <span className="flex items-center gap-1">
+                   <span className="text-stone-400">vs acum 60 zile ({reviewsSummary.avg_as_of_60d}):</span>
+                   {reviewsSummary.trend_60d > 0 ? (
+                     <span className="flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400 font-semibold">
+                       <TrendingUp className="w-3 h-3" />+{reviewsSummary.trend_60d}
+                     </span>
+                   ) : reviewsSummary.trend_60d < 0 ? (
+                     <span className="flex items-center gap-0.5 text-red-500 dark:text-red-400 font-semibold">
+                       <TrendingDown className="w-3 h-3" />{reviewsSummary.trend_60d}
+                     </span>
+                   ) : (
+                     <Minus className="w-3 h-3 text-stone-400" />
+                   )}
+                 </span>
+               </>
+             )}
+
+             {reviewsSummary.avg_as_of_30d !== null && reviewsSummary.trend_30d !== null && (
+               <>
+                 <span className="text-stone-300 dark:text-stone-600">·</span>
+                 <span className="flex items-center gap-1">
+                   <span className="text-stone-400">vs acum 30 zile ({reviewsSummary.avg_as_of_30d}):</span>
+                   {reviewsSummary.trend_30d > 0 ? (
+                     <span className="flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400 font-semibold">
+                       <TrendingUp className="w-3 h-3" />+{reviewsSummary.trend_30d}
+                     </span>
+                   ) : reviewsSummary.trend_30d < 0 ? (
+                     <span className="flex items-center gap-0.5 text-red-500 dark:text-red-400 font-semibold">
+                       <TrendingDown className="w-3 h-3" />{reviewsSummary.trend_30d}
+                     </span>
+                   ) : (
+                     <Minus className="w-3 h-3 text-stone-400" />
+                   )}
+                 </span>
+               </>
+             )}
+           </Link>
+         )}
+
          {/* Banner apeluri ratate */}
          {!bannerDismissed && apeluriData?.summary && ((apeluriData.summary.ABANDONAT ?? 0) + (apeluriData.summary.NEPRELUATE ?? 0)) > 0 && (
            <div className="bg-red-600 dark:bg-red-700 text-white px-4 py-2 flex items-center justify-between gap-4">
-             <div className="flex items-center gap-2 text-sm font-medium">
+             <Link
+               to="/apeluri/primite"
+               className="flex items-center gap-2 text-sm font-medium flex-1 hover:opacity-90"
+             >
                <PhoneCall className="w-4 h-4 flex-shrink-0" />
                <span>
                  Apeluri ratate azi:&nbsp;
@@ -401,7 +475,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                    <span className="ml-2 opacity-80">({apeluriData.summary.ABANDONAT} abandonate)</span>
                  )}
                </span>
-             </div>
+             </Link>
              <button
                onClick={() => setBannerDismissed(true)}
                className="text-white/70 hover:text-white transition-colors flex-shrink-0"

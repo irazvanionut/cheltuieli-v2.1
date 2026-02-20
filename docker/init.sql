@@ -34,7 +34,10 @@ INSERT INTO settings (cheie, valoare, tip, descriere) VALUES
     ('tema_ui', 'light', 'string', 'Tema interfață: light/dark/auto'),
     ('limba', 'ro', 'string', 'Limba aplicației'),
     ('inregistrari_per_pagina', '20', 'number', 'Număr înregistrări per pagină'),
-    ('monede', 'RON:lei,EUR:€,USD:$', 'string', 'Lista monede active: CODE:label separate prin virgula');
+    ('monede', 'RON:lei,EUR:€,USD:$', 'string', 'Lista monede active: CODE:label separate prin virgula'),
+    ('serpapi_api_key', '', 'string', 'SerpAPI API key pentru Google Reviews'),
+    ('serpapi_data_id', '', 'string', 'Google Maps data_id pentru restaurant (ex: 0x40b1f7...}'),
+    ('google_reviews_last_refresh', '', 'string', 'ISO datetime al ultimului refresh Google Reviews');
 
 -- ============================================
 -- 2. USERS (Utilizatori)
@@ -367,16 +370,52 @@ CREATE INDEX idx_apeluri_detalii_zilnic ON apeluri_detalii(apeluri_zilnic_id);
 
 CREATE TABLE recomandari_apeluri (
     id SERIAL PRIMARY KEY,
-    data DATE NOT NULL UNIQUE,
+    data DATE NOT NULL,
+    ai_model VARCHAR(20) NOT NULL DEFAULT 'Claude' CHECK (ai_model IN ('Claude', 'Ollama')),
     total_conversatii INTEGER DEFAULT 0,
     conversations JSONB DEFAULT '[]',
     top_recomandari JSONB DEFAULT '[]',
     top_lucruri_bune JSONB DEFAULT '[]',
     tip_apeluri JSONB DEFAULT '{}',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT unique_data_ai_model UNIQUE (data, ai_model)
 );
 
 CREATE INDEX idx_recomandari_apeluri_data ON recomandari_apeluri(data DESC);
+CREATE INDEX idx_recomandari_apeluri_ai_model ON recomandari_apeluri(ai_model);
+CREATE INDEX idx_recomandari_apeluri_data_ai_model ON recomandari_apeluri(data, ai_model);
+
+-- ============================================
+-- 15. GOOGLE REVIEWS
+-- ============================================
+
+CREATE TABLE google_reviews (
+    id SERIAL PRIMARY KEY,
+    review_id VARCHAR(512) UNIQUE NOT NULL,
+    rating INTEGER NOT NULL,
+    iso_date TIMESTAMPTZ NOT NULL,
+    date_text VARCHAR(100),
+    snippet TEXT,
+    snippet_translated TEXT,
+    user_name VARCHAR(255),
+    user_link TEXT,
+    contributor_id VARCHAR(100),
+    user_thumbnail TEXT,
+    local_guide BOOLEAN DEFAULT false,
+    user_reviews_count INTEGER DEFAULT 0,
+    user_photos_count INTEGER DEFAULT 0,
+    food_rating INTEGER,
+    service_rating INTEGER,
+    atmosphere_rating INTEGER,
+    details JSONB DEFAULT '{}',
+    images JSONB DEFAULT '[]',
+    review_link TEXT,
+    likes INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_google_reviews_iso_date ON google_reviews(iso_date DESC);
+CREATE INDEX idx_google_reviews_review_id ON google_reviews(review_id);
 
 -- ============================================
 -- FUNCTIONS & TRIGGERS
@@ -589,3 +628,6 @@ COMMENT ON TABLE chat_history IS 'Istoric conversații cu AI BigBoss';
 COMMENT ON COLUMN categorii.afecteaza_sold IS 'Dacă false, nu se scade din sold (ex: FormePlata)';
 COMMENT ON COLUMN cheltuieli.neplatit IS 'Pentru marfă neplătită - apare separat în raport';
 COMMENT ON COLUMN cheltuieli.activ IS 'Soft delete - nu se șterge fizic';
+COMMENT ON TABLE google_reviews IS 'Recenzii Google Maps importate via SerpAPI';
+COMMENT ON COLUMN google_reviews.review_id IS 'ID unic din Google Maps / SerpAPI - previne duplicate';
+COMMENT ON COLUMN google_reviews.details IS 'Câmpuri extra: price_per_person, noise_level, wait_time etc.';

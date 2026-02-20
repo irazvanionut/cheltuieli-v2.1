@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api import auth, nomenclator, cheltuieli, portofele, rapoarte, settings, apeluri, apeluri_trend, pontaj, recomandari_apeluri
+from app.api import auth, nomenclator, cheltuieli, portofele, rapoarte, settings, apeluri, apeluri_trend, pontaj, recomandari_apeluri, google_reviews
 
 api_router = APIRouter()
 
@@ -15,3 +15,4 @@ api_router.include_router(apeluri.router)
 api_router.include_router(apeluri_trend.router)
 api_router.include_router(pontaj.router)
 api_router.include_router(recomandari_apeluri.router)
+api_router.include_router(google_reviews.router)

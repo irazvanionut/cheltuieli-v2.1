@@ -1,0 +1,1285 @@
+[
+  {
+    "position": 1,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT210cFFXTnVlRzl4WWkxYVZXbHljV2RGUlU1NE4wRRAB!2m1!1s",
+    "rating": 5,
+    "date": "4 days ago",
+    "iso_date": "2026-02-14T22:52:31Z",
+    "images": [
+      "https://lh3.googleusercontent.com/geougc-cs/ABOP9pvPA0Z-Kh3Bt5lJ0Gw977cnbOK93I2np35HC3ggsHQD1HpGaERLWHOpENJbot6A7Ex1OkBia0gq7S7UVfwYrraTkQv3OlmqIjocDVm2vKCNRFu48cUvCObnScyDIclz7Ia6rzHLvcYo4B7h"
+    ],
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT210cFFXTnVlRzl4WWkxYVZXbHljV2RGUlU1NE4wRRAB",
+    "user": {
+      "name": "loredana ivan",
+      "link": "https://www.google.com/maps/contrib/106114388087442168403/reviews?hl=en-US",
+      "contributor_id": "106114388087442168403",
+      "thumbnail": "https://lh3.googleusercontent.com/a-/ALV-UjXiPeJWr7qysiCgv57FJXbqE3xxPkffBmGp6WOTTQC9Y7hAy6w=s64-c-rp-mo-br100",
+      "reviews": 2,
+      "photos": 0
+    },
+    "snippet": "Super licatie si personal!",
+    "extracted_snippet": {
+      "original": "Super licatie si personal!",
+      "translated": "Great deal and staff!"
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 2,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT25Ca1lUWlplRVoyTkU1NGFscEdTWHAxUm5sV1NXYxAB!2m1!1s",
+    "rating": 5,
+    "date": "6 days ago",
+    "iso_date": "2026-02-13T15:50:56Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT25Ca1lUWlplRVoyTkU1NGFscEdTWHAxUm5sV1NXYxAB",
+    "user": {
+      "name": "toma sorin marian",
+      "link": "https://www.google.com/maps/contrib/103328515041668057063/reviews?hl=en-US",
+      "contributor_id": "103328515041668057063",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocLmY9_fiABUUSHSjbiYT4_zz7fljK5tevZnKX_7IL7gdqL6rg=s64-c-rp-mo-ba2-br100",
+      "local_guide": true,
+      "reviews": 20,
+      "photos": 2
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 3,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT20xdGVtOUxRbVZ5VEZJdFoxTnZlRE5MTTBkWk5FRRAB!2m1!1s",
+    "rating": 1,
+    "date": "a week ago",
+    "iso_date": "2026-02-07T19:39:24Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT20xdGVtOUxRbVZ5VEZJdFoxTnZlRE5MTTBkWk5FRRAB",
+    "user": {
+      "name": "Vlad Idk",
+      "link": "https://www.google.com/maps/contrib/109299210036987791335/reviews?hl=en-US",
+      "contributor_id": "109299210036987791335",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocJToHP23P3ceTIfiA4aJRuN9kb5SepXoVClAvKgwNsc6l8WFw=s64-c-rp-mo-br100",
+      "reviews": 1,
+      "photos": 0
+    },
+    "snippet": "Nu recomand cu\nnimic am comandat 4 feluri de mâncare și nu au nici unu",
+    "extracted_snippet": {
+      "original": "Nu recomand cu\nnimic am comandat 4 feluri de mâncare și nu au nici unu",
+      "translated": "I do not recommend at all I ordered 4 dishes and they did not have any"
+    },
+    "details": {
+      "wheelchair_accessibility": "Nu recomand."
+    },
+    "likes": 0
+  },
+  {
+    "position": 4,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT25aTkxVRnBVblUzT0dNNVVGbEtla1pVUmtWSU5sRRAB!2m1!1s",
+    "rating": 1,
+    "date": "a week ago",
+    "iso_date": "2026-02-07T19:07:29Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT25aTkxVRnBVblUzT0dNNVVGbEtla1pVUmtWSU5sRRAB",
+    "user": {
+      "name": "Ionel Ionel",
+      "link": "https://www.google.com/maps/contrib/103995403013014332426/reviews?hl=en-US",
+      "contributor_id": "103995403013014332426",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocIFEEQ3V_l7t9n97pskzbKatA9sGdtkYhqAA2FRfv8os4DCog=s64-c-rp-mo-br100",
+      "reviews": 1,
+      "photos": 0
+    },
+    "snippet": "Din 4 feluri de mâncare Nu au nici una cum este posibil asta , Asta nu e , de asta nu mai avem ,\nOfffff 🤦‍♂️🤦‍♂️🤦‍♂️",
+    "extracted_snippet": {
+      "original": "Din 4 feluri de mâncare Nu au nici una cum este posibil asta , Asta nu e , de asta nu mai avem ,\nOfffff 🤦‍♂️🤦‍♂️🤦‍♂️",
+      "translated": "Out of 4 dishes They don't have any, how is this possible, That's not it, that's why we don't have any more,\nOfffff 🤦‍♂️🤦‍♂️🤦‍♂️"
+    },
+    "details": {
+      "food": 1
+    },
+    "likes": 0
+  },
+  {
+    "position": 5,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT25GM2JWWXlVbEZyUldGTWJIQnpRbTltUTJoU1ozYxAB!2m1!1s",
+    "rating": 5,
+    "date": "4 weeks ago",
+    "iso_date": "2026-01-19T22:11:13Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT25GM2JWWXlVbEZyUldGTWJIQnpRbTltUTJoU1ozYxAB",
+    "user": {
+      "name": "sonia baranescu",
+      "link": "https://www.google.com/maps/contrib/115670060315362130016/reviews?hl=en-US",
+      "contributor_id": "115670060315362130016",
+      "thumbnail": "https://lh3.googleusercontent.com/a-/ALV-UjWLsLZxaxffL43divHr0Ksqi9IKGbJ9YULeoqTNlIsBI8OqO9OG=s64-c-rp-mo-ba2-br100",
+      "local_guide": true,
+      "reviews": 9,
+      "photos": 5
+    },
+    "snippet": "Localul este superb, ambianta, mancare,servire excelente\nLocul pentru fumat fiind si el frumos amenajat\nIntradevar te simti bine-venit!\nTin sa precizez ca am fost in seara de revelion, defapt sarbatorim revelionul LA NUCI de vreo 4 ani.",
+    "extracted_snippet": {
+      "original": "Localul este superb, ambianta, mancare,servire excelente\nLocul pentru fumat fiind si el frumos amenajat\nIntradevar te simti bine-venit!\nTin sa precizez ca am fost in seara de revelion, defapt sarbatorim revelionul LA NUCI de vreo 4 ani.",
+      "translated": "The place is superb, the ambiance, food, service are excellent\nThe smoking area is also beautifully decorated\nYou really feel welcome!\nI want to point out that I was there on New Year's Eve, in fact we have been celebrating New Year's Eve at LA NUCI for about 4 years."
+    },
+    "details": {
+      "price_per_person": "lei 200+",
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5,
+      "noise_level": "Loud, but you can still talk",
+      "group_size": "Suitable for all group sizes",
+      "wait_time": "No wait",
+      "parking_space": "Plenty of parking",
+      "parking_options": "Free parking lot",
+      "kid_friendliness": "Potrivit pentru copii, acestia beneficiind de spatii de joaca special amenajate",
+      "wheelchair_accessibility": "Nu sunt scari sau praguri"
+    },
+    "likes": 0
+  },
+  {
+    "position": 6,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2tWWVVEbFdZM2RhZVRJMFVYbEdWV3haTkRWSFlXYxAB!2m1!1s",
+    "rating": 5,
+    "date": "a month ago",
+    "iso_date": "2026-01-16T03:19:48Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2tWWVVEbFdZM2RhZVRJMFVYbEdWV3haTkRWSFlXYxAB",
+    "user": {
+      "name": "petrișor Marian ion",
+      "link": "https://www.google.com/maps/contrib/102647112938363055659/reviews?hl=en-US",
+      "contributor_id": "102647112938363055659",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocIS6-Xv1q8RPdyT9-AmogQv55P5UnE7dZbQ38yYzKhvhN7aEw=s64-c-rp-mo-ba2-br100",
+      "local_guide": true,
+      "reviews": 1,
+      "photos": 50
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 7,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2paRldIWTNjRUpFVmsxcVpGcFVaVXhoYkRBM1RuYxAB!2m1!1s",
+    "rating": 5,
+    "date": "a month ago",
+    "iso_date": "2026-01-12T11:13:27Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2paRldIWTNjRUpFVmsxcVpGcFVaVXhoYkRBM1RuYxAB",
+    "user": {
+      "name": "Alex Vasyle",
+      "link": "https://www.google.com/maps/contrib/113558816249553398774/reviews?hl=en-US",
+      "contributor_id": "113558816249553398774",
+      "thumbnail": "https://lh3.googleusercontent.com/a-/ALV-UjWLtQTm1xDWrE56n7vmLutCsZCgP_ho_KuEsXgL1kV1zMnBLlRRVg=s64-c-rp-mo-br100",
+      "reviews": 1,
+      "photos": 0
+    },
+    "details": {
+      "price_per_person": "lei 60–80",
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5,
+      "noise_level": "Moderate noise",
+      "group_size": "3-4 people",
+      "wait_time": "10-30 min"
+    },
+    "likes": 0
+  },
+  {
+    "position": 8,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT25Gd1ZHMWFYMmhXUlY5MU5Xa3laV05NTFU4MVdtYxAB!2m1!1s",
+    "rating": 4,
+    "date": "a month ago",
+    "iso_date": "2026-01-12T10:12:04Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT25Gd1ZHMWFYMmhXUlY5MU5Xa3laV05NTFU4MVdtYxAB",
+    "user": {
+      "name": "Alina Facalet",
+      "link": "https://www.google.com/maps/contrib/105008520463273116856/reviews?hl=en-US",
+      "contributor_id": "105008520463273116856",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocI1JY46VSIywmfT2QGll7HcMjPOFbm7eL7Nn_dKtFxFa6Obbw=s64-c-rp-mo-br100",
+      "reviews": 2,
+      "photos": 30
+    },
+    "snippet": "Bună ziua,\nAm vizitat recent restaurantul dumneavoastră și aș dori să ofer un feedback constructiv.\nMâncarea este gustoasă și atmosfera ar putea fi plăcută, însă am întâlnit o problemă destul de serioasă legată de igienă. Localul este plin de câini și pisici, iar pe durata mesei animalele se plimbau printre mese și pe lângă clienți. Pentru noi a fost deranjant, mai ales că aveam copii cu noi.\nMai mult, am găsit un fir de păr în farfurie, ceea ce ne-a făcut să ne oprim din mâncat. Înțeleg și respect dragostea pentru animale, însă cred că ar fi mult mai potrivit ca acestea să fie ținute separat de zona în care se servește mâncarea, astfel încât să fie respectate normele de igienă și toți clienții să se simtă confortabil.\nSper ca acest mesaj să fie util, pentru că restaurantul are potențial, dar partea de igienă trebuie tratată cu mai mare grijă.\nVă mulțumesc!",
+    "extracted_snippet": {
+      "original": "Bună ziua,\nAm vizitat recent restaurantul dumneavoastră și aș dori să ofer un feedback constructiv.\nMâncarea este gustoasă și atmosfera ar putea fi plăcută, însă am întâlnit o problemă destul de serioasă legată de igienă. Localul este plin de câini și pisici, iar pe durata mesei animalele se plimbau printre mese și pe lângă clienți. Pentru noi a fost deranjant, mai ales că aveam copii cu noi.\nMai mult, am găsit un fir de păr în farfurie, ceea ce ne-a făcut să ne oprim din mâncat. Înțeleg și respect dragostea pentru animale, însă cred că ar fi mult mai potrivit ca acestea să fie ținute separat de zona în care se servește mâncarea, astfel încât să fie respectate normele de igienă și toți clienții să se simtă confortabil.\nSper ca acest mesaj să fie util, pentru că restaurantul are potențial, dar partea de igienă trebuie tratată cu mai mare grijă.\nVă mulțumesc!",
+      "translated": "Hello,\nI recently visited your restaurant and would like to provide some constructive feedback.\nThe food is tasty and the atmosphere could be nice, but I encountered a rather serious hygiene problem. The place is full of dogs and cats, and during the meal the animals walked among the tables and past the customers. For us it was disturbing, especially since we had children with us.\nFurthermore, we found a hair on our plate, which made us stop eating. I understand and respect the love for animals, but I think it would be much more appropriate for them to be kept separate from the area where food is served, so that hygiene standards are respected and all customers feel comfortable.\nI hope this message is useful, because the restaurant has potential, but the hygiene part needs to be treated with greater care.\nThank you!"
+    },
+    "details": {
+      "price_per_person": "lei 80–100",
+      "food": 4,
+      "service": 4,
+      "atmosphere": 1,
+      "noise_level": "Quiet, easy to talk",
+      "group_size": "Suitable for all group sizes",
+      "wait_time": "No wait"
+    },
+    "likes": 0
+  },
+  {
+    "position": 9,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2xKV1VtRlJiRlZqY1dwR1dVMHdTRmhtUzA0d1NYYxAB!2m1!1s",
+    "rating": 5,
+    "date": "a month ago",
+    "iso_date": "2026-01-10T23:28:06Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2xKV1VtRlJiRlZqY1dwR1dVMHdTRmhtUzA0d1NYYxAB",
+    "user": {
+      "name": "ioana ghinea",
+      "link": "https://www.google.com/maps/contrib/105248795301225191184/reviews?hl=en-US",
+      "contributor_id": "105248795301225191184",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocJj1dFP2KB4DVFfhJHVNVFVndnZGflt7pdYiL2EZkv_by-s=s64-c-rp-mo-br100",
+      "reviews": 0,
+      "photos": 0
+    },
+    "details": {
+      "food": 4,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 10,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2paaE1qSkhiM0Z2WVhCTVJGUmtVRFJIVjFWdGJWRRAB!2m1!1s",
+    "rating": 5,
+    "date": "Edited a month ago",
+    "iso_date": "2026-01-10T19:53:50Z",
+    "images": [
+      "https://lh3.googleusercontent.com/geougc-cs/ABOP9ps7IiosOj3kcekCIJjyFTJESWJ3FqMu-Wr5elobKCNQtjvonFEwGo3z0moXBmXRFVcXZ5w1Bo_Q4UTwVcOArLiFGD4CL3Cn3G3j1edvBJixxERhNk_W726TlA-K2OhgevbTEpXB49nnrEc"
+    ],
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2paaE1qSkhiM0Z2WVhCTVJGUmtVRFJIVjFWdGJWRRAB",
+    "user": {
+      "name": "Alex Alexiadis",
+      "link": "https://www.google.com/maps/contrib/117138349771989582506/reviews?hl=en-US",
+      "contributor_id": "117138349771989582506",
+      "thumbnail": "https://lh3.googleusercontent.com/a-/ALV-UjX-tqtPfbMaOGBksCAmV-cX4OAeXdKrTd6FgDr4fW2kxD0_k-xpww=s64-c-rp-mo-ba4-br100",
+      "local_guide": true,
+      "reviews": 47,
+      "photos": 108
+    },
+    "snippet": "Recomand !Din exterior nu se vede sau nu pare asa frumos cum e in interior.Am avut ocazia sa ne serveasca chiar @FlorentinNeacsu  cu provocarea cu burgerul cu 2 minute,o atmosfera relaxanta,ambianta placuta,mai decor de interior new age retro combinate in un mod placut,intim,curat,mancare foarte buna si preturi foarte ok!! Au si acvarii ceeea ce tine putin copii ocupati!! Recomand!!!",
+    "extracted_snippet": {
+      "original": "Recomand !Din exterior nu se vede sau nu pare asa frumos cum e in interior.Am avut ocazia sa ne serveasca chiar @FlorentinNeacsu  cu provocarea cu burgerul cu 2 minute,o atmosfera relaxanta,ambianta placuta,mai decor de interior new age retro combinate in un mod placut,intim,curat,mancare foarte buna si preturi foarte ok!! Au si acvarii ceeea ce tine putin copii ocupati!! Recomand!!!",
+      "translated": "I recommend! From the outside it doesn't look or feel as beautiful as it is inside. We had the opportunity to have @FlorentinNeacsu serve us with the 2-minute burger challenge, a relaxing atmosphere, pleasant ambiance, more new age retro interior decoration combined in a pleasant, intimate, clean way, very good food and very ok prices!! They also have aquariums which keeps the kids busy!! I recommend!!!"
+    },
+    "details": {
+      "meal_type": "Dinner",
+      "price_per_person": "lei 140–160",
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5,
+      "reservation": "Reservations recommended",
+      "wait_time": "No wait",
+      "seating_type": "Indoor dining area, Bar area, Outdoor patio / terrace, Booth seating",
+      "parking_space": "Plenty of parking",
+      "parking_options": "Free parking lot, Paid parking lot"
+    },
+    "likes": 0
+  },
+  {
+    "position": 1,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2xSaGJIaDNXa2xXV2tZM1VrSkhVbVpLYzIxblVXYxAB!2m1!1s",
+    "rating": 5,
+    "date": "a month ago",
+    "iso_date": "2026-01-07T17:41:02Z",
+    "images": [
+      "https://lh3.googleusercontent.com/geougc-cs/ABOP9ptky0bI5FsR6OuBu2zo5zihY2d9sfwVflOrzm6PdfAvGjnRE3ScK7ZQ14Gt7t2pEoxZLMs3VYidrSTF6T_wkyZRChlZyIrajdMfE5tS_5GlU1dPCscjjVMCv9QGKc_2Q_jjXbY2Pq3uhpXH",
+      "https://lh3.googleusercontent.com/geougc-cs/ABOP9pvPujKsx5Yt0AX1F1jHQKjmE5-YmXnF1Nc0TBatXrxmTXAMBv3phxOhpISR_TrV0TbuapVKjCOw8Mdv41Mv8s56qT55LzALMYcomQv2JoX3qqU2uOdt2an5fl6XaLd1KJ7MCPUktq89Qokl",
+      "https://lh3.googleusercontent.com/geougc-cs/ABOP9puxuudit0yhhCnCDyeMyXiWDUiUuz0kWmFZVGdSKolkdYdo-jmFKwZN0fxPufoDT5Kx9Pk6AS1UIQrgPDYPaIdn9s1B499ADi4IIJBjKn7VPmCEoGmq7lImhhexEY5WE503J33-DZhjTdQo",
+      "https://lh3.googleusercontent.com/geougc-cs/ABOP9ptPU3IjqCLbBFcBNulMo-XSlNDumZZBq8cCrWq54MmRVfZWQzlik_l134nIC0it4TKH8n7AckdwLQ-GF0PHao7XMrAYHkIklbXoTl-PAox_u3-v_DjUEeJVdJX-DmrwkFt8JWImDNwdOBN0",
+      "https://lh3.googleusercontent.com/geougc-cs/ABOP9pvdxHdU3zDbgTIvnbLtQohEsKSNtDuDChNX2bt6bzgeJBXkOum5CKDBgdC1bkh7VohrrjbF3AOfTx58fgPx3no_EY7RazBkVhnOuIe5zosk5W2JDr-owm9tIsYbiFkDKymt4eAl1Tq-vkE"
+    ],
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2xSaGJIaDNXa2xXV2tZM1VrSkhVbVpLYzIxblVXYxAB",
+    "user": {
+      "name": "Anca Manisor (Anca.M)",
+      "link": "https://www.google.com/maps/contrib/107163044968884777075/reviews?hl=en-US",
+      "contributor_id": "107163044968884777075",
+      "thumbnail": "https://lh3.googleusercontent.com/a-/ALV-UjWBujkwug-4Oh98HAkoBuZK7k_nYRvA-QpzJ8hxWB-gjT6gBLA_CA=s64-c-rp-mo-ba2-br100",
+      "local_guide": true,
+      "reviews": 7,
+      "photos": 15
+    },
+    "snippet": "Atmosfera foarte primitoare. Mâncare foarte buna. Au meniurile zilei disponibile până tarziu in seara. Ne-a plăcut foarte mult. E a 3-a ora cand am venit aici.",
+    "extracted_snippet": {
+      "original": "Atmosfera foarte primitoare. Mâncare foarte buna. Au meniurile zilei disponibile până tarziu in seara. Ne-a plăcut foarte mult. E a 3-a ora cand am venit aici.",
+      "translated": "Very welcoming atmosphere. Very good food. They have daily menus available until late in the evening. We really liked it. This is the 3rd time we've been here."
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5,
+      "noise_level": "Moderate noise",
+      "group_size": "9+ people, Suitable for all group sizes",
+      "wait_time": "No wait",
+      "parking_space": "Plenty of parking",
+      "kid_friendliness": "Are meniuri de copii.",
+      "wheelchair_accessibility": "Da"
+    },
+    "likes": 0
+  },
+  {
+    "position": 2,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT21kMGQwZGxUbkJ6VTI5TmRGbHBXbDh3V2xWUVNWRRAB!2m1!1s",
+    "rating": 5,
+    "date": "a month ago",
+    "iso_date": "2026-01-07T17:28:55Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT21kMGQwZGxUbkJ6VTI5TmRGbHBXbDh3V2xWUVNWRRAB",
+    "user": {
+      "name": "Claudiu Găman",
+      "link": "https://www.google.com/maps/contrib/116429591017083645835/reviews?hl=en-US",
+      "contributor_id": "116429591017083645835",
+      "thumbnail": "https://lh3.googleusercontent.com/a-/ALV-UjWFFM1UYCZbpyukP35l5EOqhhbr_rmnY9wpflEYAWZgzsHvOQEX=s64-c-rp-mo-br100",
+      "reviews": 2,
+      "photos": 0
+    },
+    "details": {
+      "price_per_person": "lei 160–180",
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5,
+      "noise_level": "Quiet, easy to talk",
+      "group_size": "Suitable for all group sizes",
+      "wait_time": "No wait",
+      "parking_space": "Plenty of parking",
+      "parking_options": "Free parking lot, Free street parking",
+      "parking": "O locatie foarte frumoasa, spatioasa cu mancare excelenta, muzica de voie buna. Recomand.",
+      "kid_friendliness": "Da"
+    },
+    "likes": 0
+  },
+  {
+    "position": 3,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT21ReFpWaHVZVUpxWjNsc2NHYzJNWFp0VTFaNWVGRRAB!2m1!1s",
+    "rating": 5,
+    "date": "a month ago",
+    "iso_date": "2026-01-06T12:17:08Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT21ReFpWaHVZVUpxWjNsc2NHYzJNWFp0VTFaNWVGRRAB",
+    "user": {
+      "name": "Gʀᴀᴛɪᴇʟᴀ Aᴍᴀʟɪᴀ",
+      "link": "https://www.google.com/maps/contrib/104746995983362456783/reviews?hl=en-US",
+      "contributor_id": "104746995983362456783",
+      "thumbnail": "https://lh3.googleusercontent.com/a-/ALV-UjXQYS2LU39HaH_ZTgwZ3LUsQ3HkYLVPZ-eWW61I0T4llMpDk56j=s64-c-rp-mo-ba4-br100",
+      "local_guide": true,
+      "reviews": 24,
+      "photos": 221
+    },
+    "likes": 0
+  },
+  {
+    "position": 4,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT21GS01UWlNOMW93Y0dSclJqZHlSRzFtYkhSMlRsRRAB!2m1!1s",
+    "rating": 1,
+    "date": "a month ago",
+    "iso_date": "2026-01-03T16:46:23Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT21GS01UWlNOMW93Y0dSclJqZHlSRzFtYkhSMlRsRRAB",
+    "user": {
+      "name": "Anca Roxana Stancu",
+      "link": "https://www.google.com/maps/contrib/117962805479643447211/reviews?hl=en-US",
+      "contributor_id": "117962805479643447211",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocLyL_4xSUeIieJCF-Nr_ilX31vFk29lvzgfl9bxBEtZFM-4JA=s64-c-rp-mo-br100",
+      "reviews": 3,
+      "photos": 0
+    },
+    "snippet": "Dezamăgitor, te duci să mănânci ceva bun cum avea reputația și dai de grădina zoologică, tot restaurantul e plin de pisici, stau sub mesele clienților și în tot restaurantul, cu siguranță și în bucătărie.",
+    "extracted_snippet": {
+      "original": "Dezamăgitor, te duci să mănânci ceva bun cum avea reputația și dai de grădina zoologică, tot restaurantul e plin de pisici, stau sub mesele clienților și în tot restaurantul, cu siguranță și în bucătărie.",
+      "translated": "Disappointing, you go to eat something good like it had a reputation and you find yourself in a zoo, the whole restaurant is full of cats, they sit under the customers' tables and throughout the restaurant, definitely in the kitchen too."
+    },
+    "details": {
+      "food": 1,
+      "service": 1,
+      "atmosphere": 1
+    },
+    "likes": 2
+  },
+  {
+    "position": 5,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2xCdE9XUm5lVGhSU1RNMVVra3lXWFkzTTJKdmQyYxAB!2m1!1s",
+    "rating": 5,
+    "date": "a month ago",
+    "iso_date": "2026-01-03T16:38:10Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2xCdE9XUm5lVGhSU1RNMVVra3lXWFkzTTJKdmQyYxAB",
+    "user": {
+      "name": "Dragos Homoceanu",
+      "link": "https://www.google.com/maps/contrib/117419278436598765596/reviews?hl=en-US",
+      "contributor_id": "117419278436598765596",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocLvYeDn1G1hpypDM3ljSdTuwlUiSgjPtxYJQt58s7CU2EjYPA=s64-c-rp-mo-ba3-br100",
+      "local_guide": true,
+      "reviews": 20,
+      "photos": 17
+    },
+    "details": {
+      "meal_type": "Lunch",
+      "food": 5,
+      "service": 5,
+      "atmosphere": 4
+    },
+    "likes": 0
+  },
+  {
+    "position": 6,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sChZDSUhNMG9nS0VJQ0FnSUNpdUxDS0F3EAE!2m1!1s",
+    "rating": 5,
+    "date": "Edited a month ago",
+    "iso_date": "2025-12-25T22:41:10Z",
+    "review_id": "ChZDSUhNMG9nS0VJQ0FnSUNpdUxDS0F3EAE",
+    "user": {
+      "name": "Andreea Scarlat",
+      "link": "https://www.google.com/maps/contrib/104818164547906679413/reviews?hl=en-US",
+      "contributor_id": "104818164547906679413",
+      "thumbnail": "https://lh3.googleusercontent.com/a-/ALV-UjX2lkUV1CFWXqJdFim_OxVtp5WZIDYvc0BGWxooOdk9I5iyivw=s64-c-rp-mo-ba5-br100",
+      "local_guide": true,
+      "reviews": 189,
+      "photos": 426
+    },
+    "snippet": "Foarte plăcută experinta aici",
+    "extracted_snippet": {
+      "original": "Foarte plăcută experinta aici",
+      "translated": "Very pleasant experience here"
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 7,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2pGQkxXaGpNMnA2TWpscFNHUndiVjl3VVc5U2NuYxAB!2m1!1s",
+    "rating": 4,
+    "date": "a month ago",
+    "iso_date": "2025-12-23T14:14:55Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2pGQkxXaGpNMnA2TWpscFNHUndiVjl3VVc5U2NuYxAB",
+    "user": {
+      "name": "Alexandru Ghene-Alexe",
+      "link": "https://www.google.com/maps/contrib/110555737769736554843/reviews?hl=en-US",
+      "contributor_id": "110555737769736554843",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocIYrN-C4fDpG0MjInXv7qVU435fnhlam9y_sATOvopVDgoqtw=s64-c-rp-mo-ba2-br100",
+      "local_guide": true,
+      "reviews": 13,
+      "photos": 0
+    },
+    "details": {
+      "price_per_person": "lei 200+",
+      "food": 3,
+      "service": 5,
+      "atmosphere": 4,
+      "reservation": "Reservations recommended",
+      "noise_level": "Moderate noise",
+      "wait_time": "No wait",
+      "parking_space": "Plenty of parking",
+      "parking_options": "Free parking lot"
+    },
+    "likes": 0
+  },
+  {
+    "position": 8,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sChZDSUhNMG9nS0VJQ0FnSUQwLVppRkxREAE!2m1!1s",
+    "rating": 1,
+    "date": "Edited a month ago",
+    "iso_date": "2025-12-22T11:34:05Z",
+    "review_id": "ChZDSUhNMG9nS0VJQ0FnSUQwLVppRkxREAE",
+    "user": {
+      "name": "Iulia Condrache",
+      "link": "https://www.google.com/maps/contrib/111619079409730251433/reviews?hl=en-US",
+      "contributor_id": "111619079409730251433",
+      "thumbnail": "https://lh3.googleusercontent.com/a-/ALV-UjXIHtUfSy7zNBYiaQ7nU2eLDaPNwIsjwU3-8m7SIg6qs4IcXEU=s64-c-rp-mo-br100",
+      "reviews": 5,
+      "photos": 5
+    },
+    "snippet": "Niciodata nu primim comanda care trebuie,mereu lipsesc produse\nLipsa de profesionalism si nepăsare!",
+    "extracted_snippet": {
+      "original": "Niciodata nu primim comanda care trebuie,mereu lipsesc produse\nLipsa de profesionalism si nepăsare!",
+      "translated": "We never receive the right order, always missing products\nLack of professionalism and carelessness!"
+    },
+    "details": {
+      "service": 1
+    },
+    "likes": 0,
+    "response": {
+      "date": "6 years ago",
+      "snippet": "Iti multumim! 😊",
+      "extracted_snippet": {
+        "original": "Iti multumim! 😊",
+        "translated": "Thank you! 😊"
+      }
+    }
+  },
+  {
+    "position": 9,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT21aRU4xZFJORXA1YkV4blVtUldka3MzT1V4UVVtYxAB!2m1!1s",
+    "rating": 5,
+    "date": "a month ago",
+    "iso_date": "2025-12-22T09:13:52Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT21aRU4xZFJORXA1YkV4blVtUldka3MzT1V4UVVtYxAB",
+    "user": {
+      "name": "Aleksander",
+      "link": "https://www.google.com/maps/contrib/101812419882278206641/reviews?hl=en-US",
+      "contributor_id": "101812419882278206641",
+      "thumbnail": "https://lh3.googleusercontent.com/a-/ALV-UjUF6EQuz9Kq-BM2FhQJ3e-udOxN2SQ7wjYrYOrYYPa7kkeeY6NQ=s64-c-rp-mo-ba4-br100",
+      "local_guide": true,
+      "reviews": 76,
+      "photos": 11
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5,
+      "reservation": "Reservations not required",
+      "noise_level": "Quiet, easy to talk",
+      "wait_time": "Up to 10 min"
+    },
+    "likes": 0
+  },
+  {
+    "position": 10,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2pGck1qUkhlbWhKZEdoRExYVm5XR2hvVEhOblRGRRAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-18T21:07:38Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2pGck1qUkhlbWhKZEdoRExYVm5XR2hvVEhOblRGRRAB",
+    "user": {
+      "name": "Florentin Maneci",
+      "link": "https://www.google.com/maps/contrib/116894856912408080037/reviews?hl=en-US",
+      "contributor_id": "116894856912408080037",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocK0lMX-O4TFj075e-W4LIclnpBGgSqaN12T3wKFS-yDyQzANg=s64-c-rp-mo-br100",
+      "reviews": 2,
+      "photos": 0
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 1,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT25sR1IwTk9iME50U2xjdGFXaDFTSGhCWTFKcmMwRRAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-18T21:03:01Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT25sR1IwTk9iME50U2xjdGFXaDFTSGhCWTFKcmMwRRAB",
+    "user": {
+      "name": "Andreia Butoi",
+      "link": "https://www.google.com/maps/contrib/112275741435884400293/reviews?hl=en-US",
+      "contributor_id": "112275741435884400293",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocLYj3zOtgL5Oxha4btGRaT2cM6l-geNg9PPtur1MCyif1ZhEg=s64-c-rp-mo-br100",
+      "reviews": 1,
+      "photos": 0
+    },
+    "snippet": "Recomand cu drag!O locatie frumoasa si primitoare",
+    "extracted_snippet": {
+      "original": "Recomand cu drag!O locatie frumoasa si primitoare",
+      "translated": "Highly recommend! A beautiful and welcoming location"
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 2,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2xSdVpUTktaWGxVU2preFkwMVNWakIzVlZFd1ZtYxAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-18T20:57:57Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2xSdVpUTktaWGxVU2preFkwMVNWakIzVlZFd1ZtYxAB",
+    "user": {
+      "name": "Irina Beatrice Șerban",
+      "link": "https://www.google.com/maps/contrib/102493210271977755328/reviews?hl=en-US",
+      "contributor_id": "102493210271977755328",
+      "thumbnail": "https://lh3.googleusercontent.com/a-/ALV-UjUYvZyFaGnthXTs3U-7BTcrxFSfg_ZfFlcfDIGbVb-_BrN1Uorm=s64-c-rp-mo-br100",
+      "reviews": 0,
+      "photos": 0
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 3,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2s0eFZUa3dOamh6VVdWNllYRk9ka3d6UVhKRFkxRRAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-18T20:56:23Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2s0eFZUa3dOamh6VVdWNllYRk9ka3d6UVhKRFkxRRAB",
+    "user": {
+      "name": "Catalina Nuta",
+      "link": "https://www.google.com/maps/contrib/111052448148488323406/reviews?hl=en-US",
+      "contributor_id": "111052448148488323406",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocITrUl2oZtWWduKYA43q7AReKKYbAeEnmPRsKyjM7ie9gEUjg=s64-c-rp-mo-br100",
+      "reviews": 2,
+      "photos": 3
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 4,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT21zM01FTnlXUzF1Tm1KQmFqVmtSbHAzZG1NMVpuYxAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-18T14:55:38Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT21zM01FTnlXUzF1Tm1KQmFqVmtSbHAzZG1NMVpuYxAB",
+    "user": {
+      "name": "derz",
+      "link": "https://www.google.com/maps/contrib/109952990329553596783/reviews?hl=en-US",
+      "contributor_id": "109952990329553596783",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocKAugTO5zBs5dtGCas4Dqzj9tlEafWkstqTxgdEeDtixjz31A=s64-c-rp-mo-br100",
+      "reviews": 0,
+      "photos": 0
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 5,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2pWdGNWUjRWRzlDUVVKamVUaGxTVmgwYjJKaFdGRRAB!2m1!1s",
+    "rating": 4,
+    "date": "2 months ago",
+    "iso_date": "2025-12-18T14:55:23Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2pWdGNWUjRWRzlDUVVKamVUaGxTVmgwYjJKaFdGRRAB",
+    "user": {
+      "name": "Marian Florin",
+      "link": "https://www.google.com/maps/contrib/106516699005480324735/reviews?hl=en-US",
+      "contributor_id": "106516699005480324735",
+      "thumbnail": "https://lh3.googleusercontent.com/a-/ALV-UjVPr714uW9-LYvP1CGaX6OtTWZWgSbmlZWCw-8TlaOTza1TQEkx=s64-c-rp-mo-br100",
+      "reviews": 1,
+      "photos": 0
+    },
+    "details": {
+      "meal_type": "Other",
+      "price_per_person": "lei 200+",
+      "food": 4,
+      "service": 4,
+      "atmosphere": 4,
+      "group_size": "Suitable for all group sizes",
+      "seating_type": "Indoor dining area"
+    },
+    "likes": 0
+  },
+  {
+    "position": 6,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2xaTVIyNVdTM2RRVldWNU4wVmtPVFo2UjJOTmEwRRAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-18T14:55:20Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2xaTVIyNVdTM2RRVldWNU4wVmtPVFo2UjJOTmEwRRAB",
+    "user": {
+      "name": "Dolmanian Sarchis",
+      "link": "https://www.google.com/maps/contrib/109407915695490423480/reviews?hl=en-US",
+      "contributor_id": "109407915695490423480",
+      "thumbnail": "https://lh3.googleusercontent.com/a-/ALV-UjVnlzzj5CNV8lUwGpyM-dvUvDTpck3x50NB171nY55fDO3o7GcU=s64-c-rp-mo-ba3-br100",
+      "local_guide": true,
+      "reviews": 40,
+      "photos": 11
+    },
+    "details": {
+      "food": 5,
+      "service": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 7,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2tZd1FrSTNaR1J3UkdOdGVUTmliREZTU25RelNtYxAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-18T14:54:51Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2tZd1FrSTNaR1J3UkdOdGVUTmliREZTU25RelNtYxAB",
+    "user": {
+      "name": "TEODOR MIHAI",
+      "link": "https://www.google.com/maps/contrib/104770100561499365810/reviews?hl=en-US",
+      "contributor_id": "104770100561499365810",
+      "thumbnail": "https://lh3.googleusercontent.com/a-/ALV-UjVwZiWpiI-pUQGgmk2BUsRnqA2YlXqLF2RNCSlZslK8r7wianQ=s64-c-rp-mo-br100",
+      "reviews": 0,
+      "photos": 0
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 8,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT214QmMyOURTbk10VlRoamFtRkVWUzEyTVdZMVpVRRAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-14T17:42:52Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT214QmMyOURTbk10VlRoamFtRkVWUzEyTVdZMVpVRRAB",
+    "user": {
+      "name": "Alex Tatu",
+      "link": "https://www.google.com/maps/contrib/112726711731119777318/reviews?hl=en-US",
+      "contributor_id": "112726711731119777318",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocJsCTYuzLSJ4FHv9QjbezuZndxeMOgfquZlEJemQ9ZdDO5VSw=s64-c-rp-mo-br100",
+      "reviews": 5,
+      "photos": 0
+    },
+    "snippet": "Un restaurant de nota zece. Mâncare excelentă, ambianță deosebită și servire excepțională.",
+    "extracted_snippet": {
+      "original": "Un restaurant de nota zece. Mâncare excelentă, ambianță deosebită și servire excepțională.",
+      "translated": "A top-notch restaurant. Excellent food, great ambiance, and exceptional service."
+    },
+    "details": {
+      "price_per_person": "lei 100–120",
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 9,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT21aalRraGtPRkZYTFRacGVYYzNaM0Z5VVVkek4wRRAB!2m1!1s",
+    "rating": 1,
+    "date": "2 months ago",
+    "iso_date": "2025-12-14T16:32:23Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT21aalRraGtPRkZYTFRacGVYYzNaM0Z5VVVkek4wRRAB",
+    "user": {
+      "name": "Curea Maria",
+      "link": "https://www.google.com/maps/contrib/104217304010678938420/reviews?hl=en-US",
+      "contributor_id": "104217304010678938420",
+      "thumbnail": "https://lh3.googleusercontent.com/a-/ALV-UjXBI0_61MciLMPrGOmuyjBvrIOPf8zb0MMbNpi1KPpev511k-o=s64-c-rp-mo-br100",
+      "reviews": 0,
+      "photos": 0
+    },
+    "details": {
+      "service": 2,
+      "atmosphere": 3
+    },
+    "likes": 0
+  },
+  {
+    "position": 10,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2pWelp6Uk5PRXd4WmxoaFpXWmFiemR4VHpOWFYwRRAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-14T15:51:31Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2pWelp6Uk5PRXd4WmxoaFpXWmFiemR4VHpOWFYwRRAB",
+    "user": {
+      "name": "Dorina Fidje",
+      "link": "https://www.google.com/maps/contrib/115464983874754077411/reviews?hl=en-US",
+      "contributor_id": "115464983874754077411",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocIFwRWtr3hZyvOirkg15-Mw7kDPHjFjaDVFxZ81uUCwLuFLDA=s64-c-rp-mo-br100",
+      "reviews": 3,
+      "photos": 0
+    },
+    "snippet": "Mancarea a fost exceptionala la gust si servirea foarte prompta! Un restaurant de nota 10! Revin cu drag!",
+    "extracted_snippet": {
+      "original": "Mancarea a fost exceptionala la gust si servirea foarte prompta! Un restaurant de nota 10! Revin cu drag!",
+      "translated": "The food was exceptional in taste and the service was very prompt! A 10 star restaurant! I would love to come back!"
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 1,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2tkU1NsQm1lQzF1UzJobVMwUkhUa2syZWtkMFZFRRAB!2m1!1s",
+    "rating": 1,
+    "date": "2 months ago",
+    "iso_date": "2025-12-14T12:32:48Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2tkU1NsQm1lQzF1UzJobVMwUkhUa2syZWtkMFZFRRAB",
+    "user": {
+      "name": "CATALIN 47",
+      "link": "https://www.google.com/maps/contrib/109475052005367853418/reviews?hl=en-US",
+      "contributor_id": "109475052005367853418",
+      "thumbnail": "https://lh3.googleusercontent.com/a-/ALV-UjW5bW0-Z6zlBR-LEspKghtrHL7w8-sQr3k0MBFqmnNFmo4KlUo=s64-c-rp-mo-br100",
+      "reviews": 1,
+      "photos": 0
+    },
+    "details": {
+      "food": 1,
+      "service": 1,
+      "atmosphere": 1
+    },
+    "likes": 0
+  },
+  {
+    "position": 2,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2pWUFdWUkphV2hWWWtONFRVUkpRV1pHYVRZelNrRRAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-14T11:34:43Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2pWUFdWUkphV2hWWWtONFRVUkpRV1pHYVRZelNrRRAB",
+    "user": {
+      "name": "CRISTI M. CRISS RYU BUZAU",
+      "link": "https://www.google.com/maps/contrib/115953294885034939567/reviews?hl=en-US",
+      "contributor_id": "115953294885034939567",
+      "thumbnail": "https://lh3.googleusercontent.com/a-/ALV-UjWW2jrX0FI0TH7Y6UzTylIuwGgSQ8DceJRpPyjgtCeFLhWwybse=s64-c-rp-mo-ba3-br100",
+      "local_guide": true,
+      "reviews": 27,
+      "photos": 73
+    },
+    "snippet": "Mâncare buna , servire ok , sa o țineți tot asa !",
+    "extracted_snippet": {
+      "original": "Mâncare buna , servire ok , sa o țineți tot asa !",
+      "translated": "Good food, ok service, keep it up!"
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 3,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2pkSVZsTXpUVVl6ZDNkaE0ySlBTM1JPWW0xeE9GRRAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-14T11:32:46Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2pkSVZsTXpUVVl6ZDNkaE0ySlBTM1JPWW0xeE9GRRAB",
+    "user": {
+      "name": "Vegan Queen",
+      "link": "https://www.google.com/maps/contrib/114082535746980990620/reviews?hl=en-US",
+      "contributor_id": "114082535746980990620",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocKvrTLgzRcmp5_9zcfk4YLybEUOQDc05eTei5hB8NGbRTjoGA=s64-c-rp-mo-br100",
+      "reviews": 2,
+      "photos": 0
+    },
+    "snippet": "Cel mai bun, cel mai cald, cel mai frumos restaurant!\nMâncare, servire și atmosfera impecabile!",
+    "extracted_snippet": {
+      "original": "Cel mai bun, cel mai cald, cel mai frumos restaurant!\nMâncare, servire și atmosfera impecabile!",
+      "translated": "The best, warmest, most beautiful restaurant!\nImpeccable food, service and atmosphere!"
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 4,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2tkNWQwbGFPRTVwYkU5bVJrbGxVVVpwWmkwMGNXYxAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-14T11:27:59Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2tkNWQwbGFPRTVwYkU5bVJrbGxVVVpwWmkwMGNXYxAB",
+    "user": {
+      "name": "Adrian Vasilache",
+      "link": "https://www.google.com/maps/contrib/107657659398856754960/reviews?hl=en-US",
+      "contributor_id": "107657659398856754960",
+      "thumbnail": "https://lh3.googleusercontent.com/a-/ALV-UjUkBaOUg5sQgut_vVNnd2UcpGODRsslzFirq3yErLg3p-ixCjI=s64-c-rp-mo-br100",
+      "reviews": 1,
+      "photos": 0
+    },
+    "snippet": "Absolut totul este la superlativ !!!",
+    "extracted_snippet": {
+      "original": "Absolut totul este la superlativ !!!",
+      "translated": "Absolutely everything is superlative!!!"
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 5,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT21GM01HRnZWMlpXYjBzNGVrbFpia05LUVV0MldrRRAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-14T11:26:51Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT21GM01HRnZWMlpXYjBzNGVrbFpia05LUVV0MldrRRAB",
+    "user": {
+      "name": "Cătălina Ungureanu",
+      "link": "https://www.google.com/maps/contrib/113027185630470071909/reviews?hl=en-US",
+      "contributor_id": "113027185630470071909",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocK7hG-Ukgt5Jk8ixgJ-PBqb3ez_Pci3ydhNnEjWnge68Mn8NQ=s64-c-rp-mo-br100",
+      "reviews": 1,
+      "photos": 0
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 6,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2pSWlJWbDRYMkpDWkZKTFpqaEZSMUZqZDJoV1MxRRAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-14T11:22:36Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2pSWlJWbDRYMkpDWkZKTFpqaEZSMUZqZDJoV1MxRRAB",
+    "user": {
+      "name": "Florin Ghita",
+      "link": "https://www.google.com/maps/contrib/100837508673106811893/reviews?hl=en-US",
+      "contributor_id": "100837508673106811893",
+      "thumbnail": "https://lh3.googleusercontent.com/a-/ALV-UjW66JLInoq_y1wOGxdYb-uCv1dbJvEjgk3YaP6EJh-J9e7vh4iT3Q=s64-c-rp-mo-ba5-br100",
+      "local_guide": true,
+      "reviews": 12,
+      "photos": 1746
+    },
+    "snippet": "Un restaurant excelent!",
+    "extracted_snippet": {
+      "original": "Un restaurant excelent!",
+      "translated": "An excellent restaurant!"
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 7,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2t0SVEyeHBOMHRZY2t0dmNHUlNVSGhsTVRNeVNtYxAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-14T11:22:24Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2t0SVEyeHBOMHRZY2t0dmNHUlNVSGhsTVRNeVNtYxAB",
+    "user": {
+      "name": "Leo Durey",
+      "link": "https://www.google.com/maps/contrib/115072168062329227655/reviews?hl=en-US",
+      "contributor_id": "115072168062329227655",
+      "thumbnail": "https://lh3.googleusercontent.com/a-/ALV-UjXlXOAg3MrGKC8id9huWcBDhw-xelTIH7I4xNt1d-YZ6alSEowv=s64-c-rp-mo-br100",
+      "reviews": 1,
+      "photos": 0
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 8,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2w4M2NYbHFNRVpRTkdGdFNXSkpjVkozUlRkaWVsRRAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-14T11:21:24Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2w4M2NYbHFNRVpRTkdGdFNXSkpjVkozUlRkaWVsRRAB",
+    "user": {
+      "name": "Iulian Badea",
+      "link": "https://www.google.com/maps/contrib/101982477413540163728/reviews?hl=en-US",
+      "contributor_id": "101982477413540163728",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocKjEiUWqjIxLMDPzfo-cqFIeUtKzEiIZhS3H4FzCFZzOLQkAQ=s64-c-rp-mo-br100",
+      "reviews": 2,
+      "photos": 1
+    },
+    "snippet": "Un restaurant super 🙏",
+    "extracted_snippet": {
+      "original": "Un restaurant super 🙏",
+      "translated": "A great restaurant 🙏"
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 9,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT201RlluaExSMlZ2Y1RaT1FYUmtTRWxYWjE5alJtYxAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-14T11:20:51Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT201RlluaExSMlZ2Y1RaT1FYUmtTRWxYWjE5alJtYxAB",
+    "user": {
+      "name": "Alina Badea",
+      "link": "https://www.google.com/maps/contrib/113389219650280156337/reviews?hl=en-US",
+      "contributor_id": "113389219650280156337",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocITCn1YRGljzMf6sC95a2OLJVCVDuLOTdx45KILgo3q8yiBRQ=s64-c-rp-mo-br100",
+      "reviews": 0,
+      "photos": 0
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 10,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT25ocFNtbE9ORzVyYlVReGVUVkdkbVJZVVV3ek1rRRAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-14T11:20:51Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT25ocFNtbE9ORzVyYlVReGVUVkdkbVJZVVV3ek1rRRAB",
+    "user": {
+      "name": "Dragos Preda",
+      "link": "https://www.google.com/maps/contrib/110851775473233795178/reviews?hl=en-US",
+      "contributor_id": "110851775473233795178",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocJlhWrbS0iNZ8E1UQl5Fj3DdPyeRa9KLC06KjAjsVTjPVP74A=s64-c-rp-mo-br100",
+      "reviews": 2,
+      "photos": 0
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 1,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT21oNFJ6bDBZVU5mVWpsT1gxRkxWMjF5WmpKeGNtYxAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-14T11:19:41Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT21oNFJ6bDBZVU5mVWpsT1gxRkxWMjF5WmpKeGNtYxAB",
+    "user": {
+      "name": "Ion Enăchescu",
+      "link": "https://www.google.com/maps/contrib/109500305568805524370/reviews?hl=en-US",
+      "contributor_id": "109500305568805524370",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocKldbMvIpG7x9XxmJXeuzgXqhv3bLr7H2x_WTGHhQRDF2_Tjw=s64-c-rp-mo-br100",
+      "reviews": 0,
+      "photos": 0
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 2,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2psUVIyOU5XazVSTWpkclYzRXlSRzEzWjB0Sk5YYxAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-14T11:18:05Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2psUVIyOU5XazVSTWpkclYzRXlSRzEzWjB0Sk5YYxAB",
+    "user": {
+      "name": "Andrei Motan",
+      "link": "https://www.google.com/maps/contrib/111826546149774988405/reviews?hl=en-US",
+      "contributor_id": "111826546149774988405",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocI4mrgBtdG1XbCSqEH4W1DQYt3UPqUMYKRQJZREIoHiWQgDQg=s64-c-rp-mo-br100",
+      "reviews": 1,
+      "photos": 0
+    },
+    "snippet": "Fortză",
+    "extracted_snippet": {
+      "original": "Fortză",
+      "translated": "Strength"
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 3,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT21wblZHVm1jRGw1UkRaVGJVNDNNa1ZuWjBwcFpYYxAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-14T10:58:00Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT21wblZHVm1jRGw1UkRaVGJVNDNNa1ZuWjBwcFpYYxAB",
+    "user": {
+      "name": "Andreea Petre",
+      "link": "https://www.google.com/maps/contrib/100080727522689998120/reviews?hl=en-US",
+      "contributor_id": "100080727522689998120",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocIUssR7_-dXb2ULC7JSI2YgWAq4jE030umtiy3T6akrIT8Qvg=s64-c-rp-mo-br100",
+      "reviews": 1,
+      "photos": 0
+    },
+    "snippet": "Mancarea buna! Multumim Andreea!",
+    "extracted_snippet": {
+      "original": "Mancarea buna! Multumim Andreea!",
+      "translated": "Good food! Thank you Andreea!"
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 4,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT21wbWIyOUlORUoyU25CS2NVUnRXVzlpT0VoR1ZuYxAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-13T21:37:07Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT21wbWIyOUlORUoyU25CS2NVUnRXVzlpT0VoR1ZuYxAB",
+    "user": {
+      "name": "tudor marian",
+      "link": "https://www.google.com/maps/contrib/115294460631815554595/reviews?hl=en-US",
+      "contributor_id": "115294460631815554595",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocJNMGqPMVAq38kjwLo2JNrNwjNsFx-OSic-8fiowfW9qfoMfA=s64-c-rp-mo-br100",
+      "reviews": 2,
+      "photos": 0
+    },
+    "snippet": "Cel mai bunchelner si cea mai calda atmosfera",
+    "extracted_snippet": {
+      "original": "Cel mai bunchelner si cea mai calda atmosfera",
+      "translated": "The nicest waiter and the warmest atmosphere"
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 5,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2tWUFkyYzRVM1pYVTFOVlJsRnJSak0yUTBKMFQyYxAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-13T21:26:58Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2tWUFkyYzRVM1pYVTFOVlJsRnJSak0yUTBKMFQyYxAB",
+    "user": {
+      "name": "Cristina Mihaela",
+      "link": "https://www.google.com/maps/contrib/113068238967924365392/reviews?hl=en-US",
+      "contributor_id": "113068238967924365392",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocJLl98TVLhu1b8ak4cbVNW6Sv8mUFl7CiIr9wMK6Cd2SsNy1A=s64-c-rp-mo-br100",
+      "reviews": 1,
+      "photos": 0
+    },
+    "snippet": "Mâncare bună, mulțumim Andreea!😘",
+    "extracted_snippet": {
+      "original": "Mâncare bună, mulțumim Andreea!😘",
+      "translated": "Good food, thank you Andreea!😘"
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 6,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT21GMGVEVjBjWFZIWDBoUGRrZHZPV1ZTWWxkelMyYxAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-13T21:25:45Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT21GMGVEVjBjWFZIWDBoUGRrZHZPV1ZTWWxkelMyYxAB",
+    "user": {
+      "name": "Alexandra Florescu",
+      "link": "https://www.google.com/maps/contrib/112881385787971833092/reviews?hl=en-US",
+      "contributor_id": "112881385787971833092",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocJtpZk8PuejjKaHlZxCqPgdFx-OIh3FWyP5r5vCA15mzRo_FQ=s64-c-rp-mo-br100",
+      "reviews": 1,
+      "photos": 0
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 7,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2pKNFpFdHBhMUJPT1U5Q2QwbzRTbUl4UjB0MVNXYxAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-13T21:23:26Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2pKNFpFdHBhMUJPT1U5Q2QwbzRTbUl4UjB0MVNXYxAB",
+    "user": {
+      "name": "Bogdan Mihai",
+      "link": "https://www.google.com/maps/contrib/104568341981468361496/reviews?hl=en-US",
+      "contributor_id": "104568341981468361496",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocIxIi9Ou3ZrKxPN6DLgeZ6judiq22VyIx3Ucc6m50qYH_8KHg=s64-c-rp-mo-br100",
+      "reviews": 0,
+      "photos": 0
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 8,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT25OR1lqQkVURVZ3ZGpGWlMyY3hkVlp6TkZsQlpVRRAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-13T21:21:07Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT25OR1lqQkVURVZ3ZGpGWlMyY3hkVlp6TkZsQlpVRRAB",
+    "user": {
+      "name": "Florina Ghita",
+      "link": "https://www.google.com/maps/contrib/112026457130008566908/reviews?hl=en-US",
+      "contributor_id": "112026457130008566908",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocI3WCcpdl8ncSKhaei2-T_hdM-xBKpRgfI4MhDvVQm6e9Dw0Q=s64-c-rp-mo-br100",
+      "reviews": 1,
+      "photos": 0
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 9,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2psQmVYcEtPRkJMVVhsMlNrZHphVGcyVGtoTGVuYxAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-13T21:18:02Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2psQmVYcEtPRkJMVVhsMlNrZHphVGcyVGtoTGVuYxAB",
+    "user": {
+      "name": "Ciprian Burac",
+      "link": "https://www.google.com/maps/contrib/109851065080851360420/reviews?hl=en-US",
+      "contributor_id": "109851065080851360420",
+      "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocKRqY2fjhssS-wSnoJ_YMFhhHRs7RbXQ6SCS8rMQ6FU_oKcwQ=s64-c-rp-mo-br100",
+      "reviews": 0,
+      "photos": 0
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  },
+  {
+    "position": 10,
+    "link": "https://www.google.com/maps/reviews/data=!3m1!4b1!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2w5cmJFVkpUMDVtYlVNMWJsaEpNWGhHWlU5ZlFrRRAB!2m1!1s",
+    "rating": 5,
+    "date": "2 months ago",
+    "iso_date": "2025-12-13T21:15:10Z",
+    "review_id": "Ci9DQUlRQUNvZENodHljRjlvT2w5cmJFVkpUMDVtYlVNMWJsaEpNWGhHWlU5ZlFrRRAB",
+    "user": {
+      "name": "Bogdan Spanu",
+      "link": "https://www.google.com/maps/contrib/108943038673711115762/reviews?hl=en-US",
+      "contributor_id": "108943038673711115762",
+      "thumbnail": "https://lh3.googleusercontent.com/a-/ALV-UjUJFITyUQHAguhWo6yA6tJhqlEbshibQuO175kzNKmWQrOo7yAw=s64-c-rp-mo-br100",
+      "reviews": 7,
+      "photos": 4
+    },
+    "details": {
+      "food": 5,
+      "service": 5,
+      "atmosphere": 5
+    },
+    "likes": 0
+  }
+]

@@ -1,0 +1,58 @@
+https://serpapi.com/search.json?engine=google_maps_contributor_reviews&contributor_id=109299210036987791335&api_key=77d334e3717208049d09637ae0e8128627f389eae9e0223fe5d9c6d6524c54f1
+
+
+{
+  "search_metadata": {
+    "id": "699778593b93e38e7467a0b8",
+    "status": "Success",
+    "json_endpoint": "https://serpapi.com/searches/4_gL-koLwwqTYpHcTGncIQ/699778593b93e38e7467a0b8.json",
+    "created_at": "2026-02-19 20:53:45 UTC",
+    "processed_at": "2026-02-19 20:53:45 UTC",
+    "google_maps_contributor_reviews_url": "https://www.google.com/maps/contrib/109299210036987791335/reviews?",
+    "raw_html_file": "https://serpapi.com/searches/4_gL-koLwwqTYpHcTGncIQ/699778593b93e38e7467a0b8.html",
+    "prettify_html_file": "https://serpapi.com/searches/4_gL-koLwwqTYpHcTGncIQ/699778593b93e38e7467a0b8.prettify",
+    "total_time_taken": 4.19
+  },
+  "search_parameters": {
+    "engine": "google_maps_contributor_reviews",
+    "contributor_id": "109299210036987791335"
+  },
+  "contributor": {
+    "name": "Vlad Idk",
+    "thumbnail": "https://lh3.googleusercontent.com/a/ACg8ocJToHP23P3ceTIfiA4aJRuN9kb5SepXoVClAvKgwNsc6l8WFw=s120-c-rp-mo-br100",
+    "points": 13,
+    "level": 1,
+    "local_guide": true,
+    "contributions": {
+      "reviews": 1,
+      "ratings": 0,
+      "photos": 0,
+      "videos": 0,
+      "captions": 0,
+      "answers": 2,
+      "edits": 0,
+      "reported_incorrect": 0,
+      "places_added": 0,
+      "roads_added": 0,
+      "facts_checked": 0,
+      "q_a": 0
+    }
+  },
+  "search_information": {
+    "reviews_results_state": "Fully empty"
+  },
+  "error": "Google hasn't returned any results for this query."
+}
+
+| Nivel | Puncte necesare | Ce înseamnă practic                                                    |
+| ----- | --------------- | ---------------------------------------------------------------------- |
+| 1     | 0               | Tocmai te-ai înscris, fără badge.                                      |
+| 2     | 15              | Ai câteva contribuții (review-uri, poze etc.).                         |
+| 3     | 75              | Contributor mai activ, încă fără badge vizibil peste tot.              |
+| 4     | 250             | Deblochezi primul badge „Local Guide”, apare lângă nume la review-uri. |
+| 5     | 500             | Contributor foarte activ, mai multe șanse la invitații / testări.      |
+| 6     | 1.500           | Contributor „heavy”, zeci–sute de contribuții.                         |
+| 7     | 5.000           | Comunitate mare de contribuții, foarte activ local.                    |
+| 8     | 15.000          | Nivel foarte înalt, mii de contribuții.                                |
+| 9     | 50.000          | Top Local Guides global.                                               |
+| 10    | 100.000         | Nivel maxim, contribuții masive.google+1                               |

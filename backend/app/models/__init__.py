@@ -12,6 +12,8 @@ from app.models.models import (
     ChatHistory,
     ApeluriZilnic,
     ApeluriDetalii,
+    RecomandariApeluri,
+    GoogleReview,
 )
 
 __all__ = [
@@ -28,4 +30,6 @@ __all__ = [
     "ChatHistory",
     "ApeluriZilnic",
     "ApeluriDetalii",
+    "RecomandariApeluri",
+    "GoogleReview",
 ]

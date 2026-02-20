@@ -16,6 +16,8 @@ import type {
   Setting,
   OllamaStatus,
   PontajResponse,
+  GoogleReview,
+  IngestResult,
 } from '@/types';
 
 const API_URL = (import.meta as any).env.VITE_API_URL || '/api';
@@ -500,6 +502,48 @@ class ApiService {
 
   async chat(message: string): Promise<{ response: string }> {
     const { data } = await this.client.post('/chat', { message });
+    return data;
+  }
+
+  // ============================================
+  // GOOGLE REVIEWS
+  // ============================================
+
+  async getGoogleReviews(): Promise<GoogleReview[]> {
+    const { data } = await this.client.get<GoogleReview[]>('/google-reviews');
+    return data;
+  }
+
+  async getGoogleReviewsStatus(): Promise<{ last_refresh: string | null; remaining_seconds: number; cooldown_minutes: number }> {
+    const { data } = await this.client.get('/google-reviews/refresh-status');
+    return data;
+  }
+
+  async refreshGoogleReviews(): Promise<{ inserted: number; pages_fetched: number; refreshed_at: string }> {
+    const { data } = await this.client.post('/google-reviews/refresh');
+    return data;
+  }
+
+  async getGoogleReviewsSummary(): Promise<{
+    avg_today: number | null;
+    count_today: number;
+    avg_overall: number | null;
+    count_overall: number;
+    avg_as_of_30d: number | null;
+    trend_30d: number | null;
+    avg_as_of_60d: number | null;
+    trend_60d: number | null;
+  }> {
+    const { data } = await this.client.get('/google-reviews/summary');
+    return data;
+  }
+
+  async ingestGoogleReviews(file: File): Promise<IngestResult> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const { data } = await this.client.post<IngestResult>('/google-reviews/ingest', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return data;
   }
 }

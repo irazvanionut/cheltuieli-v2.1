@@ -312,6 +312,41 @@ export interface RecomandariApeluri {
 }
 
 // ============================================
+// Google Reviews
+// ============================================
+
+export interface GoogleReview {
+  id: number;
+  review_id: string;
+  rating: number;
+  iso_date: string;
+  date_text: string | null;
+  snippet: string | null;
+  snippet_translated: string | null;
+  user_name: string | null;
+  user_link: string | null;
+  contributor_id: string | null;
+  user_thumbnail: string | null;
+  local_guide: boolean;
+  user_reviews_count: number;
+  user_photos_count: number;
+  food_rating: number | null;
+  service_rating: number | null;
+  atmosphere_rating: number | null;
+  details: Record<string, any>;
+  images: string[];
+  review_link: string | null;
+  likes: number;
+}
+
+export interface IngestResult {
+  inserted: number;
+  skipped: number;
+  errors: number;
+  total_in_file: number;
+}
+
+// ============================================
 // UI Types
 // ============================================
 
