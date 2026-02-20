@@ -12,7 +12,7 @@ from app.models.models import GoogleReview, Setting
 
 router = APIRouter(tags=["google-reviews"])
 
-COOLDOWN_MINUTES = 0
+COOLDOWN_MINUTES = 5
 ANALYSIS_COOLDOWN_HOURS = 4
 SERPAPI_BASE = "https://serpapi.com/search.json"
 
