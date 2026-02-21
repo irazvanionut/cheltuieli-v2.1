@@ -1,20 +1,74 @@
 import json
-from datetime import datetime, timezone, timedelta
+import time as time_module
+from collections import deque
+from datetime import datetime, timezone, timedelta, date
 from typing import Optional, AsyncGenerator
+from urllib.parse import urlparse, parse_qs
 
 import httpx
 from fastapi import APIRouter, UploadFile, File, HTTPException, Request
 from fastapi.responses import StreamingResponse
-from sqlalchemy import select, func
+from sqlalchemy import select, func, delete as sql_delete
 
 from app.core.database import AsyncSessionLocal
 from app.models.models import GoogleReview, Setting
 
 router = APIRouter(tags=["google-reviews"])
 
+# ─── In-memory SerpAPI call log (max 500 entries, lost on restart) ─────────────
+_serp_log: deque = deque(maxlen=500)
+
+def _log_serp_call(*, key_index: int, source: str, page: int,
+                   status: str, status_code: int, ms: int, error: str = "", url: str = ""):
+    _serp_log.appendleft({
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "key": key_index,
+        "source": source,
+        "page": page,
+        "status": status,
+        "status_code": status_code,
+        "ms": ms,
+        "error": error,
+        "url": url,
+    })
+    print(f"[SerpAPI] source={source} key={key_index} page={page} "
+          f"status={status} ({status_code}) {ms}ms"
+          + (f" ERR: {error}" if error else ""))
+
 COOLDOWN_MINUTES = 5
 ANALYSIS_COOLDOWN_HOURS = 4
 SERPAPI_BASE = "https://serpapi.com/search.json"
+
+
+def _get_next_url(page_data: dict, data_id: str) -> str | None:
+    """
+    Extract next_page_token from SerpAPI response and build a clean next-page URL.
+    We always build from scratch so api_key and no_cache are NEVER embedded here —
+    _fetch_serpapi_page will append them.
+    """
+    pagination = page_data.get("serpapi_pagination", {})
+
+    # Try direct token first (most reliable)
+    token = pagination.get("next_page_token")
+
+    # Fallback: parse token out of the full next URL
+    if not token:
+        next_full = pagination.get("next", "")
+        if next_full:
+            try:
+                token = parse_qs(urlparse(next_full).query).get("next_page_token", [None])[0]
+            except Exception:
+                pass
+
+    if not token:
+        return None
+
+    # Build clean URL — no api_key, no no_cache (added by _fetch_serpapi_page)
+    return (
+        f"{SERPAPI_BASE}?engine=google_maps_reviews"
+        f"&data_id={data_id}&hl=en&sort_by=newestFirst"
+        f"&next_page_token={token}"
+    )
 
 
 # ─── helpers ──────────────────────────────────────────────────────────────────
@@ -77,18 +131,83 @@ async def _set_setting(db, key: str, value: str):
         db.add(Setting(cheie=key, valoare=value, tip="string"))
 
 
-async def _fetch_serpapi_page(url: str, api_key: str) -> dict:
+async def _select_serpapi_key(db) -> tuple[str, int]:
+    """
+    Selectează cheia SerpAPI activă și resetează contoarele lunar.
+    Zile pare (1, 3, 5...) → cheie 1 | Zile impare (2, 4, 6...) → cheie 2
+    Dacă cheia preferată nu e configurată, cade pe cealaltă.
+    Returnează (api_key, key_index).
+    """
+    current_month = date.today().strftime("%Y-%m")
+    stored_month = await _get_setting(db, "serpapi_calls_month")
+    if stored_month != current_month:
+        await _set_setting(db, "serpapi_calls_1", "0")
+        await _set_setting(db, "serpapi_calls_2", "0")
+        await _set_setting(db, "serpapi_calls_month", current_month)
+        await db.commit()
+
+    key1 = await _get_setting(db, "serpapi_api_key")
+    key2 = await _get_setting(db, "serpapi_api_key_2")
+
+    # Zile impare (1,3,5...) → cheie 1 | Zile pare (2,4,6...) → cheie 2
+    preferred = 1 if date.today().day % 2 == 1 else 2
+
+    if preferred == 1 and key1:
+        return key1, 1
+    if preferred == 2 and key2:
+        return key2, 2
+    # fallback
+    if key1:
+        return key1, 1
+    if key2:
+        return key2, 2
+    raise ValueError("serpapi_api_key sau serpapi_data_id nu sunt configurate")
+
+
+async def _increment_serpapi_counter(db, key_index: int, pages: int):
+    """Incrementează contorul de apeluri pentru cheia dată."""
+    setting_key = f"serpapi_calls_{key_index}"
+    current = int(await _get_setting(db, setting_key) or "0")
+    await _set_setting(db, setting_key, str(current + pages))
+
+
+async def _fetch_serpapi_page(url: str, api_key: str,
+                              key_index: int = 0, source: str = "?", page: int = 1) -> dict:
+    """
+    Call a SerpAPI URL. Always appends api_key and no_cache=true.
+    URLs passed here must NOT already contain api_key (initial URLs and
+    URLs built by _get_next_url never embed it).
+    """
     sep = "&" if "?" in url else "?"
-    full_url = f"{url}{sep}api_key={api_key}" if "api_key=" not in url else url
-    async with httpx.AsyncClient(timeout=30) as client:
-        resp = await client.get(full_url)
-        resp.raise_for_status()
-        return resp.json()
+    clean_url = f"{url}{sep}api_key={api_key}"
+    if "no_cache=true" not in clean_url:
+        clean_url += "&no_cache=true"
+
+    t0 = time_module.monotonic()
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.get(clean_url)
+            ms = int((time_module.monotonic() - t0) * 1000)
+            resp.raise_for_status()
+            _log_serp_call(key_index=key_index, source=source, page=page,
+                           status="ok", status_code=resp.status_code, ms=ms, url=clean_url)
+            return resp.json()
+    except httpx.HTTPStatusError as e:
+        ms = int((time_module.monotonic() - t0) * 1000)
+        _log_serp_call(key_index=key_index, source=source, page=page,
+                       status="error", status_code=e.response.status_code,
+                       ms=ms, error=str(e), url=clean_url)
+        raise
+    except Exception as e:
+        ms = int((time_module.monotonic() - t0) * 1000)
+        _log_serp_call(key_index=key_index, source=source, page=page,
+                       status="error", status_code=0, ms=ms, error=str(e), url=clean_url)
+        raise
 
 
 # ─── core refresh logic (also used by scheduler) ──────────────────────────────
 
-async def do_refresh() -> dict:
+async def do_refresh(source: str = "scheduler") -> dict:
     """
     Fetch new reviews from SerpAPI (newest first).
     Stop when we find a review already in DB.
@@ -96,11 +215,11 @@ async def do_refresh() -> dict:
     Returns dict with inserted/skipped/pages_fetched.
     """
     async with AsyncSessionLocal() as db:
-        api_key = await _get_setting(db, "serpapi_api_key")
+        api_key, key_index = await _select_serpapi_key(db)
         data_id = await _get_setting(db, "serpapi_data_id")
 
-        if not api_key or not data_id:
-            raise ValueError("serpapi_api_key sau serpapi_data_id nu sunt configurate")
+        if not data_id:
+            raise ValueError("serpapi_data_id nu este configurat")
 
         # Get all known review_ids
         existing_result = await db.execute(select(GoogleReview.review_id))
@@ -116,7 +235,10 @@ async def do_refresh() -> dict:
         stop = False
 
         while not stop:
-            page_data = await _fetch_serpapi_page(current_url, api_key)
+            page_data = await _fetch_serpapi_page(
+                current_url, api_key,
+                key_index=key_index, source=source, page=pages_fetched + 1
+            )
             pages_fetched += 1
             reviews = page_data.get("reviews", [])
 
@@ -142,7 +264,7 @@ async def do_refresh() -> dict:
 
             # If NO existing review found on this page, all were new → go to next page
             if not found_existing_on_page:
-                next_url = page_data.get("serpapi_pagination", {}).get("next")
+                next_url = _get_next_url(page_data, data_id)
                 if next_url:
                     current_url = next_url
                 else:
@@ -151,9 +273,10 @@ async def do_refresh() -> dict:
 
         await db.commit()
 
-        # Update last_refresh timestamp
+        # Update last_refresh timestamp + call counter
         now_iso = datetime.now(timezone.utc).isoformat()
         await _set_setting(db, "google_reviews_last_refresh", now_iso)
+        await _increment_serpapi_counter(db, key_index, pages_fetched)
         await db.commit()
 
     return {
@@ -163,7 +286,219 @@ async def do_refresh() -> dict:
     }
 
 
+async def do_refetch_from_date(from_date: date) -> dict:
+    """
+    Șterge toate review-urile cu iso_date >= from_date și le re-fetchează
+    din SerpAPI (no_cache=true, newest first). Cheile SerpAPI alternează
+    per pagină pentru a distribui uniform apelurile.
+    """
+    from_dt = datetime.combine(from_date, datetime.min.time()).replace(tzinfo=timezone.utc)
+
+    async with AsyncSessionLocal() as db:
+        # 1. Numără și șterge review-urile din intervalul specificat
+        count_result = await db.execute(
+            select(func.count()).select_from(GoogleReview).where(GoogleReview.iso_date >= from_dt)
+        )
+        deleted_count = count_result.scalar() or 0
+
+        await db.execute(
+            sql_delete(GoogleReview).where(GoogleReview.iso_date >= from_dt)
+        )
+        await db.commit()
+
+        # 2. Pregătește cheile disponibile pentru alternare per pagină
+        data_id = await _get_setting(db, "serpapi_data_id")
+        if not data_id:
+            raise ValueError("serpapi_data_id nu este configurat")
+
+        key1 = await _get_setting(db, "serpapi_api_key")
+        key2 = await _get_setting(db, "serpapi_api_key_2")
+        available_keys: list[tuple[str, int]] = []
+        if key1:
+            available_keys.append((key1, 1))
+        if key2:
+            available_keys.append((key2, 2))
+        if not available_keys:
+            raise ValueError("Nicio cheie SerpAPI configurată")
+
+        # Reset lunar dacă e cazul
+        current_month = date.today().strftime("%Y-%m")
+        stored_month = await _get_setting(db, "serpapi_calls_month")
+        if stored_month != current_month:
+            await _set_setting(db, "serpapi_calls_1", "0")
+            await _set_setting(db, "serpapi_calls_2", "0")
+            await _set_setting(db, "serpapi_calls_month", current_month)
+            await db.commit()
+
+        # 3. Re-fetch cu alternare per pagină
+        current_url = (
+            f"{SERPAPI_BASE}?engine=google_maps_reviews"
+            f"&data_id={data_id}&hl=en&sort_by=newestFirst&no_cache=true"
+        )
+
+        inserted = 0
+        pages_fetched = 0
+        calls_per_key: dict[int, int] = {}
+        key_idx = 0
+        stop = False
+        stop_reason = "unknown"
+
+        print(f"[Refetch] START from_date={from_date} from_dt={from_dt.isoformat()}")
+
+        while not stop:
+            api_key, key_index = available_keys[key_idx % len(available_keys)]
+            key_idx += 1
+
+            page_data = await _fetch_serpapi_page(
+                current_url, api_key,
+                key_index=key_index, source="refetch", page=pages_fetched + 1
+            )
+            pages_fetched += 1
+            calls_per_key[key_index] = calls_per_key.get(key_index, 0) + 1
+
+            reviews = page_data.get("reviews", [])
+            pagination_raw = page_data.get("serpapi_pagination", {})
+            print(f"[Refetch] Page {pages_fetched}: {len(reviews)} reviews, "
+                  f"pagination keys={list(pagination_raw.keys())}, "
+                  f"has_next={'next' in pagination_raw}, "
+                  f"has_token={'next_page_token' in pagination_raw}")
+
+            if not reviews:
+                stop_reason = "empty_page"
+                print(f"[Refetch] Stopping: empty reviews on page {pages_fetched}")
+                break
+
+            hit_old = False
+            for r in reviews:
+                rid = r.get("review_id", "")
+                if not rid:
+                    continue
+                parsed = _parse_review(r)
+                review_dt = parsed["iso_date"]
+                is_old = review_dt < from_dt
+                print(f"[Refetch]   review_id={rid[:12]} iso_date={review_dt.isoformat()} old={is_old}")
+                if is_old:
+                    hit_old = True
+                    stop = True
+                    stop_reason = f"hit_old_review date={review_dt.isoformat()}"
+                    break
+                db.add(GoogleReview(**parsed))
+                inserted += 1
+
+            if not hit_old:
+                next_url = _get_next_url(page_data, data_id)
+                print(f"[Refetch] Page {pages_fetched}: hit_old=False, next_url={'YES' if next_url else 'NONE'}")
+                if next_url:
+                    current_url = next_url
+                else:
+                    stop = True
+                    stop_reason = "no_next_token"
+            else:
+                print(f"[Refetch] Stopping after page {pages_fetched}: {stop_reason}")
+
+        print(f"[Refetch] DONE pages={pages_fetched} inserted={inserted} stop_reason={stop_reason}")
+
+        await db.commit()
+
+        # 4. Actualizează contoare și timestamp
+        now_iso = datetime.now(timezone.utc).isoformat()
+        await _set_setting(db, "google_reviews_last_refresh", now_iso)
+        for kidx, calls in calls_per_key.items():
+            if calls > 0:
+                await _increment_serpapi_counter(db, kidx, calls)
+        await db.commit()
+
+    return {
+        "deleted": deleted_count,
+        "inserted": inserted,
+        "pages_fetched": pages_fetched,
+        "calls_per_key": calls_per_key,
+        "from_date": from_date.isoformat(),
+        "refreshed_at": now_iso,
+        "stop_reason": stop_reason,
+    }
+
+
+SERPAPI_ACCOUNT_URL = "https://serpapi.com/account"
+
+ACCOUNT_FIELDS = [
+    "plan_name", "account_status", "searches_per_month",
+    "plan_searches_left", "extra_credits", "total_searches_left",
+    "this_month_usage", "this_hour_searches", "last_hour_searches",
+    "account_rate_limit_per_hour",
+]
+
+
+async def do_fetch_serpapi_account() -> dict:
+    """
+    Fetch /account from SerpAPI for each configured key.
+    Stores results as JSON in serpapi_account_1 / serpapi_account_2.
+    Returns {"key1": {...}, "key2": {...}, "fetched_at": "..."}.
+    """
+    async with AsyncSessionLocal() as db:
+        key1 = await _get_setting(db, "serpapi_api_key")
+        key2 = await _get_setting(db, "serpapi_api_key_2")
+
+    results = {}
+    for label, api_key in [("key1", key1), ("key2", key2)]:
+        if not api_key:
+            results[label] = None
+            continue
+        try:
+            async with httpx.AsyncClient(timeout=15) as client:
+                resp = await client.get(SERPAPI_ACCOUNT_URL, params={"api_key": api_key})
+                resp.raise_for_status()
+                data = resp.json()
+                results[label] = {f: data.get(f) for f in ACCOUNT_FIELDS}
+        except Exception as e:
+            results[label] = {"error": str(e)}
+
+    fetched_at = datetime.now(timezone.utc).isoformat()
+    results["fetched_at"] = fetched_at
+
+    async with AsyncSessionLocal() as db:
+        await _set_setting(db, "serpapi_account_1", json.dumps(results.get("key1") or {}))
+        await _set_setting(db, "serpapi_account_2", json.dumps(results.get("key2") or {}))
+        await _set_setting(db, "serpapi_account_fetched_at", fetched_at)
+        await db.commit()
+
+    return results
+
+
 # ─── endpoints ────────────────────────────────────────────────────────────────
+
+@router.get("/google-reviews/serpapi-account")
+async def get_serpapi_account(refresh: bool = False):
+    """Returnează info cont SerpAPI (stocat zilnic la 08:00). refresh=true forțează re-fetch."""
+    if refresh:
+        return await do_fetch_serpapi_account()
+
+    async with AsyncSessionLocal() as db:
+        raw1 = await _get_setting(db, "serpapi_account_1")
+        raw2 = await _get_setting(db, "serpapi_account_2")
+        fetched_at = await _get_setting(db, "serpapi_account_fetched_at")
+
+    def parse(raw: str) -> dict | None:
+        if not raw:
+            return None
+        try:
+            d = json.loads(raw)
+            return d if d else None
+        except Exception:
+            return None
+
+    return {
+        "key1": parse(raw1),
+        "key2": parse(raw2),
+        "fetched_at": fetched_at or None,
+    }
+
+
+@router.get("/google-reviews/serp-log")
+async def get_serp_log(limit: int = 100):
+    """Returnează ultimele N intrări din log-ul apelurilor SerpAPI."""
+    return list(_serp_log)[:limit]
+
 
 @router.get("/google-reviews/refresh-status")
 async def get_refresh_status():
@@ -224,7 +559,33 @@ async def trigger_refresh(force: bool = False):
             pass
 
     try:
-        result = await do_refresh()
+        result = await do_refresh(source="manual")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except httpx.HTTPError as e:
+        raise HTTPException(status_code=502, detail=f"Eroare SerpAPI: {str(e)}")
+
+    return result
+
+
+@router.post("/google-reviews/refetch-from-date")
+async def refetch_from_date(request: Request):
+    """
+    Șterge review-urile de la data specificată și le re-fetchează din SerpAPI.
+    Body: { "date": "YYYY-MM-DD" }
+    Cheile SerpAPI alternează per pagină.
+    """
+    body = await request.json()
+    date_str = body.get("date", "")
+    if not date_str:
+        raise HTTPException(status_code=400, detail="Câmpul 'date' este obligatoriu")
+    try:
+        from_date = date.fromisoformat(date_str)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Format dată invalid (YYYY-MM-DD)")
+
+    try:
+        result = await do_refetch_from_date(from_date)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except httpx.HTTPError as e:

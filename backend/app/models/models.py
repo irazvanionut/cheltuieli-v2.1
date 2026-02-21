@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Numeric, Text, ForeignKey, Date, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Numeric, Text, ForeignKey, Date, UniqueConstraint, SmallInteger
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -333,3 +333,100 @@ class HassGroupEntity(Base):
     group = relationship("HassGroup", back_populates="entities")
 
     __table_args__ = (UniqueConstraint("group_id", "entity_id"),)
+
+
+# ============================================
+# AGENDA FURNIZORI
+# ============================================
+
+class AgendaFurnizor(Base):
+    __tablename__ = "agenda_furnizori"
+
+    id = Column(Integer, primary_key=True, index=True)
+    erp_name = Column(String(255))          # link opțional la ERP
+    nume = Column(String(255), nullable=False)
+    categorie = Column(String(100))         # Alimente, Băuturi, etc.
+    zile_livrare = Column(String(100))      # "Luni,Miercuri,Vineri"
+    frecventa_comanda = Column(String(50))  # Săptămânal | Bisăptămânal | Lunar | La cerere
+    discount_procent = Column(Numeric(5, 2))
+    termen_plata_zile = Column(Integer)     # 0=cash, 30, 60, 90
+    suma_minima_comanda = Column(Numeric(10, 2))
+    rating_intern = Column(SmallInteger)   # 1-5
+    note_generale = Column(Text)
+    atentie = Column(Boolean, default=False)
+    activ = Column(Boolean, default=True)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    # Relationships
+    contacte = relationship("AgendaContact", back_populates="furnizor", cascade="all, delete-orphan")
+    interactiuni = relationship("AgendaInteractiune", back_populates="furnizor", cascade="all, delete-orphan")
+    todos = relationship("AgendaTodo", back_populates="furnizor", cascade="all, delete-orphan")
+
+
+class AgendaContact(Base):
+    __tablename__ = "agenda_contacte"
+
+    id = Column(Integer, primary_key=True, index=True)
+    furnizor_id = Column(Integer, ForeignKey("agenda_furnizori.id", ondelete="CASCADE"))
+    nume = Column(String(255), nullable=False)
+    rol = Column(String(100))               # Agent | Livrator | Director | Casier | Alt
+    primar = Column(Boolean, default=False)
+    erp_contact = Column(Boolean, default=False)
+    activ = Column(Boolean, default=True)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    # Relationships
+    furnizor = relationship("AgendaFurnizor", back_populates="contacte")
+    campuri = relationship("AgendaContactCamp", back_populates="contact", cascade="all, delete-orphan")
+    interactiuni = relationship("AgendaInteractiune", back_populates="contact")
+
+
+class AgendaContactCamp(Base):
+    __tablename__ = "agenda_contacte_campuri"
+
+    id = Column(Integer, primary_key=True, index=True)
+    contact_id = Column(Integer, ForeignKey("agenda_contacte.id", ondelete="CASCADE"))
+    tip = Column(String(50), nullable=False)    # Mobil | Telefon | Email | WhatsApp | Website | Alt
+    valoare = Column(String(255), nullable=False)
+    ordine = Column(Integer, default=0)
+
+    # Relationships
+    contact = relationship("AgendaContact", back_populates="campuri")
+
+
+class AgendaInteractiune(Base):
+    __tablename__ = "agenda_interactiuni"
+
+    id = Column(Integer, primary_key=True, index=True)
+    furnizor_id = Column(Integer, ForeignKey("agenda_furnizori.id", ondelete="CASCADE"))
+    contact_id = Column(Integer, ForeignKey("agenda_contacte.id", ondelete="SET NULL"), nullable=True)
+    nota = Column(Text, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+    # Relationships
+    furnizor = relationship("AgendaFurnizor", back_populates="interactiuni")
+    contact = relationship("AgendaContact", back_populates="interactiuni")
+    user = relationship("User")
+
+
+class AgendaTodo(Base):
+    __tablename__ = "agenda_todos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    furnizor_id = Column(Integer, ForeignKey("agenda_furnizori.id", ondelete="CASCADE"))
+    titlu = Column(String(500), nullable=False)
+    cantitate = Column(String(100))         # "2 cutii", "5 kg" (opțional)
+    tip = Column(String(20), default='todo')  # todo | comanda
+    prioritate = Column(SmallInteger, default=2)  # 1=urgentă, 2=normală, 3=scăzută
+    rezolvat = Column(Boolean, default=False)
+    data_scadenta = Column(Date, nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    # Relationships
+    furnizor = relationship("AgendaFurnizor", back_populates="todos")
+    user = relationship("User")

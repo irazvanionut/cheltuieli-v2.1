@@ -14,12 +14,13 @@ from app.models import Exercitiu, ApeluriZilnic, ApeluriDetalii
 from app.api import api_router
 from app.api.apeluri import parse_queue_log, QUEUE_LOG_DIR
 from app.api.pontaj import pontaj_fetch_loop
-from app.api.google_reviews import do_refresh as google_reviews_refresh, do_analysis as google_reviews_analyze
+from app.api.google_reviews import do_refresh as google_reviews_refresh, do_analysis as google_reviews_analyze, do_fetch_serpapi_account
 
-AUTO_CLOSE_HOUR = 7  # 07:00
+AUTO_CLOSE_HOUR = 7   # 07:00
 SAVE_APELURI_HOUR = 23  # 23:00
 GOOGLE_REVIEWS_REFRESH_HOURS = [14, 21]  # 14:00 și 21:00
 GOOGLE_REVIEWS_ANALYSIS_HOURS = [12, 21]  # 12:00 și 21:00
+SERPAPI_ACCOUNT_FETCH_HOUR = 8  # 08:00
 
 
 async def auto_close_exercitiu_loop():
@@ -229,6 +230,29 @@ async def google_reviews_analysis_loop():
             await asyncio.sleep(300)
 
 
+async def serpapi_account_loop():
+    """Background task: fetch SerpAPI account info daily at 08:00."""
+    while True:
+        try:
+            now = datetime.now()
+            target = datetime.combine(now.date(), time(SERPAPI_ACCOUNT_FETCH_HOUR, 0))
+            if now >= target:
+                target += timedelta(days=1)
+            wait_secs = (target - now).total_seconds()
+            print(f"SerpAPI account scheduler: next run at {target} (in {wait_secs:.0f}s)")
+            await asyncio.sleep(wait_secs)
+
+            print("SerpAPI account scheduler: fetching account info...")
+            result = await do_fetch_serpapi_account()
+            print(f"SerpAPI account scheduler: done — {result.get('fetched_at')}")
+        except asyncio.CancelledError:
+            print("SerpAPI account scheduler stopped")
+            return
+        except Exception as e:
+            print(f"SerpAPI account scheduler error: {e}")
+            await asyncio.sleep(300)
+
+
 async def google_reviews_refresh_loop():
     """Background task: auto-refresh Google Reviews at 14:00 and 21:00."""
     while True:
@@ -272,11 +296,12 @@ async def lifespan(app: FastAPI):
     task_pontaj = asyncio.create_task(pontaj_fetch_loop())
     task_google_reviews = asyncio.create_task(google_reviews_refresh_loop())
     task_google_analysis = asyncio.create_task(google_reviews_analysis_loop())
+    task_serpapi_account = asyncio.create_task(serpapi_account_loop())
     yield
     # Shutdown
-    for task in [task_close, task_apeluri, task_pontaj, task_google_reviews, task_google_analysis]:
+    for task in [task_close, task_apeluri, task_pontaj, task_google_reviews, task_google_analysis, task_serpapi_account]:
         task.cancel()
-    for task in [task_close, task_apeluri, task_pontaj, task_google_reviews, task_google_analysis]:
+    for task in [task_close, task_apeluri, task_pontaj, task_google_reviews, task_google_analysis, task_serpapi_account]:
         try:
             await task
         except asyncio.CancelledError:

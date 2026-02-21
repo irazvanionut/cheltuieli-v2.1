@@ -1,0 +1,47 @@
+{
+    "dataSetName": "BusinessPartnerVendorProjection",
+    "query": {
+        "selectFields": [
+            {
+                "name": "Name"
+            },
+            {
+                "name": "BusinessPartnerType_"
+            },
+            {
+                "name": "VatCode"
+            },
+            {
+                "name": "TaxCode"
+            },
+            {
+                "name": "TaxNumbers"
+            },
+            {
+                "name": "PhoneNumber"
+            },
+            {
+                "name": "EmailAddress"
+            },
+            {
+                "name": "AddressText"
+            },
+            {
+                "name": "RoleNames"
+            },
+            {
+                "name": "ContactPersons"
+            },
+            {
+                "name": "CreatedAt_"
+            },
+            {
+                "name": "Id"
+            }
+        ],
+        "where": [],
+        "orderBy": []
+    },
+    "formatOptions": 1,
+    "endpoint": "/proxy/http://10.170.4.101:5000//api/Entity/Get"
+}

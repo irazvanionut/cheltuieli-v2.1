@@ -1,4 +1,5 @@
 import httpx
+import json
 import numpy as np
 from typing import List, Dict, Optional
 from sqlalchemy import select, text
@@ -157,6 +158,32 @@ class AIService:
                     "similarity": float(row.sim) if row.sim else 0.0,
                     "source": "history"
                 })
+
+        # Method 1c: Search in furnizori cache (ERP vendors)
+        try:
+            furnizori_result = await db.execute(
+                select(Setting).where(Setting.cheie == 'furnizori_cache')
+            )
+            furnizori_setting = furnizori_result.scalar_one_or_none()
+            if furnizori_setting and furnizori_setting.valoare:
+                vendor_names = json.loads(furnizori_setting.valoare)
+                q_lower = query.lower()
+                for name in vendor_names:
+                    if name and q_lower in name.lower() and name.lower() not in seen_denumiri:
+                        results.append({
+                            "id": None,
+                            "denumire": name,
+                            "categorie_id": None,
+                            "categorie_nume": None,
+                            "grupa_id": None,
+                            "grupa_nume": None,
+                            "tip_entitate": "furnizor",
+                            "similarity": 0.4,
+                            "source": "furnizor"
+                        })
+                        seen_denumiri.add(name.lower())
+        except Exception as e:
+            print(f"Furnizori cache search error: {e}")
 
         # Method 2: Vector search (if enabled and no good results)
         if len(results) < 3:

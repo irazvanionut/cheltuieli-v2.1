@@ -73,7 +73,7 @@ export interface AutocompleteResult {
   grupa_nume?: string;
   tip_entitate?: string;
   similarity: number;
-  source?: 'trigram' | 'vector';
+  source?: 'trigram' | 'vector' | 'history' | 'furnizor';
 }
 
 export interface Exercitiu {
@@ -345,6 +345,119 @@ export interface IngestResult {
   errors: number;
   total_in_file: number;
 }
+
+// ============================================
+// Agenda Furnizori Types
+// ============================================
+
+export interface AgendaContactCamp {
+  id: number;
+  contact_id: number;
+  tip: string; // Mobil | Telefon | Email | WhatsApp | Website | Alt
+  valoare: string;
+  ordine: number;
+}
+
+export interface AgendaContact {
+  id: number;
+  furnizor_id: number;
+  furnizor_nume?: string;
+  furnizor_categorie?: string;
+  nume: string;
+  rol?: string;
+  primar: boolean;
+  erp_contact: boolean;
+  activ: boolean;
+  campuri: AgendaContactCamp[];
+  created_at: string;
+}
+
+export interface AgendaInteractiune {
+  id: number;
+  furnizor_id: number;
+  contact_id?: number;
+  nota: string;
+  user_id?: number;
+  user_nume?: string;
+  contact_nume?: string;
+  created_at: string;
+}
+
+export interface AgendaTodo {
+  id: number;
+  furnizor_id: number;
+  furnizor_nume?: string;
+  titlu: string;
+  cantitate?: string;
+  tip: 'todo' | 'comanda';
+  prioritate: 1 | 2 | 3; // 1=urgentă, 2=normală, 3=scăzută
+  rezolvat: boolean;
+  data_scadenta?: string;
+  user_id?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AgendaFurnizor {
+  id: number;
+  erp_name?: string;
+  nume: string;
+  categorie?: string;
+  zile_livrare?: string;
+  frecventa_comanda?: string;
+  discount_procent?: number;
+  termen_plata_zile?: number;
+  suma_minima_comanda?: number;
+  rating_intern?: number;
+  note_generale?: string;
+  atentie: boolean;
+  activ: boolean;
+  // List view extras
+  contact_primar_nume?: string;
+  contact_primar_valoare?: string;
+  ultima_interactiune?: string;
+  todos_deschise: number;
+  created_at: string;
+}
+
+export interface AgendaFurnizorDetail extends AgendaFurnizor {
+  contacte: AgendaContact[];
+  updated_at: string;
+}
+
+export interface AgendaContactCreateStandalone {
+  nume: string;
+  rol?: string;
+  primar?: boolean;
+  campuri?: { tip: string; valoare: string; ordine?: number }[];
+  furnizor_id?: number;
+  furnizor_nou?: string;
+}
+
+export type AgendaCategorie =
+  | 'Alimente & Ingrediente'
+  | 'Băuturi'
+  | 'Produse curățenie'
+  | 'Ambalaje & Consumabile'
+  | 'Servicii'
+  | 'Echipamente & Dotări'
+  | 'Altele';
+
+export const AGENDA_CATEGORII: AgendaCategorie[] = [
+  'Alimente & Ingrediente',
+  'Băuturi',
+  'Produse curățenie',
+  'Ambalaje & Consumabile',
+  'Servicii',
+  'Echipamente & Dotări',
+  'Altele',
+];
+
+export const AGENDA_CAMP_TIPURI = ['Mobil', 'Telefon', 'Email', 'WhatsApp', 'Website', 'Alt'];
+export const AGENDA_ROLURI = ['Agent', 'Livrator', 'Director', 'Casier', 'Alt'];
+export const AGENDA_FRECVENTE = ['Săptămânal', 'Bisăptămânal', 'Lunar', 'La cerere'];
+export const AGENDA_TERMENE = [0, 7, 14, 30, 60, 90];
+export const AGENDA_ZILE = ['Luni', 'Marți', 'Miercuri', 'Joi', 'Vineri', 'Sâmbătă', 'Duminică'];
 
 // ============================================
 // UI Types

@@ -17,6 +17,8 @@ import { PontajPage } from '@/pages/PontajPage';
 import { ReviewGooglePage } from '@/pages/online/ReviewGooglePage';
 import { AutomatizariPage } from '@/pages/online/AutomatizariPage';
 import { ScenePage } from '@/pages/online/ScenePage';
+import { AgendaPage } from '@/pages/agenda/AgendaPage';
+import { FurnizorDetail } from '@/pages/agenda/FurnizorDetail';
 import { Spinner } from '@/components/ui';
 
 // Create React Query client
@@ -159,6 +161,23 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ScenePage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/agenda"
+              element={
+                <ProtectedRoute>
+                  <AgendaPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/agenda/:id"
+              element={
+                <ProtectedRoute>
+                  <FurnizorDetail />
                 </ProtectedRoute>
               }
             />

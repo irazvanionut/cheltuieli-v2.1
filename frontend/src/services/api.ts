@@ -18,6 +18,12 @@ import type {
   PontajResponse,
   GoogleReview,
   IngestResult,
+  AgendaFurnizor,
+  AgendaFurnizorDetail,
+  AgendaContact,
+  AgendaContactCamp,
+  AgendaInteractiune,
+  AgendaTodo,
 } from '@/types';
 
 const API_URL = (import.meta as any).env.VITE_API_URL || '/api';
@@ -372,6 +378,67 @@ class ApiService {
     return data;
   }
 
+  async upsertSetting(cheie: string, valoare: string): Promise<Setting> {
+    const { data } = await this.client.put<Setting>(`/settings/${cheie}`, { valoare });
+    return data;
+  }
+
+  async getBearerToken(): Promise<{ value: string }> {
+    const { data } = await this.client.get<{ value: string }>('/settings/bearer-token');
+    return data;
+  }
+
+  async updateBearerToken(value: string): Promise<{ value: string }> {
+    const { data } = await this.client.put<{ value: string }>('/settings/bearer-token', { value });
+    return data;
+  }
+
+  async getFurnizori(): Promise<{
+    vendors: Array<{
+      name: string; businessPartnerType_: number; vatCode?: string; taxCode?: string;
+      taxNumbers?: string; phoneNumber?: string; emailAddress?: string; addressText?: string;
+      roleNames?: string; contactPersons?: string; createdAt_?: string; id: string;
+    }>;
+    count: number;
+  }> {
+    const { data } = await this.client.get('/furnizori');
+    return data;
+  }
+
+  async resetSerpApiCounters(): Promise<{ ok: boolean; month: string }> {
+    const { data } = await this.client.post<{ ok: boolean; month: string }>('/settings/serpapi/reset-counters');
+    return data;
+  }
+
+  async getSerpApiAccount(refresh = false): Promise<{
+    key1: { plan_name: string; account_status: string; searches_per_month: number; plan_searches_left: number; extra_credits: number; total_searches_left: number; this_month_usage: number; this_hour_searches: number; last_hour_searches: number; account_rate_limit_per_hour: number; error?: string } | null;
+    key2: { plan_name: string; account_status: string; searches_per_month: number; plan_searches_left: number; extra_credits: number; total_searches_left: number; this_month_usage: number; this_hour_searches: number; last_hour_searches: number; account_rate_limit_per_hour: number; error?: string } | null;
+    fetched_at: string | null;
+  }> {
+    const { data } = await this.client.get(`/google-reviews/serpapi-account${refresh ? '?refresh=true' : ''}`);
+    return data;
+  }
+
+  async getSerpLog(limit = 100): Promise<Array<{
+    ts: string; key: number; source: string; page: number;
+    status: string; status_code: number; ms: number; error: string; url: string;
+  }>> {
+    const { data } = await this.client.get(`/google-reviews/serp-log?limit=${limit}`);
+    return data;
+  }
+
+  async refetchReviewsFromDate(date: string): Promise<{
+    deleted: number;
+    inserted: number;
+    pages_fetched: number;
+    calls_per_key: Record<string, number>;
+    from_date: string;
+    refreshed_at: string;
+  }> {
+    const { data } = await this.client.post('/google-reviews/refetch-from-date', { date });
+    return data;
+  }
+
   async testOllamaConnection(): Promise<OllamaStatus> {
     const { data } = await this.client.get<OllamaStatus>('/settings/ollama/test');
     return data;
@@ -604,6 +671,154 @@ class ApiService {
 
   async callHassService(entityId: string, service: 'turn_on' | 'turn_off'): Promise<void> {
     await this.client.post('/hass/service', { entity_id: entityId, service });
+  }
+
+  // ============================================
+  // AGENDA FURNIZORI
+  // ============================================
+
+  async syncAgendaErp(): Promise<{ created_furnizori: number; created_contacts: number }> {
+    const { data } = await this.client.post('/agenda/sync-erp');
+    return data;
+  }
+
+  async getAgendaContacteGlobal(search?: string): Promise<AgendaContact[]> {
+    const { data } = await this.client.get<AgendaContact[]>('/agenda/contacte', {
+      params: search ? { search } : undefined,
+    });
+    return data;
+  }
+
+  async getAgendaFurnizori(params?: {
+    search?: string;
+    categorie?: string;
+    activ?: boolean;
+  }): Promise<AgendaFurnizor[]> {
+    const { data } = await this.client.get<AgendaFurnizor[]>('/agenda/furnizori', { params });
+    return data;
+  }
+
+  async createAgendaFurnizor(body: Partial<AgendaFurnizor>): Promise<{ id: number; nume: string }> {
+    const { data } = await this.client.post('/agenda/furnizori', body);
+    return data;
+  }
+
+  async getAgendaFurnizor(id: number): Promise<AgendaFurnizorDetail> {
+    const { data } = await this.client.get<AgendaFurnizorDetail>(`/agenda/furnizori/${id}`);
+    return data;
+  }
+
+  async updateAgendaFurnizor(id: number, body: Partial<AgendaFurnizor>): Promise<{ ok: boolean }> {
+    const { data } = await this.client.patch(`/agenda/furnizori/${id}`, body);
+    return data;
+  }
+
+  async deleteAgendaFurnizor(id: number): Promise<{ ok: boolean }> {
+    const { data } = await this.client.delete(`/agenda/furnizori/${id}`);
+    return data;
+  }
+
+  async importErpFurnizori(names: string[]): Promise<{ imported: number; skipped: number }> {
+    const { data } = await this.client.post('/agenda/furnizori/import-erp', { names });
+    return data;
+  }
+
+  async getAgendaFurnizorCheltuieli(id: number): Promise<{
+    total_ron: number;
+    count: number;
+    items: any[];
+  }> {
+    const { data } = await this.client.get(`/agenda/furnizori/${id}/cheltuieli`);
+    return data;
+  }
+
+  async getAgendaInteractiuni(furnizorId: number): Promise<AgendaInteractiune[]> {
+    const { data } = await this.client.get<AgendaInteractiune[]>(`/agenda/furnizori/${furnizorId}/interactiuni`);
+    return data;
+  }
+
+  async createAgendaInteractiune(furnizorId: number, body: { nota: string; contact_id?: number }): Promise<AgendaInteractiune> {
+    const { data } = await this.client.post<AgendaInteractiune>(`/agenda/furnizori/${furnizorId}/interactiuni`, body);
+    return data;
+  }
+
+  async deleteAgendaInteractiune(id: number): Promise<{ ok: boolean }> {
+    const { data } = await this.client.delete(`/agenda/interactiuni/${id}`);
+    return data;
+  }
+
+  async getAgendaContacte(furnizorId: number): Promise<AgendaContact[]> {
+    const { data } = await this.client.get<AgendaContact[]>(`/agenda/furnizori/${furnizorId}/contacte`);
+    return data;
+  }
+
+  async createAgendaContact(furnizorId: number, body: Partial<AgendaContact> & { campuri?: Partial<AgendaContactCamp>[] }): Promise<AgendaContact> {
+    const { data } = await this.client.post<AgendaContact>(`/agenda/furnizori/${furnizorId}/contacte`, body);
+    return data;
+  }
+
+  async updateAgendaContact(id: number, body: Partial<AgendaContact>): Promise<{ ok: boolean }> {
+    const { data } = await this.client.patch(`/agenda/contacte/${id}`, body);
+    return data;
+  }
+
+  async deleteAgendaContact(id: number): Promise<{ ok: boolean }> {
+    const { data } = await this.client.delete(`/agenda/contacte/${id}`);
+    return data;
+  }
+
+  async createAgendaCamp(contactId: number, body: Partial<AgendaContactCamp>): Promise<AgendaContactCamp> {
+    const { data } = await this.client.post<AgendaContactCamp>(`/agenda/contacte/${contactId}/campuri`, body);
+    return data;
+  }
+
+  async updateAgendaCamp(id: number, body: Partial<AgendaContactCamp>): Promise<{ ok: boolean }> {
+    const { data } = await this.client.patch(`/agenda/campuri/${id}`, body);
+    return data;
+  }
+
+  async deleteAgendaCamp(id: number): Promise<{ ok: boolean }> {
+    const { data } = await this.client.delete(`/agenda/campuri/${id}`);
+    return data;
+  }
+
+  async getAgendaTodos(params?: {
+    furnizor_id?: number;
+    rezolvat?: boolean;
+    tip?: string;
+  }): Promise<AgendaTodo[]> {
+    const { data } = await this.client.get<AgendaTodo[]>('/agenda/todos', { params });
+    return data;
+  }
+
+  async createAgendaTodo(body: Partial<AgendaTodo> & { furnizor_id: number }): Promise<AgendaTodo> {
+    const { data } = await this.client.post<AgendaTodo>('/agenda/todos', body);
+    return data;
+  }
+
+  async updateAgendaTodo(id: number, body: Partial<AgendaTodo>): Promise<{ ok: boolean }> {
+    const { data } = await this.client.patch(`/agenda/todos/${id}`, body);
+    return data;
+  }
+
+  async deleteAgendaTodo(id: number): Promise<{ ok: boolean }> {
+    const { data } = await this.client.delete(`/agenda/todos/${id}`);
+    return data;
+  }
+
+  async getAgendaCategorii(): Promise<string[]> {
+    const { data } = await this.client.get<string[]>('/agenda/categorii');
+    return data;
+  }
+
+  async updateAgendaCategorii(categorii: string[]): Promise<{ ok: boolean }> {
+    const { data } = await this.client.put('/agenda/categorii', categorii);
+    return data;
+  }
+
+  async createAgendaContactStandalone(body: import('@/types').AgendaContactCreateStandalone): Promise<AgendaContact> {
+    const { data } = await this.client.post<AgendaContact>('/agenda/contacte', body);
+    return data;
   }
 }
 

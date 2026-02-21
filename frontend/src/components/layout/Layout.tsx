@@ -29,6 +29,8 @@ import {
   Lightbulb,
   Star,
   Zap,
+  BookUser,
+  Building2,
 } from 'lucide-react';
 import { useAppStore, useIsAdmin, useIsSef } from '@/hooks/useAppStore';
 import api from '@/services/api';
@@ -54,6 +56,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     cheltuieli: true,
+    agenda: true,
     apeluri: true,
     pontaj: true,
     automatizari: true,
@@ -152,6 +155,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       ],
     },
     {
+      key: 'agenda',
+      label: 'Agenda',
+      icon: BookUser,
+      items: [
+        { name: 'Furnizori', href: '/agenda', icon: Building2, show: true, badge: null, badgeApeluri: null },
+      ],
+    },
+    {
       key: 'apeluri',
       label: 'Apeluri',
       icon: Phone,
@@ -238,6 +249,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         className={clsx(
           'fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-stone-900',
           'border-r border-stone-200 dark:border-stone-800',
+          'flex flex-col',
           'transform transition-transform duration-200 ease-in-out',
           'lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
@@ -278,6 +290,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           {navGroups.map((group) => {
             const isExpanded = expandedGroups[group.key];
             const visibleItems = group.items.filter((item) => item.show);
+            if (visibleItems.length === 0) return null;
             const hasActiveItem = visibleItems.some((item) => location.pathname === item.href);
 
             return (
@@ -306,7 +319,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 {isExpanded && (
                   <div className="ml-3 mt-0.5 space-y-0.5">
                     {visibleItems.map((item) => {
-                      const isActive = location.pathname === item.href;
+                      const isActive = item.href === '/'
+                        ? location.pathname === item.href
+                        : location.pathname.startsWith(item.href);
                       return (
                         <Link
                           key={item.name}

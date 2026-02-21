@@ -472,5 +472,184 @@ class RecomandariApelResponse(BaseModel):
         from_attributes = True
 
 
+# ============================================
+# AGENDA FURNIZORI SCHEMAS
+# ============================================
+
+class AgendaContactCampBase(BaseModel):
+    tip: str
+    valoare: str
+    ordine: int = 0
+
+
+class AgendaContactCampCreate(AgendaContactCampBase):
+    pass
+
+
+class AgendaContactCampUpdate(BaseModel):
+    tip: Optional[str] = None
+    valoare: Optional[str] = None
+    ordine: Optional[int] = None
+
+
+class AgendaContactCampResponse(AgendaContactCampBase):
+    id: int
+    contact_id: int
+
+    class Config:
+        from_attributes = True
+
+
+class AgendaContactBase(BaseModel):
+    nume: str
+    rol: Optional[str] = None
+    primar: bool = False
+    activ: bool = True
+
+
+class AgendaContactCreate(AgendaContactBase):
+    campuri: List[AgendaContactCampCreate] = []
+
+
+class AgendaContactCreateStandalone(AgendaContactBase):
+    campuri: List[AgendaContactCampCreate] = []
+    furnizor_id: Optional[int] = None       # link to existing furnizor
+    furnizor_nou: Optional[str] = None      # or create new furnizor with this name
+
+
+class AgendaContactUpdate(BaseModel):
+    nume: Optional[str] = None
+    rol: Optional[str] = None
+    primar: Optional[bool] = None
+    activ: Optional[bool] = None
+
+
+class AgendaContactResponse(AgendaContactBase):
+    id: int
+    furnizor_id: int
+    campuri: List[AgendaContactCampResponse] = []
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class AgendaInteractiuneCreate(BaseModel):
+    nota: str
+    contact_id: Optional[int] = None
+
+
+class AgendaInteractiuneResponse(BaseModel):
+    id: int
+    furnizor_id: int
+    contact_id: Optional[int] = None
+    nota: str
+    user_id: Optional[int] = None
+    user_nume: Optional[str] = None
+    contact_nume: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class AgendaTodoBase(BaseModel):
+    titlu: str
+    cantitate: Optional[str] = None
+    tip: str = 'todo'
+    prioritate: int = 2
+    rezolvat: bool = False
+    data_scadenta: Optional[date] = None
+
+
+class AgendaTodoCreate(AgendaTodoBase):
+    furnizor_id: int
+
+
+class AgendaTodoUpdate(BaseModel):
+    titlu: Optional[str] = None
+    cantitate: Optional[str] = None
+    tip: Optional[str] = None
+    prioritate: Optional[int] = None
+    rezolvat: Optional[bool] = None
+    data_scadenta: Optional[date] = None
+
+
+class AgendaTodoResponse(AgendaTodoBase):
+    id: int
+    furnizor_id: int
+    furnizor_nume: Optional[str] = None
+    user_id: Optional[int] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class AgendaFurnizorBase(BaseModel):
+    nume: str
+    erp_name: Optional[str] = None
+    categorie: Optional[str] = None
+    zile_livrare: Optional[str] = None
+    frecventa_comanda: Optional[str] = None
+    discount_procent: Optional[Decimal] = None
+    termen_plata_zile: Optional[int] = None
+    suma_minima_comanda: Optional[Decimal] = None
+    rating_intern: Optional[int] = None
+    note_generale: Optional[str] = None
+    atentie: bool = False
+
+
+class AgendaFurnizorCreate(AgendaFurnizorBase):
+    pass
+
+
+class AgendaFurnizorUpdate(BaseModel):
+    nume: Optional[str] = None
+    erp_name: Optional[str] = None
+    categorie: Optional[str] = None
+    zile_livrare: Optional[str] = None
+    frecventa_comanda: Optional[str] = None
+    discount_procent: Optional[Decimal] = None
+    termen_plata_zile: Optional[int] = None
+    suma_minima_comanda: Optional[Decimal] = None
+    rating_intern: Optional[int] = None
+    note_generale: Optional[str] = None
+    atentie: Optional[bool] = None
+    activ: Optional[bool] = None
+
+
+class AgendaFurnizorListResponse(AgendaFurnizorBase):
+    id: int
+    activ: bool
+    atentie: bool = False
+    contact_primar_nume: Optional[str] = None
+    contact_primar_valoare: Optional[str] = None  # first phone/email
+    ultima_interactiune: Optional[datetime] = None
+    todos_deschise: int = 0
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class AgendaFurnizorDetailResponse(AgendaFurnizorBase):
+    id: int
+    activ: bool
+    contacte: List[AgendaContactResponse] = []
+    interactiuni: List[AgendaInteractiuneResponse] = []
+    todos_deschise: int = 0
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class AgendaImportErpRequest(BaseModel):
+    names: List[str]  # ERP supplier names to import
+
+
 # Forward references
 TokenResponse.model_rebuild()

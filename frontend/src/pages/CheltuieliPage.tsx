@@ -663,7 +663,11 @@ export const CheltuieliPage: React.FC = () => {
                           {result.denumire}
                         </div>
                         <div className="text-sm text-stone-500">
-                          {result.categorie_nume ? `${result.categorie_nume}${result.grupa_nume ? ` • ${result.grupa_nume}` : ''}` : !result.id ? 'Necategorizat' : ''}
+                          {result.categorie_nume
+                            ? `${result.categorie_nume}${result.grupa_nume ? ` • ${result.grupa_nume}` : ''}`
+                            : result.source === 'furnizor'
+                            ? 'Furnizor ERP'
+                            : !result.id ? 'Necategorizat' : ''}
                         </div>
                       </div>
                     ))}
@@ -1065,7 +1069,11 @@ export const CheltuieliPage: React.FC = () => {
                           {result.denumire}
                         </div>
                         <div className="text-xs text-stone-500">
-                          {result.categorie_nume ? `${result.categorie_nume}${result.grupa_nume ? ` • ${result.grupa_nume}` : ''}` : !result.id ? 'Necategorizat' : ''}
+                          {result.categorie_nume
+                            ? `${result.categorie_nume}${result.grupa_nume ? ` • ${result.grupa_nume}` : ''}`
+                            : result.source === 'furnizor'
+                            ? 'Furnizor ERP'
+                            : !result.id ? 'Necategorizat' : ''}
                         </div>
                       </div>
                     ))}
