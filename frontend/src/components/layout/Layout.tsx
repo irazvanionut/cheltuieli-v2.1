@@ -67,6 +67,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Banner apeluri ratate - dismissed per sesiune
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
+  // Ticker pentru elapsed time (actualizare la 30s)
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Auto-expand groups when navigating there
   useEffect(() => {
     if (isOnApeluri && !expandedGroups.apeluri) {
@@ -82,7 +89,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     queryKey: ['apeluri-primite-count'],
     queryFn: () => api.getApeluriPrimite(),
     staleTime: 60000,
-    refetchInterval: 120000,
+    refetchInterval: 180000,
   });
 
   // Fetch Google Reviews summary for top banner
@@ -421,6 +428,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           'lg:ml-64'
         )}
        >
+         {/* Bannere sticky */}
+        <div className="sticky top-14 lg:top-0 z-30">
+
          {/* Banner rating Google */}
          {reviewsSummary?.count_overall != null && reviewsSummary.count_overall > 0 && (() => {
            const t = reviewsSummary.trend_30d;
@@ -432,9 +442,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
            return (
            <Link
              to="/online/review-google"
-             className={`${bannerCls} px-4 py-1.5 flex items-center gap-3 flex-wrap text-xs text-stone-700 dark:text-stone-300 transition-colors`}
+             className={`${bannerCls} px-[17px] py-[7px] flex items-center gap-3 flex-wrap text-[13px] text-stone-700 dark:text-stone-300 transition-colors`}
            >
-             <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-400 flex-shrink-0" />
+             <Star className="w-[15px] h-[15px] text-amber-500 fill-amber-400 flex-shrink-0" />
              <span className="flex items-center gap-1">
                <span className="text-stone-400">Rating Google:</span>
                <span className="font-bold text-stone-900 dark:text-stone-100">{reviewsSummary.avg_overall}</span>
@@ -456,14 +466,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                    <span className="text-stone-400">vs acum 60 zile ({reviewsSummary.avg_as_of_60d}):</span>
                    {reviewsSummary.trend_60d > 0 ? (
                      <span className="flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400 font-semibold">
-                       <TrendingUp className="w-3 h-3" />+{reviewsSummary.trend_60d}
+                       <TrendingUp className="w-3.5 h-3.5" />+{reviewsSummary.trend_60d}
                      </span>
                    ) : reviewsSummary.trend_60d < 0 ? (
                      <span className="flex items-center gap-0.5 text-red-500 dark:text-red-400 font-semibold">
-                       <TrendingDown className="w-3 h-3" />{reviewsSummary.trend_60d}
+                       <TrendingDown className="w-3.5 h-3.5" />{reviewsSummary.trend_60d}
                      </span>
                    ) : (
-                     <Minus className="w-3 h-3 text-stone-400" />
+                     <Minus className="w-3.5 h-3.5 text-stone-400" />
                    )}
                  </span>
                </>
@@ -476,14 +486,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                    <span className="text-stone-400">vs acum 30 zile ({reviewsSummary.avg_as_of_30d}):</span>
                    {reviewsSummary.trend_30d > 0 ? (
                      <span className="flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400 font-semibold">
-                       <TrendingUp className="w-3 h-3" />+{reviewsSummary.trend_30d}
+                       <TrendingUp className="w-3.5 h-3.5" />+{reviewsSummary.trend_30d}
                      </span>
                    ) : reviewsSummary.trend_30d < 0 ? (
                      <span className="flex items-center gap-0.5 text-red-500 dark:text-red-400 font-semibold">
-                       <TrendingDown className="w-3 h-3" />{reviewsSummary.trend_30d}
+                       <TrendingDown className="w-3.5 h-3.5" />{reviewsSummary.trend_30d}
                      </span>
                    ) : (
-                     <Minus className="w-3 h-3 text-stone-400" />
+                     <Minus className="w-3.5 h-3.5 text-stone-400" />
                    )}
                  </span>
                </>
@@ -498,6 +508,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
            const hasMissed = missed > 0;
            const stats = apeluriData.stats;
            const fmtSec = (s: number) => s < 60 ? `${s}s` : `${Math.floor(s / 60)}m${s % 60 > 0 ? `${s % 60}s` : ''}`;
+           const lastCallOra = apeluriData.calls?.[0]?.ora as string | undefined;
+           const fmtElapsed = (ora: string) => {
+             const [h, m, s] = ora.split(':').map(Number);
+             const callDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, s);
+             const diffMin = Math.floor((now.getTime() - callDate.getTime()) / 60000);
+             return `${diffMin}m`;
+           };
            return (
              <div className={`px-4 py-1.5 flex items-center justify-between gap-4 border-b transition-colors ${hasMissed ? 'bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-900/30' : 'bg-stone-50 dark:bg-stone-900/50 border-stone-200 dark:border-stone-800'}`}>
                <Link
@@ -535,6 +552,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                    <span>așteptat &gt;30s:</span>
                    <span className="font-semibold text-stone-700 dark:text-stone-300">{stats.waited_over_30}</span>
                  </span>
+                 {lastCallOra && (
+                   <>
+                     <span className="text-stone-300 dark:text-stone-600">·</span>
+                     <span className="flex items-center gap-1 text-stone-500 dark:text-stone-400">
+                       <Clock className="w-3 h-3 flex-shrink-0" />
+                       <span>ultim apel:</span>
+                       <span className="font-semibold text-stone-700 dark:text-stone-300">{fmtElapsed(lastCallOra)}</span>
+                     </span>
+                   </>
+                 )}
                </Link>
                <button
                  onClick={() => setBannerDismissed(true)}
@@ -546,6 +573,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
              </div>
            );
          })()}
+
+        </div>{/* end sticky banners */}
          <div className="p-4 lg:p-6">{children}</div>
        </main>
 

@@ -718,9 +718,11 @@ async def ingest_reviews_json(request: Request):
 @router.get("/google-reviews/summary")
 async def get_reviews_summary():
     """
-    avg_today  = avg of reviews received today.
-    trend_30d  = avg_today - avg(all reviews with iso_date <= now-30d)
-    trend_60d  = avg_today - avg(all reviews with iso_date <= now-60d)
+    avg_overall   = ratingul curent (media tuturor recenziilor)
+    avg_as_of_30d = ratingul cum era acum 30 zile (media tuturor recenziilor cu iso_date <= now-30d)
+    trend_30d     = avg_overall - avg_as_of_30d  (pozitiv = a crescut, negativ = a scazut)
+    avg_as_of_60d = ratingul cum era acum 60 zile
+    trend_60d     = avg_overall - avg_as_of_60d
     """
     now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -728,50 +730,49 @@ async def get_reviews_summary():
     cutoff_60d = now - timedelta(days=60)
 
     async with AsyncSessionLocal() as db:
-        # Overall (total count + global avg for display)
+        # Ratingul curent — media TUTUROR recenziilor
         row0 = await db.execute(
             select(func.avg(GoogleReview.rating).label("avg"), func.count(GoogleReview.id).label("cnt"))
         )
         overall = row0.one()
 
-        # Today's reviews
+        # Recenziile de azi
         row1 = await db.execute(
             select(func.avg(GoogleReview.rating).label("avg"), func.count(GoogleReview.id).label("cnt"))
             .where(GoogleReview.iso_date >= today_start)
         )
         today = row1.one()
 
-        # Avg of last 30 days (excluding today)
+        # Ratingul cum era acum 30 zile (media tuturor recenziilor existente la acel moment)
         row2 = await db.execute(
             select(func.avg(GoogleReview.rating).label("avg"), func.count(GoogleReview.id).label("cnt"))
-            .where(GoogleReview.iso_date >= cutoff_30d)
-            .where(GoogleReview.iso_date < today_start)
+            .where(GoogleReview.iso_date <= cutoff_30d)
         )
-        last_30d = row2.one()
+        as_of_30d = row2.one()
 
-        # Avg of last 60 days (excluding today)
+        # Ratingul cum era acum 60 zile
         row3 = await db.execute(
             select(func.avg(GoogleReview.rating).label("avg"), func.count(GoogleReview.id).label("cnt"))
-            .where(GoogleReview.iso_date >= cutoff_60d)
-            .where(GoogleReview.iso_date < today_start)
+            .where(GoogleReview.iso_date <= cutoff_60d)
         )
-        last_60d = row3.one()
+        as_of_60d = row3.one()
 
+    avg_overall = round(float(overall.avg), 2) if overall.avg else None
     avg_today = round(float(today.avg), 2) if today.avg else None
-    avg_30d = round(float(last_30d.avg), 2) if last_30d.avg else None
-    avg_60d = round(float(last_60d.avg), 2) if last_60d.avg else None
-    # trend = period_avg - overall_avg  (negative = recent period worse than all-time)
-    trend_30d = round(float(last_30d.avg) - float(overall.avg), 2) if last_30d.avg and overall.avg else None
-    trend_60d = round(float(last_60d.avg) - float(overall.avg), 2) if last_60d.avg and overall.avg else None
+    avg_as_of_30d = round(float(as_of_30d.avg), 2) if as_of_30d.avg else None
+    avg_as_of_60d = round(float(as_of_60d.avg), 2) if as_of_60d.avg else None
+    # trend = curent - cum era atunci (negativ = a scazut fata de acel moment)
+    trend_30d = round(avg_overall - avg_as_of_30d, 2) if avg_overall is not None and avg_as_of_30d is not None else None
+    trend_60d = round(avg_overall - avg_as_of_60d, 2) if avg_overall is not None and avg_as_of_60d is not None else None
 
     return {
         "avg_today": avg_today,
         "count_today": today.cnt,
-        "avg_overall": round(float(overall.avg), 2) if overall.avg else None,
+        "avg_overall": avg_overall,
         "count_overall": overall.cnt,
-        "avg_as_of_30d": avg_30d,
+        "avg_as_of_30d": avg_as_of_30d,
         "trend_30d": trend_30d,
-        "avg_as_of_60d": avg_60d,
+        "avg_as_of_60d": avg_as_of_60d,
         "trend_60d": trend_60d,
     }
 
