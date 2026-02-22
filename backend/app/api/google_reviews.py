@@ -718,19 +718,21 @@ async def ingest_reviews_json(request: Request):
 @router.get("/google-reviews/summary")
 async def get_reviews_summary():
     """
-    avg_overall   = ratingul curent (media tuturor recenziilor)
-    avg_as_of_30d = ratingul cum era acum 30 zile (media tuturor recenziilor cu iso_date <= now-30d)
-    trend_30d     = avg_overall - avg_as_of_30d  (pozitiv = a crescut, negativ = a scazut)
-    avg_as_of_60d = ratingul cum era acum 60 zile
-    trend_60d     = avg_overall - avg_as_of_60d
+    Compara medii pe PERIOADE (nu cumulative):
+    - avg_last_30d  = media recenziilor primite in ultimele 30 zile (luna aceasta)
+    - avg_as_of_30d = media recenziilor primite acum 30-60 zile (luna trecuta)
+    - avg_as_of_60d = media recenziilor primite acum 60-90 zile (acum 2 luni)
+    - trend_30d = avg_last_30d - avg_as_of_30d  (luna aceasta vs luna trecuta)
+    - trend_60d = avg_last_30d - avg_as_of_60d  (luna aceasta vs acum 2 luni)
     """
     now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     cutoff_30d = now - timedelta(days=30)
     cutoff_60d = now - timedelta(days=60)
+    cutoff_90d = now - timedelta(days=90)
 
     async with AsyncSessionLocal() as db:
-        # Ratingul curent — media TUTUROR recenziilor
+        # Overall — media tuturor recenziilor (ratingul afisat de Google)
         row0 = await db.execute(
             select(func.avg(GoogleReview.rating).label("avg"), func.count(GoogleReview.id).label("cnt"))
         )
@@ -743,27 +745,37 @@ async def get_reviews_summary():
         )
         today = row1.one()
 
-        # Ratingul cum era acum 30 zile (media tuturor recenziilor existente la acel moment)
+        # Luna aceasta: recenzii primite in ultimele 30 zile
         row2 = await db.execute(
             select(func.avg(GoogleReview.rating).label("avg"), func.count(GoogleReview.id).label("cnt"))
-            .where(GoogleReview.iso_date <= cutoff_30d)
+            .where(GoogleReview.iso_date >= cutoff_30d)
         )
-        as_of_30d = row2.one()
+        last_30d = row2.one()
 
-        # Ratingul cum era acum 60 zile
+        # Luna trecuta: recenzii primite acum 30-60 zile
         row3 = await db.execute(
             select(func.avg(GoogleReview.rating).label("avg"), func.count(GoogleReview.id).label("cnt"))
-            .where(GoogleReview.iso_date <= cutoff_60d)
+            .where(GoogleReview.iso_date >= cutoff_60d)
+            .where(GoogleReview.iso_date < cutoff_30d)
         )
-        as_of_60d = row3.one()
+        prev_30d = row3.one()
+
+        # Acum 2 luni: recenzii primite acum 60-90 zile
+        row4 = await db.execute(
+            select(func.avg(GoogleReview.rating).label("avg"), func.count(GoogleReview.id).label("cnt"))
+            .where(GoogleReview.iso_date >= cutoff_90d)
+            .where(GoogleReview.iso_date < cutoff_60d)
+        )
+        prev_60d = row4.one()
 
     avg_overall = round(float(overall.avg), 2) if overall.avg else None
     avg_today = round(float(today.avg), 2) if today.avg else None
-    avg_as_of_30d = round(float(as_of_30d.avg), 2) if as_of_30d.avg else None
-    avg_as_of_60d = round(float(as_of_60d.avg), 2) if as_of_60d.avg else None
-    # trend = curent - cum era atunci (negativ = a scazut fata de acel moment)
-    trend_30d = round(avg_overall - avg_as_of_30d, 2) if avg_overall is not None and avg_as_of_30d is not None else None
-    trend_60d = round(avg_overall - avg_as_of_60d, 2) if avg_overall is not None and avg_as_of_60d is not None else None
+    avg_last_30d = round(float(last_30d.avg), 2) if last_30d.avg else None
+    avg_as_of_30d = round(float(prev_30d.avg), 2) if prev_30d.avg else None
+    avg_as_of_60d = round(float(prev_60d.avg), 2) if prev_60d.avg else None
+    # trend = luna aceasta - perioada de referinta
+    trend_30d = round(avg_last_30d - avg_as_of_30d, 2) if avg_last_30d is not None and avg_as_of_30d is not None else None
+    trend_60d = round(avg_last_30d - avg_as_of_60d, 2) if avg_last_30d is not None and avg_as_of_60d is not None else None
 
     return {
         "avg_today": avg_today,
