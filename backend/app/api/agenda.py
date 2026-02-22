@@ -44,14 +44,23 @@ ERP_BODY = {
 }
 
 
-def _read_bearer() -> str:
-    if not SET_FILE.exists():
-        return ""
-    for line in SET_FILE.read_text().strip().splitlines():
-        if line.strip().startswith("bearer"):
-            parts = line.split("=", 1)
-            if len(parts) == 2:
-                return parts[1].strip()
+async def _read_bearer(db: AsyncSession) -> str:
+    """Citește bearer token: DB (erp_bearer_token) → fallback .set"""
+    # 1. DB (primary, always writable)
+    result = await db.execute(select(Setting).where(Setting.cheie == "erp_bearer_token"))
+    s = result.scalar_one_or_none()
+    if s and s.valoare:
+        return s.valoare
+    # 2. Fallback: .set file
+    if SET_FILE.exists():
+        try:
+            for line in SET_FILE.read_text().strip().splitlines():
+                if line.strip().startswith("bearer"):
+                    parts = line.split("=", 1)
+                    if len(parts) == 2:
+                        return parts[1].strip()
+        except Exception:
+            pass
     return ""
 
 
@@ -185,7 +194,7 @@ async def sync_erp(
 
     # 2. Fetch from ERP if cache stale
     if vendors is None:
-        token = _read_bearer()
+        token = await _read_bearer(db)
         if token:
             try:
                 async with httpx.AsyncClient(timeout=15) as client:
@@ -785,6 +794,14 @@ async def create_contact(
         campuri.append(camp)
 
     await db.flush()
+
+    # Reload with campuri eagerly loaded (lazy load forbidden in async SQLAlchemy)
+    reloaded = await db.execute(
+        select(AgendaContact)
+        .where(AgendaContact.id == c.id)
+        .options(selectinload(AgendaContact.campuri))
+    )
+    c = reloaded.scalar_one()
     return _serialize_contact(c)
 
 

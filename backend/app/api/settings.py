@@ -74,41 +74,67 @@ async def test_ollama_connection(
 
 @router.get("/settings/bearer-token")
 async def get_bearer_token(
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_admin)
 ):
-    """Citește bearer token din fișierul .set"""
-    if not SET_FILE.exists():
-        return {"value": ""}
-    for line in SET_FILE.read_text().strip().splitlines():
-        if line.startswith("bearer"):
-            parts = line.split("=", 1)
-            if len(parts) == 2:
-                return {"value": parts[1].strip()}
+    """Citește bearer token: DB (erp_bearer_token) → fallback .set"""
+    # 1. Check DB first (primary storage)
+    result = await db.execute(select(Setting).where(Setting.cheie == "erp_bearer_token"))
+    s = result.scalar_one_or_none()
+    if s and s.valoare:
+        return {"value": s.valoare}
+
+    # 2. Fallback: read from .set file
+    if SET_FILE.exists():
+        try:
+            for line in SET_FILE.read_text().strip().splitlines():
+                if line.strip().startswith("bearer"):
+                    parts = line.split("=", 1)
+                    if len(parts) == 2:
+                        return {"value": parts[1].strip()}
+        except Exception:
+            pass
     return {"value": ""}
 
 
 @router.put("/settings/bearer-token")
 async def update_bearer_token(
     data: dict,
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_admin)
 ):
-    """Actualizează bearer token în fișierul .set"""
+    """Actualizează bearer token în DB (și încearcă și .set dacă e writable)"""
     new_token = (data.get("value") or "").strip()
-    lines = []
-    if SET_FILE.exists():
-        lines = SET_FILE.read_text().splitlines()
-    # Replace or add bearer line
-    found = False
-    new_lines = []
-    for line in lines:
-        if line.strip().startswith("bearer"):
+
+    # 1. Save to DB (always works)
+    result = await db.execute(select(Setting).where(Setting.cheie == "erp_bearer_token"))
+    s = result.scalar_one_or_none()
+    if s:
+        s.valoare = new_token
+    else:
+        db.add(Setting(cheie="erp_bearer_token", valoare=new_token, tip="string",
+                       descriere="Bearer token ERP (pontaj + furnizori)"))
+    await db.flush()
+
+    # 2. Also try to update .set file (best-effort, may be read-only in Docker)
+    try:
+        lines = []
+        if SET_FILE.exists():
+            lines = SET_FILE.read_text().splitlines()
+        found = False
+        new_lines = []
+        for line in lines:
+            if line.strip().startswith("bearer"):
+                new_lines.append(f"bearer = {new_token}")
+                found = True
+            else:
+                new_lines.append(line)
+        if not found:
             new_lines.append(f"bearer = {new_token}")
-            found = True
-        else:
-            new_lines.append(line)
-    if not found:
-        new_lines.append(f"bearer = {new_token}")
-    SET_FILE.write_text("\n".join(new_lines) + "\n")
+        SET_FILE.write_text("\n".join(new_lines) + "\n")
+    except (OSError, PermissionError):
+        pass  # File is read-only in Docker — DB is the source of truth
+
     return {"value": new_token}
 
 
@@ -385,14 +411,21 @@ ERP_BODY = {
 }
 
 
-def _read_bearer() -> str:
-    if not SET_FILE.exists():
-        return ""
-    for line in SET_FILE.read_text().strip().splitlines():
-        if line.strip().startswith("bearer"):
-            parts = line.split("=", 1)
-            if len(parts) == 2:
-                return parts[1].strip()
+async def _read_bearer_db(db: AsyncSession) -> str:
+    """Citește bearer token: DB (erp_bearer_token) → fallback .set"""
+    result = await db.execute(select(Setting).where(Setting.cheie == "erp_bearer_token"))
+    s = result.scalar_one_or_none()
+    if s and s.valoare:
+        return s.valoare
+    if SET_FILE.exists():
+        try:
+            for line in SET_FILE.read_text().strip().splitlines():
+                if line.strip().startswith("bearer"):
+                    parts = line.split("=", 1)
+                    if len(parts) == 2:
+                        return parts[1].strip()
+        except Exception:
+            pass
     return ""
 
 
@@ -401,10 +434,10 @@ async def get_furnizori(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Preia lista furnizori din ERP folosind bearer token din .set"""
-    token = _read_bearer()
+    """Preia lista furnizori din ERP folosind bearer token"""
+    token = await _read_bearer_db(db)
     if not token:
-        raise HTTPException(status_code=400, detail="Bearer token neconfigurat în fișierul .set")
+        raise HTTPException(status_code=400, detail="Bearer token neconfigurat. Setează-l din Settings → Keys.")
 
     try:
         async with httpx.AsyncClient(timeout=30) as client:

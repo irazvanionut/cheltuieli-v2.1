@@ -62,8 +62,40 @@ services:
     depends_on:
       - backend
 
+  # Umami Analytics — internal DB (not exposed to host, Docker-network only)
+  umami_db:
+    image: postgres:16-alpine
+    container_name: umami_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD:-umami_pass_2024}
+    volumes:
+      - umami_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U umami -d umami"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Umami Analytics dashboard — accessible on host port 30002
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    container_name: cheltuieli_umami
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD:-umami_pass_2024}@umami_db:5432/umami
+      APP_SECRET: ${UMAMI_SECRET:-change-this-umami-secret}
+    ports:
+      - "30002:3000"
+    depends_on:
+      umami_db:
+        condition: service_healthy
+
 volumes:
   postgres_data:
+  umami_db_data:
 
 networks:
   default:

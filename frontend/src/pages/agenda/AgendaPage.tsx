@@ -656,7 +656,7 @@ export const AgendaPage: React.FC = () => {
   const isAdmin = user?.rol === 'admin' || user?.rol === 'sef';
 
   const [mainView, setMainView] = useState<'furnizori' | 'contacte'>('furnizori');
-  const [subView, setSubView] = useState<'card' | 'list'>('card');
+  const [subView, setSubView] = useState<'card' | 'list'>('list');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [categorieFilter, setCategorieFilter] = useState('');
