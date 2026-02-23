@@ -13,6 +13,7 @@ from app.core.database import init_db, AsyncSessionLocal
 from app.models import Exercitiu, ApeluriZilnic, ApeluriDetalii
 from app.api import api_router
 from app.api.apeluri import parse_queue_log, QUEUE_LOG_DIR
+from app.api.lista_apeluri import ami_event_loop
 from app.api.pontaj import pontaj_fetch_loop
 from app.api.google_reviews import do_refresh as google_reviews_refresh, do_analysis as google_reviews_analyze, do_fetch_serpapi_account
 
@@ -297,11 +298,12 @@ async def lifespan(app: FastAPI):
     task_google_reviews = asyncio.create_task(google_reviews_refresh_loop())
     task_google_analysis = asyncio.create_task(google_reviews_analysis_loop())
     task_serpapi_account = asyncio.create_task(serpapi_account_loop())
+    task_ami = asyncio.create_task(ami_event_loop())
     yield
     # Shutdown
-    for task in [task_close, task_apeluri, task_pontaj, task_google_reviews, task_google_analysis, task_serpapi_account]:
+    for task in [task_close, task_apeluri, task_pontaj, task_google_reviews, task_google_analysis, task_serpapi_account, task_ami]:
         task.cancel()
-    for task in [task_close, task_apeluri, task_pontaj, task_google_reviews, task_google_analysis, task_serpapi_account]:
+    for task in [task_close, task_apeluri, task_pontaj, task_google_reviews, task_google_analysis, task_serpapi_account, task_ami]:
         try:
             await task
         except asyncio.CancelledError:

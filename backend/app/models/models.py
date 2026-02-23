@@ -277,6 +277,24 @@ class RecomandariApeluri(Base):
     created_at = Column(DateTime, server_default=func.now())
 
 
+class AmiApel(Base):
+    """Real-time AMI call log — written on every queue event, persists across restarts."""
+    __tablename__ = "ami_apeluri"
+
+    id = Column(Integer, primary_key=True, index=True)
+    callid = Column(String(100), unique=True, nullable=False, index=True)
+    caller_id = Column(String(100), default="")
+    agent = Column(String(50), default="")
+    queue = Column(String(100), default="")
+    status = Column(String(20), nullable=False)
+    data = Column(Date, nullable=False, index=True)
+    ora = Column(String(10))
+    hold_time = Column(Integer, default=0)
+    call_time = Column(Integer, default=0)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
 class GoogleReview(Base):
     __tablename__ = "google_reviews"
 
@@ -410,6 +428,28 @@ class AgendaInteractiune(Base):
     furnizor = relationship("AgendaFurnizor", back_populates="interactiuni")
     contact = relationship("AgendaContact", back_populates="interactiuni")
     user = relationship("User")
+
+
+class SmsTemplate(Base):
+    __tablename__ = "sms_templates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    titlu = Column(String(100), nullable=False)
+    corp = Column(Text, nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class SmsLog(Base):
+    __tablename__ = "sms_log"
+
+    id = Column(Integer, primary_key=True, index=True)
+    phone = Column(String(30), nullable=False)
+    message = Column(Text, nullable=False)
+    ok = Column(Boolean, nullable=False, default=True)
+    error_msg = Column(Text)
+    sent_by = Column(String(100))
+    created_at = Column(DateTime, server_default=func.now())
 
 
 class AgendaTodo(Base):

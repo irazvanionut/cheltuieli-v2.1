@@ -14,6 +14,7 @@ import {
   Clock,
   PhoneIncoming,
   KeyRound,
+  MessageSquare,
   ChevronRight,
   ArrowLeft,
   Building2,
@@ -33,6 +34,7 @@ import { IstoricApeluriSettings } from './settings/IstoricApeluriSettings';
 import { ScheduleSettings } from './settings/ScheduleSettings';
 import { KeysSettings } from './settings/KeysSettings';
 import { FurnizoriSettings } from './settings/FurnizoriSettings';
+import { SmsSettings } from './settings/SmsSettings';
 
 interface MenuItem {
   path: string;
@@ -72,6 +74,7 @@ const settingsGroups: MenuGroup[] = [
     label: 'Apeluri',
     items: [
       { path: '/settings/istoric-apeluri', name: 'Istoric Apeluri', icon: PhoneIncoming, description: 'Vizualizare istoric apeluri salvate' },
+      { path: '/settings/sms', name: 'SMS Gateway', icon: MessageSquare, description: 'Dinstar DWG2000 — trimitere SMS' },
     ],
   },
   {
@@ -198,6 +201,7 @@ export const SettingsPage: React.FC = () => {
           <Route path="schedule" element={<ScheduleSettings />} />
           <Route path="keys" element={<KeysSettings />} />
           <Route path="furnizori" element={<FurnizoriSettings />} />
+          <Route path="sms" element={<SmsSettings />} />
         </Routes>
       </div>
     </div>

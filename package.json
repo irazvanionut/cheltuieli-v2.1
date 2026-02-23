@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "asterisk-ami-client": "^1.1.5"
+  }
+}

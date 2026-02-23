@@ -14,6 +14,9 @@ from app.models.models import (
     ApeluriDetalii,
     RecomandariApeluri,
     GoogleReview,
+    AmiApel,
+    SmsTemplate,
+    SmsLog,
 )
 
 __all__ = [
@@ -32,4 +35,7 @@ __all__ = [
     "ApeluriDetalii",
     "RecomandariApeluri",
     "GoogleReview",
+    "AmiApel",
+    "SmsTemplate",
+    "SmsLog",
 ]

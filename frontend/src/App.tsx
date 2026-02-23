@@ -19,6 +19,7 @@ import { AutomatizariPage } from '@/pages/online/AutomatizariPage';
 import { ScenePage } from '@/pages/online/ScenePage';
 import { AgendaPage } from '@/pages/agenda/AgendaPage';
 import { FurnizorDetail } from '@/pages/agenda/FurnizorDetail';
+import { ListaApeluriPage } from '@/pages/ListaApeluriPage';
 import { Spinner } from '@/components/ui';
 
 // Create React Query client
@@ -35,12 +36,21 @@ const queryClient = new QueryClient({
 // Protected route wrapper
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAppStore();
-  
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-  
+
   return <Layout>{children}</Layout>;
+};
+
+// Semi-public route: authenticated users get Layout, others see the page standalone
+const ApeluriListaRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated } = useAppStore();
+  if (isAuthenticated) {
+    return <Layout>{children}</Layout>;
+  }
+  return <>{children}</>;
 };
 
 
@@ -106,6 +116,14 @@ function App() {
                 <ProtectedRoute>
                   <SettingsPage />
                 </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/apeluri/lista"
+              element={
+                <ApeluriListaRoute>
+                  <ListaApeluriPage />
+                </ApeluriListaRoute>
               }
             />
             <Route

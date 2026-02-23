@@ -523,11 +523,78 @@ class ApiService {
     return result;
   }
 
+  async getApeluriLista(params?: {
+    data_start?: string;
+    data_end?: string;
+    q?: string;
+    status?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<any> {
+    const { data: result } = await this.client.get('/apeluri/lista', { params });
+    return result;
+  }
+
+  async getApeluriAmiCanale(): Promise<any> {
+    const { data: result } = await this.client.get('/apeluri/ami/canale');
+    return result;
+  }
+
+  async getApeluriListaPublic(params?: {
+    data_start?: string;
+    data_end?: string;
+    q?: string;
+    status?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<any> {
+    const { data: result } = await this.client.get('/apeluri/lista/public', { params });
+    return result;
+  }
+
+  async getApeluriAmiCanalePublic(): Promise<any> {
+    const { data: result } = await this.client.get('/apeluri/ami/canale/public');
+    return result;
+  }
+
   async salveazaApeluriManual(data?: string): Promise<any> {
     const params: Record<string, any> = {};
     if (data) params.data_str = data;
     const { data: result } = await this.client.post('/apeluri/istoric/salveaza', null, { params });
     return result;
+  }
+
+  async sendSms(phone: string, message: string): Promise<{ ok: boolean; error?: string }> {
+    const { data } = await this.client.post<{ ok: boolean; error?: string }>('/sms/send', { phone, message });
+    return data;
+  }
+
+  async getSmsTemplates(): Promise<{ id: number; titlu: string; corp: string }[]> {
+    const { data } = await this.client.get('/sms/templates');
+    return data;
+  }
+
+  async createSmsTemplate(titlu: string, corp: string): Promise<{ id: number; titlu: string; corp: string }> {
+    const { data } = await this.client.post('/sms/templates', { titlu, corp });
+    return data;
+  }
+
+  async updateSmsTemplate(id: number, titlu: string, corp: string): Promise<{ id: number; titlu: string; corp: string }> {
+    const { data } = await this.client.put(`/sms/templates/${id}`, { titlu, corp });
+    return data;
+  }
+
+  async deleteSmsTemplate(id: number): Promise<{ ok: boolean }> {
+    const { data } = await this.client.delete(`/sms/templates/${id}`);
+    return data;
+  }
+
+  async getSmsLog(params?: { limit?: number; phone?: string }): Promise<Array<{
+    id: number; phone: string; message: string; ok: boolean;
+    error_msg: string | null; sent_by: string | null; created_at: string;
+  }>> {
+    const { data } = await this.client.get('/sms/log', { params });
+    return data;
   }
 
   // ============================================
