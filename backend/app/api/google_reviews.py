@@ -616,6 +616,8 @@ async def refetch_from_date(request: Request):
     if key_mode not in ("key1", "key2", "alternate"):
         key_mode = "alternate"
 
+    no_cache = bool(body.get("no_cache", True))
+
     try:
         result = await do_refetch_from_date(from_date, max_calls=max_calls, key_mode=key_mode, use_date=use_date, no_cache=no_cache)
     except ValueError as e:
