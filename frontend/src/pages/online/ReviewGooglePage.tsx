@@ -121,10 +121,27 @@ const DetailRating: React.FC<{
 
 // ─── Trend chart ───────────────────────────────────────────────────────────
 
+const CHART_PERIODS = [
+  { label: '3L',  months: 3  },
+  { label: '6L',  months: 6  },
+  { label: '1A',  months: 12 },
+  { label: '2A',  months: 24 },
+  { label: 'Tot', months: 0  },
+] as const;
+
 const TrendChart: React.FC<{ reviews: GoogleReview[] }> = ({ reviews }) => {
+  const [chartMonths, setChartMonths] = useState(12);
+
   const data = useMemo(() => {
+    const cutoff = chartMonths > 0
+      ? new Date(Date.now() - chartMonths * 30.44 * 24 * 3600 * 1000)
+      : null;
+    const filtered = cutoff
+      ? reviews.filter((r) => parseISO(r.iso_date) >= cutoff)
+      : reviews;
+
     const byMonth: Record<string, { count: number; sumRating: number }> = {};
-    reviews.forEach((r) => {
+    filtered.forEach((r) => {
       const month = r.iso_date.slice(0, 7);
       if (!byMonth[month]) byMonth[month] = { count: 0, sumRating: 0 };
       byMonth[month].count++;
@@ -138,11 +155,27 @@ const TrendChart: React.FC<{ reviews: GoogleReview[] }> = ({ reviews }) => {
         count,
         avg: Math.round((sumRating / count) * 10) / 10,
       }));
-  }, [reviews]);
+  }, [reviews, chartMonths]);
 
   if (data.length === 0) return null;
 
   return (
+    <>
+      <div className="flex gap-1 mb-2">
+        {CHART_PERIODS.map((p) => (
+          <button
+            key={p.label}
+            onClick={() => setChartMonths(p.months)}
+            className={`px-2 py-0.5 text-xs rounded font-medium transition-colors ${
+              chartMonths === p.months
+                ? 'bg-stone-700 dark:bg-stone-300 text-white dark:text-stone-900'
+                : 'text-stone-400 hover:text-stone-600 dark:hover:text-stone-300'
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
     <ResponsiveContainer width="100%" height={160}>
       <ComposedChart data={data} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(120,113,108,0.15)" />
@@ -191,6 +224,7 @@ const TrendChart: React.FC<{ reviews: GoogleReview[] }> = ({ reviews }) => {
         />
       </ComposedChart>
     </ResponsiveContainer>
+    </>
   );
 };
 

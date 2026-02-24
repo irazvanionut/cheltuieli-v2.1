@@ -427,15 +427,16 @@ class ApiService {
     return data;
   }
 
-  async refetchReviewsFromDate(date: string): Promise<{
-    deleted: number;
+  async refetchReviewsFromDate(date: string, max_calls: number, key_mode: string, use_date: boolean = true): Promise<{
     inserted: number;
+    skipped: number;
     pages_fetched: number;
     calls_per_key: Record<string, number>;
     from_date: string;
     refreshed_at: string;
+    stop_reason?: string;
   }> {
-    const { data } = await this.client.post('/google-reviews/refetch-from-date', { date });
+    const { data } = await this.client.post('/google-reviews/refetch-from-date', { date, max_calls, key_mode, use_date });
     return data;
   }
 

@@ -286,40 +286,45 @@ async def do_refresh(source: str = "scheduler") -> dict:
     }
 
 
-async def do_refetch_from_date(from_date: date) -> dict:
+async def do_refetch_from_date(
+    from_date: date,
+    max_calls: int = 10,
+    key_mode: str = "alternate",  # "key1" | "key2" | "alternate"
+    use_date: bool = True,
+) -> dict:
     """
-    Șterge toate review-urile cu iso_date >= from_date și le re-fetchează
-    din SerpAPI (no_cache=true, newest first). Cheile SerpAPI alternează
-    per pagină pentru a distribui uniform apelurile.
+    Re-fetchează review-uri din SerpAPI (no_cache=true, newest first).
+    NU șterge nimic — inserează doar review-urile care nu există deja în DB.
+    Se oprește când:
+      - use_date=True și toată pagina e formată din review-uri mai vechi decât from_date, SAU
+      - a efectuat max_calls apeluri API, SAU
+      - nu mai există pagini.
+    key_mode: "key1" = doar cheie 1, "key2" = doar cheie 2, "alternate" = alternare per pagină.
     """
     from_dt = datetime.combine(from_date, datetime.min.time()).replace(tzinfo=timezone.utc)
 
     async with AsyncSessionLocal() as db:
-        # 1. Numără și șterge review-urile din intervalul specificat
-        count_result = await db.execute(
-            select(func.count()).select_from(GoogleReview).where(GoogleReview.iso_date >= from_dt)
-        )
-        deleted_count = count_result.scalar() or 0
-
-        await db.execute(
-            sql_delete(GoogleReview).where(GoogleReview.iso_date >= from_dt)
-        )
-        await db.commit()
-
-        # 2. Pregătește cheile disponibile pentru alternare per pagină
+        # 1. Pregătește cheile disponibile
         data_id = await _get_setting(db, "serpapi_data_id")
         if not data_id:
             raise ValueError("serpapi_data_id nu este configurat")
 
         key1 = await _get_setting(db, "serpapi_api_key")
         key2 = await _get_setting(db, "serpapi_api_key_2")
-        available_keys: list[tuple[str, int]] = []
-        if key1:
-            available_keys.append((key1, 1))
-        if key2:
-            available_keys.append((key2, 2))
+
+        if key_mode == "key1":
+            available_keys: list[tuple[str, int]] = [(key1, 1)] if key1 else []
+        elif key_mode == "key2":
+            available_keys = [(key2, 2)] if key2 else []
+        else:  # alternate
+            available_keys = []
+            if key1:
+                available_keys.append((key1, 1))
+            if key2:
+                available_keys.append((key2, 2))
+
         if not available_keys:
-            raise ValueError("Nicio cheie SerpAPI configurată")
+            raise ValueError("Nicio cheie SerpAPI disponibilă pentru modul selectat")
 
         # Reset lunar dacă e cazul
         current_month = date.today().strftime("%Y-%m")
@@ -330,22 +335,28 @@ async def do_refetch_from_date(from_date: date) -> dict:
             await _set_setting(db, "serpapi_calls_month", current_month)
             await db.commit()
 
-        # 3. Re-fetch cu alternare per pagină
+        # 2. Re-fetch
         current_url = (
             f"{SERPAPI_BASE}?engine=google_maps_reviews"
             f"&data_id={data_id}&hl=en&sort_by=newestFirst&no_cache=true"
         )
 
         inserted = 0
+        skipped = 0
         pages_fetched = 0
         calls_per_key: dict[int, int] = {}
         key_idx = 0
         stop = False
         stop_reason = "unknown"
 
-        print(f"[Refetch] START from_date={from_date} from_dt={from_dt.isoformat()}")
+        print(f"[Refetch] START from_date={from_date} max_calls={max_calls} key_mode={key_mode}")
 
         while not stop:
+            if pages_fetched >= max_calls:
+                stop_reason = f"max_calls_reached ({max_calls})"
+                print(f"[Refetch] Stopping: {stop_reason}")
+                break
+
             api_key, key_index = available_keys[key_idx % len(available_keys)]
             key_idx += 1
 
@@ -359,7 +370,6 @@ async def do_refetch_from_date(from_date: date) -> dict:
             reviews = page_data.get("reviews", [])
             pagination_raw = page_data.get("serpapi_pagination", {})
             print(f"[Refetch] Page {pages_fetched}: {len(reviews)} reviews, "
-                  f"pagination keys={list(pagination_raw.keys())}, "
                   f"has_next={'next' in pagination_raw}, "
                   f"has_token={'next_page_token' in pagination_raw}")
 
@@ -368,39 +378,51 @@ async def do_refetch_from_date(from_date: date) -> dict:
                 print(f"[Refetch] Stopping: empty reviews on page {pages_fetched}")
                 break
 
-            hit_old = False
+            new_on_page = 0
+            old_on_page = 0
             for r in reviews:
                 rid = r.get("review_id", "")
                 if not rid:
                     continue
                 parsed = _parse_review(r)
                 review_dt = parsed["iso_date"]
-                is_old = review_dt < from_dt
+                is_old = use_date and (review_dt < from_dt)
                 print(f"[Refetch]   review_id={rid[:12]} iso_date={review_dt.isoformat()} old={is_old}")
                 if is_old:
-                    hit_old = True
-                    stop = True
-                    stop_reason = f"hit_old_review date={review_dt.isoformat()}"
-                    break
-                db.add(GoogleReview(**parsed))
-                inserted += 1
+                    old_on_page += 1
+                    continue
+                new_on_page += 1
+                # Inserează doar dacă nu există deja
+                existing = await db.execute(
+                    select(GoogleReview).where(GoogleReview.review_id == rid)
+                )
+                if existing.scalar_one_or_none() is None:
+                    db.add(GoogleReview(**parsed))
+                    inserted += 1
+                else:
+                    skipped += 1
 
-            if not hit_old:
+            print(f"[Refetch] Page {pages_fetched}: new={new_on_page} old={old_on_page}")
+
+            # Dacă use_date=True, oprim când toată pagina e veche
+            if use_date and new_on_page == 0 and old_on_page > 0:
+                stop = True
+                stop_reason = f"full_page_old (page {pages_fetched})"
+                print(f"[Refetch] Stopping: {stop_reason}")
+            else:
                 next_url = _get_next_url(page_data, data_id)
-                print(f"[Refetch] Page {pages_fetched}: hit_old=False, next_url={'YES' if next_url else 'NONE'}")
+                print(f"[Refetch] Page {pages_fetched}: next_url={'YES' if next_url else 'NONE'}")
                 if next_url:
                     current_url = next_url
                 else:
                     stop = True
                     stop_reason = "no_next_token"
-            else:
-                print(f"[Refetch] Stopping after page {pages_fetched}: {stop_reason}")
 
-        print(f"[Refetch] DONE pages={pages_fetched} inserted={inserted} stop_reason={stop_reason}")
+        print(f"[Refetch] DONE pages={pages_fetched} inserted={inserted} skipped={skipped} stop_reason={stop_reason}")
 
         await db.commit()
 
-        # 4. Actualizează contoare și timestamp
+        # 3. Actualizează contoare și timestamp
         now_iso = datetime.now(timezone.utc).isoformat()
         await _set_setting(db, "google_reviews_last_refresh", now_iso)
         for kidx, calls in calls_per_key.items():
@@ -409,8 +431,8 @@ async def do_refetch_from_date(from_date: date) -> dict:
         await db.commit()
 
     return {
-        "deleted": deleted_count,
         "inserted": inserted,
+        "skipped": skipped,
         "pages_fetched": pages_fetched,
         "calls_per_key": calls_per_key,
         "from_date": from_date.isoformat(),
@@ -571,21 +593,29 @@ async def trigger_refresh(force: bool = False):
 @router.post("/google-reviews/refetch-from-date")
 async def refetch_from_date(request: Request):
     """
-    Șterge review-urile de la data specificată și le re-fetchează din SerpAPI.
-    Body: { "date": "YYYY-MM-DD" }
-    Cheile SerpAPI alternează per pagină.
+    Re-fetchează review-uri de la data specificată, fără a șterge nimic.
+    Body: { "date": "YYYY-MM-DD", "max_calls": 10, "key_mode": "alternate"|"key1"|"key2" }
     """
     body = await request.json()
+    use_date = bool(body.get("use_date", True))
     date_str = body.get("date", "")
-    if not date_str:
-        raise HTTPException(status_code=400, detail="Câmpul 'date' este obligatoriu")
+    if use_date and not date_str:
+        raise HTTPException(status_code=400, detail="Câmpul 'date' este obligatoriu când 'Oprire la dată' e activ")
     try:
-        from_date = date.fromisoformat(date_str)
+        from_date = date.fromisoformat(date_str) if date_str else date.today()
     except ValueError:
         raise HTTPException(status_code=400, detail="Format dată invalid (YYYY-MM-DD)")
 
+    max_calls = int(body.get("max_calls", 10))
+    if max_calls < 1:
+        max_calls = 1
+
+    key_mode = body.get("key_mode", "alternate")
+    if key_mode not in ("key1", "key2", "alternate"):
+        key_mode = "alternate"
+
     try:
-        result = await do_refetch_from_date(from_date)
+        result = await do_refetch_from_date(from_date, max_calls=max_calls, key_mode=key_mode, use_date=use_date)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except httpx.HTTPError as e:

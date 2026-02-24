@@ -1,32 +1,12 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Bot, RefreshCw, CheckCircle, XCircle, Server, Cpu, Sparkles, Save } from 'lucide-react';
+import React from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { Bot, RefreshCw, Server, Cpu, Sparkles } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 import api from '@/services/api';
-import { Card, Button, Input, Spinner, Badge } from '@/components/ui';
-import type { OllamaStatus, Setting } from '@/types';
+import { Card, Button, Badge } from '@/components/ui';
 
 export const OllamaSettings: React.FC = () => {
-  const queryClient = useQueryClient();
-  const [ollamaHost, setOllamaHost] = useState('');
-  const [embeddingModel, setEmbeddingModel] = useState('');
-  const [chatModel, setChatModel] = useState('');
-
-  // Fetch settings
-  const { data: settings = [], isLoading: isLoadingSettings } = useQuery({
-    queryKey: ['settings'],
-    queryFn: () => api.getSettings(),
-    onSuccess: (data) => {
-      const hostSetting = data.find((s) => s.cheie === 'ollama_host');
-      const embSetting = data.find((s) => s.cheie === 'ollama_embedding_model');
-      const chatSetting = data.find((s) => s.cheie === 'ollama_chat_model');
-      
-      if (hostSetting?.valoare) setOllamaHost(hostSetting.valoare);
-      if (embSetting?.valoare) setEmbeddingModel(embSetting.valoare);
-      if (chatSetting?.valoare) setChatModel(chatSetting.valoare);
-    },
-  });
 
   // Test connection
   const { 
@@ -40,15 +20,6 @@ export const OllamaSettings: React.FC = () => {
     retry: false,
   });
 
-  // Update setting mutation
-  const updateMutation = useMutation({
-    mutationFn: ({ cheie, valoare }: { cheie: string; valoare: string }) =>
-      api.updateSetting(cheie, valoare),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['settings'] });
-    },
-  });
-
   // Generate embeddings mutation
   const embeddingsMutation = useMutation({
     mutationFn: () => api.generateEmbeddings(true),
@@ -59,40 +30,6 @@ export const OllamaSettings: React.FC = () => {
       toast.error('Eroare la generarea embeddings');
     },
   });
-
-  const handleSaveSettings = async () => {
-    try {
-      await Promise.all([
-        updateMutation.mutateAsync({ cheie: 'ollama_host', valoare: ollamaHost }),
-        updateMutation.mutateAsync({ cheie: 'ollama_embedding_model', valoare: embeddingModel }),
-        updateMutation.mutateAsync({ cheie: 'ollama_chat_model', valoare: chatModel }),
-      ]);
-      toast.success('Setări salvate');
-    } catch {
-      toast.error('Eroare la salvarea setărilor');
-    }
-  };
-
-  // Initialize values from settings
-  React.useEffect(() => {
-    if (settings.length > 0) {
-      const host = settings.find((s) => s.cheie === 'ollama_host');
-      const emb = settings.find((s) => s.cheie === 'ollama_embedding_model');
-      const chat = settings.find((s) => s.cheie === 'ollama_chat_model');
-      
-      if (host?.valoare && !ollamaHost) setOllamaHost(host.valoare);
-      if (emb?.valoare && !embeddingModel) setEmbeddingModel(emb.valoare);
-      if (chat?.valoare && !chatModel) setChatModel(chat.valoare);
-    }
-  }, [settings]);
-
-  if (isLoadingSettings) {
-    return (
-      <div className="flex justify-center py-12">
-        <Spinner size="lg" />
-      </div>
-    );
-  }
 
   const isConnected = ollamaStatus?.status === 'connected';
 
@@ -165,47 +102,11 @@ export const OllamaSettings: React.FC = () => {
         )}
       </Card>
 
-      {/* Settings Form */}
-      <Card className="mb-6">
-        <h3 className="font-semibold text-stone-900 dark:text-stone-100 mb-4 flex items-center gap-2">
-          <Server className="w-5 h-5" />
-          Configurare conexiune
-        </h3>
-
-        <div className="space-y-4">
-          <Input
-            label="Ollama Host URL"
-            value={ollamaHost}
-            onChange={(e) => setOllamaHost(e.target.value)}
-            placeholder="http://localhost:11434"
-          />
-
-          <Input
-            label="Model pentru Embeddings"
-            value={embeddingModel}
-            onChange={(e) => setEmbeddingModel(e.target.value)}
-            placeholder="mxbai-embed-large"
-          />
-
-          <Input
-            label="Model pentru Chat (opțional)"
-            value={chatModel}
-            onChange={(e) => setChatModel(e.target.value)}
-            placeholder="llama3.2:3b"
-          />
-
-          <div className="pt-2">
-            <Button
-              variant="primary"
-              onClick={handleSaveSettings}
-              loading={updateMutation.isPending}
-              icon={<Save className="w-4 h-4" />}
-            >
-              Salvează setările
-            </Button>
-          </div>
-        </div>
-      </Card>
+      {/* Settings moved to Keys */}
+      <div className="mb-6 px-4 py-3 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800/50 text-sm text-stone-500 dark:text-stone-400 flex items-center gap-2">
+        <Server className="w-4 h-4 shrink-0" />
+        Configurarea conexiunii (host, modele) se face din <strong className="text-stone-700 dark:text-stone-300">Setări › Keys</strong>.
+      </div>
 
       {/* Generate Embeddings */}
       <Card>

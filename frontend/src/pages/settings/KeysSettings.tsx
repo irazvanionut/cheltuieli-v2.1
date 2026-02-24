@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Eye, EyeOff, Copy, Check, Save, X, KeyRound, RotateCcw, TrendingUp, Lock, RefreshCw, AlertTriangle, CheckCircle, List, ChevronDown, Wifi, WifiOff } from 'lucide-react';
+import { Eye, EyeOff, Copy, Check, Save, X, KeyRound, RotateCcw, TrendingUp, Lock, RefreshCw, AlertTriangle, CheckCircle, List, ChevronDown, Wifi, WifiOff, Bot, Send, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/services/api';
 import type { Setting } from '@/types';
@@ -292,14 +292,17 @@ const SerpLog: React.FC = () => {
 const RefetchWidget: React.FC = () => {
   const qc = useQueryClient();
   const [dateVal, setDateVal] = useState('');
+  const [useDate, setUseDate] = useState(true);
+  const [maxCalls, setMaxCalls] = useState(10);
+  const [keyMode, setKeyMode] = useState<'alternate' | 'key1' | 'key2'>('alternate');
   const [confirm, setConfirm] = useState(false);
   const [result, setResult] = useState<{
-    deleted: number; inserted: number; pages_fetched: number;
+    inserted: number; skipped: number; pages_fetched: number;
     calls_per_key: Record<string, number>; from_date: string; stop_reason?: string;
   } | null>(null);
 
   const mutation = useMutation({
-    mutationFn: () => api.refetchReviewsFromDate(dateVal),
+    mutationFn: () => api.refetchReviewsFromDate(useDate ? dateVal : '', maxCalls, keyMode, useDate),
     onSuccess: (res) => {
       setResult(res);
       setConfirm(false);
@@ -313,19 +316,20 @@ const RefetchWidget: React.FC = () => {
   });
 
   const maxDate = new Date().toISOString().split('T')[0];
+  const inputCls = 'px-2.5 py-1.5 text-xs rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-400';
 
   return (
     <div className="mx-4 mb-3 p-3 rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/10">
       <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-400 mb-2">
         <RefreshCw className="w-3.5 h-3.5" />
-        Re-fetch complet de la dată
+        Re-fetch de la dată
       </div>
 
       {result && !mutation.isPending && (
         <div className="mb-2 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 text-xs text-emerald-700 dark:text-emerald-400 flex items-start gap-2">
           <CheckCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
           <span>
-            Șters <strong>{result.deleted}</strong> · Adăugat <strong>{result.inserted}</strong> · Pagini <strong>{result.pages_fetched}</strong>
+            Adăugat <strong>{result.inserted}</strong> · Existente <strong>{result.skipped}</strong> · Pagini <strong>{result.pages_fetched}</strong>
             {Object.keys(result.calls_per_key).length > 0 && (
               <> · Apeluri: {Object.entries(result.calls_per_key).map(([k, v]) => `cheie ${k}: ${v}`).join(', ')}</>
             )}
@@ -337,35 +341,71 @@ const RefetchWidget: React.FC = () => {
       )}
 
       {!confirm ? (
-        <div className="flex items-center gap-2">
-          <input
-            type="date"
-            value={dateVal}
-            max={maxDate}
-            onChange={(e) => { setDateVal(e.target.value); setResult(null); }}
-            className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-400"
-          />
-          <button
-            onClick={() => dateVal && setConfirm(true)}
-            disabled={!dateVal}
-            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-40 transition-colors whitespace-nowrap"
-          >
-            Execută
-          </button>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-400 cursor-pointer select-none whitespace-nowrap">
+              <input
+                type="checkbox"
+                checked={useDate}
+                onChange={(e) => { setUseDate(e.target.checked); setResult(null); }}
+                className="rounded"
+              />
+              Oprire la dată
+            </label>
+            <input
+              type="date"
+              value={dateVal}
+              max={maxDate}
+              disabled={!useDate}
+              onChange={(e) => { setDateVal(e.target.value); setResult(null); }}
+              className={`flex-1 ${inputCls} disabled:opacity-40`}
+            />
+            <input
+              type="number"
+              value={maxCalls}
+              min={1}
+              onChange={(e) => setMaxCalls(Math.max(1, parseInt(e.target.value) || 1))}
+              className={`w-20 ${inputCls}`}
+              title="Număr maxim de apeluri API"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={keyMode}
+              onChange={(e) => setKeyMode(e.target.value as 'alternate' | 'key1' | 'key2')}
+              className={`flex-1 ${inputCls}`}
+            >
+              <option value="alternate">Alternare (Cheie 1 + 2)</option>
+              <option value="key1">Cheie 1</option>
+              <option value="key2">Cheie 2</option>
+            </select>
+            <button
+              onClick={() => (!useDate || dateVal) && setConfirm(true)}
+              disabled={useDate && !dateVal}
+              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-40 transition-colors whitespace-nowrap"
+            >
+              Execută
+            </button>
+          </div>
         </div>
       ) : (
         <div className="space-y-2">
           <div className="flex items-start gap-1.5 text-xs text-amber-700 dark:text-amber-400">
             <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
             <span>
-              Se vor <strong>șterge</strong> toate review-urile din <strong>{dateVal}</strong> până azi și se vor re-fetcha din SerpAPI (no_cache). Confirmă?
+              {useDate
+                ? <>Se vor fetcha review-uri din <strong>{dateVal}</strong> până azi, </>
+                : <>Se vor fetcha review-uri fără limită de dată, </>
+              }
+              max <strong>{maxCalls}</strong> apeluri, {keyMode === 'alternate' ? 'alternând cheile' : `cheie ${keyMode === 'key1' ? '1' : '2'}`}.
+              Review-urile existente sunt păstrate. Confirmă?
             </span>
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => mutation.mutate()}
               disabled={mutation.isPending}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-50 transition-colors"
             >
               {mutation.isPending
                 ? <><RefreshCw className="w-3 h-3 animate-spin" /> Se procesează...</>
@@ -716,6 +756,236 @@ const FieldRow: React.FC<FieldRowProps> = ({ field, value }) => {
   );
 };
 
+// ─── Ollama config widget ──────────────────────────────────────────────────────
+
+const OllamaConfigWidget: React.FC = () => {
+  const qc = useQueryClient();
+  const [ollamaHost, setOllamaHost] = useState('');
+  const [embeddingModel, setEmbeddingModel] = useState('');
+  const [chatModel, setChatModel] = useState('');
+
+  const { data: settings = [] } = useQuery({
+    queryKey: ['settings-all'],
+    queryFn: () => api.getSettings(),
+  });
+
+  useEffect(() => {
+    const host = settings.find((s) => s.cheie === 'ollama_host');
+    const emb  = settings.find((s) => s.cheie === 'ollama_embedding_model');
+    const chat = settings.find((s) => s.cheie === 'ollama_chat_model');
+    if (host?.valoare && !ollamaHost)       setOllamaHost(host.valoare);
+    if (emb?.valoare  && !embeddingModel)   setEmbeddingModel(emb.valoare);
+    if (chat?.valoare && !chatModel)        setChatModel(chat.valoare);
+  }, [settings]);
+
+  const mutation = useMutation({
+    mutationFn: ({ cheie, valoare }: { cheie: string; valoare: string }) =>
+      api.upsertSetting(cheie, valoare),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['settings-all'] }),
+  });
+
+  const handleSave = async () => {
+    try {
+      await Promise.all([
+        mutation.mutateAsync({ cheie: 'ollama_host',            valoare: ollamaHost }),
+        mutation.mutateAsync({ cheie: 'ollama_embedding_model', valoare: embeddingModel }),
+        mutation.mutateAsync({ cheie: 'ollama_chat_model',      valoare: chatModel }),
+      ]);
+      toast.success('Setări Ollama salvate');
+    } catch {
+      toast.error('Eroare la salvare');
+    }
+  };
+
+  const inputCls = 'w-full px-3 py-2 text-xs rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-red-500';
+  const labelCls = 'block text-xs font-medium text-stone-500 dark:text-stone-400 mb-1';
+
+  return (
+    <div className="bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
+      <div className="px-4 py-3 border-b border-stone-100 dark:border-stone-800 bg-stone-50 dark:bg-stone-800/50 flex items-center gap-2">
+        <Bot className="w-4 h-4 text-stone-500" />
+        <div>
+          <h3 className="text-sm font-semibold text-stone-800 dark:text-stone-200">Conexiune AI (Ollama)</h3>
+          <p className="text-xs text-stone-400 mt-0.5">Host și modele pentru autocomplete semantic și chat</p>
+        </div>
+      </div>
+      <div className="px-4 py-4 space-y-3">
+        <div>
+          <label className={labelCls}>Ollama Host URL</label>
+          <input value={ollamaHost} onChange={(e) => setOllamaHost(e.target.value)} placeholder="http://localhost:11434" className={inputCls} />
+        </div>
+        <div>
+          <label className={labelCls}>Model Embeddings</label>
+          <input value={embeddingModel} onChange={(e) => setEmbeddingModel(e.target.value)} placeholder="mxbai-embed-large" className={inputCls} />
+        </div>
+        <div>
+          <label className={labelCls}>Model Chat (opțional)</label>
+          <input value={chatModel} onChange={(e) => setChatModel(e.target.value)} placeholder="llama3.2:3b" className={inputCls} />
+        </div>
+        <div className="pt-1">
+          <button
+            onClick={handleSave}
+            disabled={mutation.isPending}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+          >
+            <Save className="w-3.5 h-3.5" />
+            {mutation.isPending ? 'Se salvează...' : 'Salvează'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+// ─── SMS Gateway widget ────────────────────────────────────────────────────────
+
+const SmsGatewayWidget: React.FC = () => {
+  const qc = useQueryClient();
+  const [dinstarIp,   setDinstarIp]   = useState('');
+  const [dinstarUser, setDinstarUser] = useState('');
+  const [dinstarPass, setDinstarPass] = useState('');
+  const [showPass,    setShowPass]    = useState(false);
+  const [testPhone,   setTestPhone]   = useState('');
+  const [testResult,  setTestResult]  = useState<{ ok: boolean; msg: string } | null>(null);
+
+  const { data: settings = [] } = useQuery({
+    queryKey: ['settings-all'],
+    queryFn: () => api.getSettings(),
+  });
+
+  useEffect(() => {
+    const ip   = settings.find((s) => s.cheie === 'dinstar_ip');
+    const user = settings.find((s) => s.cheie === 'dinstar_user');
+    const pass = settings.find((s) => s.cheie === 'dinstar_pass');
+    if (ip?.valoare   && !dinstarIp)   setDinstarIp(ip.valoare);
+    if (user?.valoare && !dinstarUser) setDinstarUser(user.valoare);
+    if (pass?.valoare && !dinstarPass) setDinstarPass(pass.valoare);
+  }, [settings]);
+
+  const saveMutation = useMutation({
+    mutationFn: ({ cheie, valoare }: { cheie: string; valoare: string }) =>
+      api.upsertSetting(cheie, valoare),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['settings-all'] }),
+  });
+
+  const testMutation = useMutation({
+    mutationFn: () => api.sendSms(testPhone, 'Test SMS din Cheltuieli App'),
+    onSuccess: (res) => {
+      if (res.ok) setTestResult({ ok: true,  msg: `SMS acceptat pentru ${testPhone}` });
+      else        setTestResult({ ok: false, msg: res.error || 'Gateway a refuzat mesajul' });
+    },
+    onError: (err: any) => {
+      setTestResult({ ok: false, msg: err.response?.data?.detail || 'Eroare de rețea' });
+    },
+  });
+
+  const handleSave = async () => {
+    try {
+      await Promise.all([
+        saveMutation.mutateAsync({ cheie: 'dinstar_ip',   valoare: dinstarIp   }),
+        saveMutation.mutateAsync({ cheie: 'dinstar_user', valoare: dinstarUser }),
+        saveMutation.mutateAsync({ cheie: 'dinstar_pass', valoare: dinstarPass }),
+      ]);
+      toast.success('Gateway SMS salvat');
+    } catch {
+      toast.error('Eroare la salvare');
+    }
+  };
+
+  const isConfigured = !!(dinstarIp && dinstarUser && dinstarPass);
+  const inputCls = 'w-full px-3 py-2 text-xs rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-red-500';
+  const labelCls = 'block text-xs font-medium text-stone-500 dark:text-stone-400 mb-1';
+
+  return (
+    <div className="bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
+      <div className="px-4 py-3 border-b border-stone-100 dark:border-stone-800 bg-stone-50 dark:bg-stone-800/50 flex items-center gap-2">
+        <Send className="w-4 h-4 text-stone-500" />
+        <div>
+          <h3 className="text-sm font-semibold text-stone-800 dark:text-stone-200">SMS Gateway (Dinstar)</h3>
+          <p className="text-xs text-stone-400 mt-0.5">Configurare conexiune și test trimitere</p>
+        </div>
+      </div>
+      <div className="px-4 py-4 space-y-3">
+        <div>
+          <label className={labelCls}>IP / Host gateway</label>
+          <input value={dinstarIp} onChange={(e) => setDinstarIp(e.target.value)} placeholder="192.168.1.100" className={inputCls} />
+        </div>
+        <div>
+          <label className={labelCls}>Utilizator</label>
+          <input value={dinstarUser} onChange={(e) => setDinstarUser(e.target.value)} placeholder="admin" className={inputCls} />
+        </div>
+        <div>
+          <label className={labelCls}>Parolă</label>
+          <div className="relative">
+            <input
+              type={showPass ? 'text' : 'password'}
+              value={dinstarPass}
+              onChange={(e) => setDinstarPass(e.target.value)}
+              placeholder="••••••••"
+              className={`${inputCls} pr-8`}
+            />
+            <button type="button" onClick={() => setShowPass(v => !v)}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200"
+            >
+              {showPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+        </div>
+        <div className="pt-1 pb-4 border-b border-stone-100 dark:border-stone-800">
+          <button
+            onClick={handleSave}
+            disabled={saveMutation.isPending}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+          >
+            <Save className="w-3.5 h-3.5" />
+            {saveMutation.isPending ? 'Se salvează...' : 'Salvează'}
+          </button>
+        </div>
+
+        <div className="flex items-center gap-1.5 pt-1 text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide">
+          <Send className="w-3.5 h-3.5" />
+          Test trimitere
+        </div>
+        <div className="flex gap-2 items-end">
+          <div className="flex-1">
+            <label className={labelCls}>Număr de test</label>
+            <input
+              type="tel"
+              value={testPhone}
+              onChange={(e) => { setTestPhone(e.target.value); setTestResult(null); }}
+              placeholder="07xxxxxxxxx"
+              className={`${inputCls} font-mono`}
+            />
+          </div>
+          <button
+            onClick={() => testMutation.mutate()}
+            disabled={!testPhone.trim() || !isConfigured || testMutation.isPending}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-stone-700 text-white hover:bg-stone-800 disabled:opacity-40 transition-colors whitespace-nowrap"
+          >
+            <Send className="w-3 h-3" />
+            {testMutation.isPending ? 'Se trimite...' : 'Trimite test'}
+          </button>
+        </div>
+        {!isConfigured && (
+          <p className="text-xs text-amber-600 dark:text-amber-400">Salvează mai întâi configurarea gateway-ului.</p>
+        )}
+        {testResult && (
+          <div className={`flex items-center gap-2 text-xs rounded-lg px-3 py-2 ${
+            testResult.ok
+              ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
+              : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
+          }`}>
+            {testResult.ok ? <CheckCircle className="w-3.5 h-3.5 shrink-0" /> : <XCircle className="w-3.5 h-3.5 shrink-0" />}
+            {testResult.msg}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export const KeysSettings: React.FC = () => {
@@ -729,8 +999,6 @@ export const KeysSettings: React.FC = () => {
 };
 
 const KeysContent: React.FC = () => {
-  const qc = useQueryClient();
-
   const { data: settings = [], isLoading: loadingSettings } = useQuery({
     queryKey: ['settings-all'],
     queryFn: () => api.getSettings(),
@@ -795,6 +1063,9 @@ const KeysContent: React.FC = () => {
           </div>
         </div>
       ))}
+
+      <OllamaConfigWidget />
+      <SmsGatewayWidget />
     </div>
   );
 };

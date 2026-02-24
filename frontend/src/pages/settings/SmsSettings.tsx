@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import {
-  MessageSquare, Save, Eye, EyeOff, Send, CheckCircle, XCircle,
+  MessageSquare, Send, CheckCircle, XCircle,
   Plus, Pencil, Trash2, Check, X, History, Search, RefreshCw,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { toast } from 'react-hot-toast';
 
 import api from '@/services/api';
-import { Card, Button, Input, Spinner } from '@/components/ui';
+import { Card, Button, Spinner } from '@/components/ui';
 
 // ── SMS segment counter (shared helper) ───────────────────────────────────
 const SmsCounter: React.FC<{ text: string }> = ({ text }) => {
@@ -184,15 +184,6 @@ const LogRow: React.FC<{ entry: {
 
 // ── Main settings page ────────────────────────────────────────────────────
 export const SmsSettings: React.FC = () => {
-  const queryClient = useQueryClient();
-
-  // ── Gateway credentials ──────────────────────────────────────────────
-  const [dinstarIp, setDinstarIp]     = useState('');
-  const [dinstarUser, setDinstarUser] = useState('');
-  const [dinstarPass, setDinstarPass] = useState('');
-  const [showPass, setShowPass]       = useState(false);
-  const [testPhone, setTestPhone]     = useState('');
-  const [testResult, setTestResult]   = useState<{ ok: boolean; msg: string } | null>(null);
 
   // ── New template form ────────────────────────────────────────────────
   const [showAddForm, setShowAddForm] = useState(false);
@@ -203,11 +194,6 @@ export const SmsSettings: React.FC = () => {
   const [logPhone, setLogPhone] = useState('');
   const [logQuery, setLogQuery] = useState('');
 
-  const { data: settings = [], isLoading: isLoadingSettings } = useQuery({
-    queryKey: ['settings'],
-    queryFn: () => api.getSettings(),
-  });
-
   const { data: templates = [], isLoading: isLoadingTemplates, refetch: refetchTemplates } = useQuery({
     queryKey: ['sms-templates'],
     queryFn: () => api.getSmsTemplates(),
@@ -217,51 +203,6 @@ export const SmsSettings: React.FC = () => {
     queryKey: ['sms-log', logQuery],
     queryFn: () => api.getSmsLog({ limit: 200, phone: logQuery || undefined }),
     staleTime: 15000,
-  });
-
-  useEffect(() => {
-    if (settings.length > 0) {
-      const ip   = settings.find((s) => s.cheie === 'dinstar_ip');
-      const user = settings.find((s) => s.cheie === 'dinstar_user');
-      const pass = settings.find((s) => s.cheie === 'dinstar_pass');
-      if (ip?.valoare   && !dinstarIp)   setDinstarIp(ip.valoare);
-      if (user?.valoare && !dinstarUser) setDinstarUser(user.valoare);
-      if (pass?.valoare && !dinstarPass) setDinstarPass(pass.valoare);
-    }
-  }, [settings]);
-
-  const updateMutation = useMutation({
-    mutationFn: ({ cheie, valoare }: { cheie: string; valoare: string }) =>
-      api.upsertSetting(cheie, valoare),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['settings'] }),
-  });
-
-  const handleSaveGateway = async () => {
-    try {
-      await Promise.all([
-        updateMutation.mutateAsync({ cheie: 'dinstar_ip',   valoare: dinstarIp   }),
-        updateMutation.mutateAsync({ cheie: 'dinstar_user', valoare: dinstarUser }),
-        updateMutation.mutateAsync({ cheie: 'dinstar_pass', valoare: dinstarPass }),
-      ]);
-      toast.success('Setări gateway salvate');
-    } catch {
-      toast.error('Eroare la salvare');
-    }
-  };
-
-  const testMutation = useMutation({
-    mutationFn: () => api.sendSms(testPhone, 'Test SMS din Cheltuieli App'),
-    onSuccess: (res) => {
-      if (res.ok) {
-        setTestResult({ ok: true, msg: `SMS acceptat pentru ${testPhone}` });
-        refetchLog();
-      } else {
-        setTestResult({ ok: false, msg: res.error || 'Gateway a refuzat mesajul' });
-      }
-    },
-    onError: (err: any) => {
-      setTestResult({ ok: false, msg: err.response?.data?.detail || 'Eroare de rețea' });
-    },
   });
 
   const createTemplateMutation = useMutation({
@@ -276,12 +217,6 @@ export const SmsSettings: React.FC = () => {
     onError: () => toast.error('Eroare la creare'),
   });
 
-  if (isLoadingSettings) {
-    return <div className="flex justify-center py-12"><Spinner size="lg" /></div>;
-  }
-
-  const isConfigured = dinstarIp && dinstarUser && dinstarPass;
-
   return (
     <div>
       {/* Header */}
@@ -295,101 +230,11 @@ export const SmsSettings: React.FC = () => {
         </p>
       </div>
 
-      {/* ── Gateway credentials ─────────────────────────────────────────── */}
-      <Card className="mb-6">
-        <h3 className="font-semibold text-stone-900 dark:text-stone-100 mb-4 text-sm uppercase tracking-wide">
-          Conexiune Gateway
-        </h3>
-        <div className="space-y-4">
-          <Input
-            label="IP / Host gateway"
-            value={dinstarIp}
-            onChange={(e) => setDinstarIp(e.target.value)}
-            placeholder="192.168.1.100"
-          />
-          <Input
-            label="Utilizator"
-            value={dinstarUser}
-            onChange={(e) => setDinstarUser(e.target.value)}
-            placeholder="admin"
-          />
-          <div>
-            <label className="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Parolă</label>
-            <div className="relative">
-              <input
-                type={showPass ? 'text' : 'password'}
-                value={dinstarPass}
-                onChange={(e) => setDinstarPass(e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-3 py-2 pr-10 text-sm border border-stone-200 dark:border-stone-600 rounded-xl bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPass(v => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200"
-              >
-                {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-          <div className="pt-1">
-            <Button
-              variant="primary"
-              onClick={handleSaveGateway}
-              loading={updateMutation.isPending}
-              icon={<Save className="w-4 h-4" />}
-            >
-              Salvează
-            </Button>
-          </div>
-        </div>
-      </Card>
-
-      {/* ── Test SMS ─────────────────────────────────────────────────────── */}
-      <Card className="mb-6">
-        <h3 className="font-semibold text-stone-900 dark:text-stone-100 mb-4 text-sm uppercase tracking-wide flex items-center gap-2">
-          <Send className="w-4 h-4" />
-          Test trimitere
-        </h3>
-        <div className="flex gap-3 items-end flex-wrap">
-          <div className="flex-1 min-w-[180px]">
-            <label className="block text-xs font-medium text-stone-500 dark:text-stone-400 mb-1.5 uppercase tracking-wide">
-              Număr de test
-            </label>
-            <input
-              type="tel"
-              value={testPhone}
-              onChange={(e) => { setTestPhone(e.target.value); setTestResult(null); }}
-              placeholder="07xxxxxxxxx"
-              className="w-full px-3 py-2 text-sm font-mono border border-stone-200 dark:border-stone-600 rounded-xl bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <Button
-            variant="secondary"
-            onClick={() => testMutation.mutate()}
-            loading={testMutation.isPending}
-            disabled={!testPhone.trim() || !isConfigured}
-            icon={<Send className="w-4 h-4" />}
-          >
-            Trimite test
-          </Button>
-        </div>
-        {!isConfigured && (
-          <p className="text-sm text-amber-600 dark:text-amber-400 mt-3">
-            Salvează mai întâi configurarea gateway-ului.
-          </p>
-        )}
-        {testResult && (
-          <div className={`mt-4 flex items-center gap-2 text-sm rounded-xl px-4 py-3 ${
-            testResult.ok
-              ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
-              : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
-          }`}>
-            {testResult.ok ? <CheckCircle className="w-4 h-4 shrink-0" /> : <XCircle className="w-4 h-4 shrink-0" />}
-            {testResult.msg}
-          </div>
-        )}
-      </Card>
+      {/* ── Conexiune/Test mutate în Keys ───────────────────────────────── */}
+      <div className="mb-6 px-4 py-3 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800/50 text-sm text-stone-500 dark:text-stone-400 flex items-center gap-2">
+        <Send className="w-4 h-4 shrink-0" />
+        Configurarea conexiunii și testul de trimitere se fac din <strong className="text-stone-700 dark:text-stone-300">Setări › Keys</strong>.
+      </div>
 
       {/* ── SMS Templates ─────────────────────────────────────────────────── */}
       <Card className="mb-6">
