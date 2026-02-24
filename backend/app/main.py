@@ -15,7 +15,7 @@ from app.api import api_router
 from app.api.apeluri import parse_queue_log, QUEUE_LOG_DIR
 from app.api.lista_apeluri import ami_event_loop
 from app.api.pontaj import pontaj_fetch_loop
-from app.api.google_reviews import do_refresh as google_reviews_refresh, do_analysis as google_reviews_analyze, do_fetch_serpapi_account
+from app.api.google_reviews import do_refresh as google_reviews_refresh, do_analysis as google_reviews_analyze, do_fetch_serpapi_account, do_negative_analysis as google_reviews_negative_analyze
 
 AUTO_CLOSE_HOUR = 7   # 07:00
 SAVE_APELURI_HOUR = 23  # 23:00
@@ -287,6 +287,35 @@ async def google_reviews_refresh_loop():
             await asyncio.sleep(300)  # retry in 5 min on error
 
 
+async def google_reviews_negative_analysis_loop():
+    """Background task: auto-run negative reviews analysis on the 1st of each month at 03:00."""
+    while True:
+        try:
+            now = datetime.now()
+            # Target: 1st of next month at 03:00
+            if now.month == 12:
+                next_month_first = datetime(now.year + 1, 1, 1, 3, 0)
+            else:
+                next_month_first = datetime(now.year, now.month + 1, 1, 3, 0)
+            # If today is the 1st and it's before 03:00, run today
+            this_month_target = datetime(now.year, now.month, 1, 3, 0)
+            next_run = this_month_target if now < this_month_target else next_month_first
+            wait_secs = (next_run - now).total_seconds()
+            print(f"Negative analysis scheduler: next run at {next_run} (in {wait_secs:.0f}s)")
+            await asyncio.sleep(wait_secs)
+
+            print("Negative analysis scheduler: starting...")
+            result = await google_reviews_negative_analyze()
+            total = result.get("total_negative", 0)
+            print(f"Negative analysis scheduler: done — {total} negative reviews analyzed")
+        except asyncio.CancelledError:
+            print("Negative analysis scheduler stopped")
+            return
+        except Exception as e:
+            print(f"Negative analysis scheduler error: {e}")
+            await asyncio.sleep(3600)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events"""
@@ -297,13 +326,14 @@ async def lifespan(app: FastAPI):
     task_pontaj = asyncio.create_task(pontaj_fetch_loop())
     task_google_reviews = asyncio.create_task(google_reviews_refresh_loop())
     task_google_analysis = asyncio.create_task(google_reviews_analysis_loop())
+    task_google_neg_analysis = asyncio.create_task(google_reviews_negative_analysis_loop())
     task_serpapi_account = asyncio.create_task(serpapi_account_loop())
     task_ami = asyncio.create_task(ami_event_loop())
     yield
     # Shutdown
-    for task in [task_close, task_apeluri, task_pontaj, task_google_reviews, task_google_analysis, task_serpapi_account, task_ami]:
+    for task in [task_close, task_apeluri, task_pontaj, task_google_reviews, task_google_analysis, task_google_neg_analysis, task_serpapi_account, task_ami]:
         task.cancel()
-    for task in [task_close, task_apeluri, task_pontaj, task_google_reviews, task_google_analysis, task_serpapi_account, task_ami]:
+    for task in [task_close, task_apeluri, task_pontaj, task_google_reviews, task_google_analysis, task_google_neg_analysis, task_serpapi_account, task_ami]:
         try:
             await task
         except asyncio.CancelledError:

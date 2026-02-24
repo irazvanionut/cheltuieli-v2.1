@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Eye, EyeOff, Copy, Check, Save, X, KeyRound, RotateCcw, TrendingUp, Lock, RefreshCw, AlertTriangle, CheckCircle, List, ChevronDown, Wifi, WifiOff, Bot, Send, XCircle } from 'lucide-react';
+import { Eye, EyeOff, Copy, Check, Save, X, KeyRound, Lock, RefreshCw, AlertTriangle, CheckCircle, List, ChevronDown, Wifi, WifiOff, Bot, Send, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/services/api';
 import type { Setting } from '@/types';
@@ -90,19 +90,25 @@ interface KeySection {
 const KEY_SECTIONS: KeySection[] = [
   {
     title: 'SerpAPI — Google Reviews',
-    description: 'Două chei disponibile (250 apeluri/lună fiecare). Zile impare → Cheie 1 | Zile pare → Cheie 2.',
+    description: 'Până la 3 chei disponibile (250 apeluri/lună fiecare). Modul de rotație se configurează mai jos.',
     usage: true,
     fields: [
       {
         cheie: 'serpapi_api_key',
-        label: 'Cheie 1 (zile impare: 1, 3, 5…)',
-        description: 'Folosită în zilele 1, 3, 5, 7… ale lunii',
+        label: 'Cheie 1',
+        description: 'Prima cheie SerpAPI (250 apeluri/lună)',
         sensitive: true,
       },
       {
         cheie: 'serpapi_api_key_2',
-        label: 'Cheie 2 (zile pare: 2, 4, 6…)',
-        description: 'Folosită în zilele 2, 4, 6, 8… ale lunii',
+        label: 'Cheie 2',
+        description: 'A doua cheie SerpAPI (250 apeluri/lună)',
+        sensitive: true,
+      },
+      {
+        cheie: 'serpapi_api_key_3',
+        label: 'Cheie 3',
+        description: 'A treia cheie SerpAPI (250 apeluri/lună)',
         sensitive: true,
       },
       {
@@ -295,7 +301,7 @@ const RefetchWidget: React.FC = () => {
   const [useDate, setUseDate] = useState(true);
   const [noCache, setNoCache] = useState(true);
   const [maxCalls, setMaxCalls] = useState(10);
-  const [keyMode, setKeyMode] = useState<'alternate' | 'key1' | 'key2'>('alternate');
+  const [keyMode, setKeyMode] = useState<'all' | 'key1' | 'key2' | 'key3'>('all');
   const [confirm, setConfirm] = useState(false);
   const [result, setResult] = useState<{
     inserted: number; skipped: number; pages_fetched: number;
@@ -373,12 +379,13 @@ const RefetchWidget: React.FC = () => {
           <div className="flex items-center gap-2">
             <select
               value={keyMode}
-              onChange={(e) => setKeyMode(e.target.value as 'alternate' | 'key1' | 'key2')}
+              onChange={(e) => setKeyMode(e.target.value as 'all' | 'key1' | 'key2' | 'key3')}
               className={`flex-1 ${inputCls}`}
             >
-              <option value="alternate">Alternare (Cheie 1 + 2)</option>
+              <option value="all">Toate cheile (rotație)</option>
               <option value="key1">Cheie 1</option>
               <option value="key2">Cheie 2</option>
+              <option value="key3">Cheie 3</option>
             </select>
             <label className="flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-400 cursor-pointer select-none whitespace-nowrap">
               <input
@@ -410,7 +417,7 @@ const RefetchWidget: React.FC = () => {
                 ? <>Se vor fetcha review-uri din <strong>{dateVal}</strong> până azi, </>
                 : <>Se vor fetcha review-uri fără limită de dată, </>
               }
-              max <strong>{maxCalls}</strong> apeluri, {keyMode === 'alternate' ? 'alternând cheile' : `cheie ${keyMode === 'key1' ? '1' : '2'}`}.
+              max <strong>{maxCalls}</strong> apeluri, {keyMode === 'all' ? 'rotând toate cheile' : `cheie ${keyMode === 'key1' ? '1' : keyMode === 'key2' ? '2' : '3'}`}.
               Review-urile existente sunt păstrate. Confirmă?
             </span>
           </div>
@@ -547,77 +554,98 @@ const SerpApiAccountInfo: React.FC = () => {
       {isLoading ? (
         <p className="text-xs text-stone-400 py-1">Se încarcă...</p>
       ) : (
-        <div className="flex gap-2">
-          <AccountKeyCard label="Cheie 1" data={data?.key1 ?? null} />
-          <AccountKeyCard label="Cheie 2" data={data?.key2 ?? null} />
+        <div className="flex gap-2 flex-wrap">
+          <AccountKeyCard label="Cheie 1" data={(data as any)?.key1 ?? null} />
+          <AccountKeyCard label="Cheie 2" data={(data as any)?.key2 ?? null} />
+          <AccountKeyCard label="Cheie 3" data={(data as any)?.key3 ?? null} />
         </div>
       )}
     </div>
   );
 };
 
-// ─── SerpAPI Usage Widget ─────────────────────────────────────────────────────
+// ─── SerpAPI Rotation Config ──────────────────────────────────────────────────
 
 const SerpApiUsage: React.FC<{ settings: Setting[] }> = ({ settings }) => {
   const qc = useQueryClient();
-  const count1 = parseInt(getSetting(settings, 'serpapi_calls_1') || '0', 10);
-  const count2 = parseInt(getSetting(settings, 'serpapi_calls_2') || '0', 10);
-  const month = getSetting(settings, 'serpapi_calls_month') || '—';
-  const LIMIT = 250;
+  const rotationMode = getSetting(settings, 'serpapi_rotation_mode') || 'day_split';
+  const forceKey = getSetting(settings, 'serpapi_force_key') || '';
 
-  const resetMutation = useMutation({
-    mutationFn: () => api.resetSerpApiCounters(),
-    onSuccess: (res) => {
-      qc.invalidateQueries({ queryKey: ['settings-all'] });
-      toast.success(`Contoare resetate pentru ${res.month}`);
-    },
-    onError: () => toast.error('Eroare la resetare'),
+  const saveMutation = useMutation({
+    mutationFn: ({ cheie, valoare }: { cheie: string; valoare: string }) =>
+      api.upsertSetting(cheie, valoare),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['settings-all'] }),
+    onError: () => toast.error('Eroare la salvare'),
   });
 
-  const bar = (count: number) => Math.min((count / LIMIT) * 100, 100);
-  const color = (count: number) =>
-    count >= LIMIT ? 'bg-red-500' : count >= LIMIT * 0.8 ? 'bg-amber-500' : 'bg-emerald-500';
+  const key1ok = !!getSetting(settings, 'serpapi_api_key');
+  const key2ok = !!getSetting(settings, 'serpapi_api_key_2');
+  const key3ok = !!getSetting(settings, 'serpapi_api_key_3');
+
+  const forceOptions = [
+    { value: '', label: 'Rotație normală', desc: 'se aplică modul de rotație selectat mai jos' },
+    ...(key1ok ? [{ value: '1', label: 'Cheie 1', desc: 'folosește exclusiv cheia 1 (indiferent de rotație)' }] : []),
+    ...(key2ok ? [{ value: '2', label: 'Cheie 2', desc: 'folosește exclusiv cheia 2 (indiferent de rotație)' }] : []),
+    ...(key3ok ? [{ value: '3', label: 'Cheie 3', desc: 'folosește exclusiv cheia 3 (indiferent de rotație)' }] : []),
+  ];
 
   return (
-    <div className="mx-4 mb-3 p-3 rounded-lg bg-stone-50 dark:bg-stone-800/50 border border-stone-200 dark:border-stone-700">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-1.5 text-xs font-medium text-stone-600 dark:text-stone-400">
-          <TrendingUp className="w-3.5 h-3.5" />
-          Apeluri luna aceasta
-          <span className="text-stone-400 font-normal">({month})</span>
+    <div className="mx-4 mb-3 p-3 rounded-lg bg-stone-50 dark:bg-stone-800/50 border border-stone-200 dark:border-stone-700 space-y-3">
+      {/* Force key override */}
+      <div>
+        <div className="text-xs font-medium text-stone-600 dark:text-stone-400 mb-1.5">Folosește numai cheia</div>
+        <div className="flex gap-1.5 flex-wrap">
+          {forceOptions.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => saveMutation.mutate({ cheie: 'serpapi_force_key', valoare: opt.value })}
+              title={opt.desc}
+              className={`px-2.5 py-1 text-xs rounded-lg font-medium transition-colors ${
+                forceKey === opt.value
+                  ? opt.value === ''
+                    ? 'bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-900'
+                    : 'bg-amber-500 text-white'
+                  : 'bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-300 dark:hover:bg-stone-600'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
-        <button
-          onClick={() => resetMutation.mutate()}
-          disabled={resetMutation.isPending}
-          className="flex items-center gap-1 text-xs text-stone-400 hover:text-red-500 transition-colors"
-          title="Resetează contoarele"
-        >
-          <RotateCcw className="w-3 h-3" />
-          Reset
-        </button>
+        {forceKey !== '' && (
+          <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1">
+            ⚠ Rotația este ignorată — toate refresh-urile automate folosesc numai Cheia {forceKey}.
+          </p>
+        )}
       </div>
 
-      <div className="space-y-2">
-        {[
-          { label: 'Cheie 1 (zile impare)', count: count1 },
-          { label: 'Cheie 2 (zile pare)', count: count2 },
-        ].map(({ label, count }) => (
-              <div key={label}>
-                <div className="flex justify-between text-xs text-stone-500 dark:text-stone-400 mb-0.5">
-                  <span>{label}</span>
-                  <span className="font-mono">
-                    <span className={count >= LIMIT ? 'text-red-500 font-semibold' : ''}>{count}</span>
-                    <span className="text-stone-400"> / {LIMIT}</span>
-                  </span>
-                </div>
-                <div className="h-1.5 bg-stone-200 dark:bg-stone-700 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${color(count)}`}
-                    style={{ width: `${bar(count)}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+      {/* Rotation mode (dimmed when force key is active) */}
+      <div className={forceKey !== '' ? 'opacity-40 pointer-events-none' : ''}>
+        <div className="text-xs font-medium text-stone-600 dark:text-stone-400 mb-1.5">Mod rotație chei</div>
+        <div className="flex gap-2">
+          {[
+            { value: 'day_split', label: 'Pe zi', desc: 'distribuie cheile pe zilele lunii' },
+            { value: 'round_robin', label: 'Round-robin', desc: 'ciclu consecutiv la fiecare refresh' },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => saveMutation.mutate({ cheie: 'serpapi_rotation_mode', valoare: opt.value })}
+              title={opt.desc}
+              className={`px-2.5 py-1 text-xs rounded-lg font-medium transition-colors ${
+                rotationMode === opt.value
+                  ? 'bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-900'
+                  : 'bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-300 dark:hover:bg-stone-600'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <p className="text-[10px] text-stone-400 mt-1">
+          {rotationMode === 'round_robin'
+            ? 'Cheile configurate sunt folosite pe rând la fiecare refresh automat.'
+            : 'Cheile sunt distribuite pe zilele lunii (cheie 1 → ziua 1, 4, 7…).'}
+        </p>
       </div>
     </div>
   );
@@ -1060,6 +1088,7 @@ const KeysContent: React.FC = () => {
           {section.usage && (
             <div className="pt-3">
               <SerpApiAccountInfo />
+              <SerpApiUsage settings={settings} />
               <RefetchWidget />
               <SerpLog />
             </div>

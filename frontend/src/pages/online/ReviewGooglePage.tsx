@@ -17,6 +17,7 @@ import {
   LayoutGrid,
   List,
   Sparkles,
+  TrendingDown,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { format, parseISO, subDays, subMonths, subYears } from 'date-fns';
@@ -1101,6 +1102,329 @@ const AIAnalysis: React.FC = () => {
   );
 };
 
+// ─── Negative monthly analysis ─────────────────────────────────────────────
+
+const NegativeMonthlyAnalysis: React.FC = () => {
+  const queryClient = useQueryClient();
+  const [open, setOpen] = React.useState(false);
+  const [running, setRunning] = React.useState(false);
+  const [step, setStep] = React.useState<'loading' | 'working'>('loading');
+  const [stepInfo, setStepInfo] = React.useState({ total: 0, months: 0 });
+  const [errMsg, setErrMsg] = React.useState<string | null>(null);
+  const [remaining, setRemaining] = React.useState(0);
+  const [tick, setTick] = React.useState(0);
+  const [monthsOpen, setMonthsOpen] = React.useState(false);
+  const esRef = React.useRef<EventSource | null>(null);
+
+  const { data: stored } = useQuery({
+    queryKey: ['google-reviews-negative-analysis'],
+    queryFn: () => api.getNegativeAnalysis(),
+    staleTime: 60_000,
+  });
+
+  React.useEffect(() => {
+    if ((stored?.remaining_seconds ?? 0) === 0) return;
+    setRemaining(stored!.remaining_seconds);
+    const id = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(id);
+  }, [stored?.remaining_seconds]);
+
+  const displayRemaining = Math.max(0, remaining - tick);
+  const canRun = !running && (!!errMsg || displayRemaining === 0);
+
+  React.useEffect(() => () => { esRef.current?.close(); }, []);
+
+  const run = (force = false) => {
+    esRef.current?.close();
+    setRunning(true);
+    setStep('loading');
+    setStepInfo({ total: 0, months: 0 });
+    setErrMsg(null);
+
+    const url = force
+      ? '/api/google-reviews/negative-analyze?force=true'
+      : '/api/google-reviews/negative-analyze';
+    const es = new EventSource(url);
+    esRef.current = es;
+
+    es.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'start') {
+          setStep('loading');
+          setStepInfo({ total: msg.total, months: msg.months });
+        } else if (msg.type === 'working') {
+          setStep('working');
+        } else if (msg.type === 'cooldown') {
+          setRemaining(msg.remaining_seconds);
+          setTick(0);
+          setRunning(false);
+          es.close();
+        } else if (msg.type === 'done') {
+          setRunning(false);
+          setTick(0);
+          queryClient.invalidateQueries({ queryKey: ['google-reviews-negative-analysis'] });
+          es.close();
+        } else if (msg.type === 'error') {
+          setErrMsg(msg.message);
+          setRunning(false);
+          setRemaining(0);
+          setTick(0);
+          es.close();
+        }
+      } catch {}
+    };
+
+    es.onerror = () => {
+      setErrMsg('Conexiune pierdută cu serverul');
+      setRunning(false);
+      setRemaining(0);
+      setTick(0);
+      es.close();
+    };
+  };
+
+  const result = stored?.result ?? null;
+  const analysis = result?.analysis ?? null;
+  const generatedAt: string | null = result?.generated_at ?? null;
+  const totalNegative: number = result?.total_negative ?? 0;
+  const monthsAnalyzed: number = result?.months_analyzed ?? 0;
+
+  const fmtCooldown = (s: number) => {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    if (h > 0) return `${h}h ${m}m`;
+    if (m > 0) return `${m}m ${sec}s`;
+    return `${sec}s`;
+  };
+
+  const stepLabel =
+    step === 'loading'
+      ? `Se încarcă ${stepInfo.total} recenzii din ${stepInfo.months} luni…`
+      : 'Ollama analizează temele recurente…';
+
+  return (
+    <Card className="mb-4 overflow-hidden">
+      {/* Header — always visible */}
+      <div
+        className="p-4 flex items-start justify-between cursor-pointer select-none"
+        onClick={() => !running && setOpen((o) => !o)}
+      >
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="font-semibold text-stone-800 dark:text-stone-200 flex items-center gap-2 text-sm">
+              <TrendingDown className="w-4 h-4 text-red-500" />
+              Teme Negative · ≤3★ pe luni
+            </h3>
+            {totalNegative > 0 && !running && (
+              <span className="text-xs text-stone-400">
+                · {totalNegative} recenzii / {monthsAnalyzed} luni
+              </span>
+            )}
+          </div>
+          {generatedAt && !running && (
+            <p className="text-[11px] text-stone-400 mt-0.5">
+              Generat: {format(parseISO(generatedAt), 'dd MMM yyyy HH:mm', { locale: ro })}
+              {displayRemaining > 0 && (
+                <span className="ml-2 text-amber-500">· disponibil în {fmtCooldown(displayRemaining)}</span>
+              )}
+            </p>
+          )}
+          {running && (
+            <p className="text-xs text-stone-400 mt-0.5 flex items-center gap-1.5">
+              <TrendingDown className="w-3 h-3 text-red-400 animate-pulse" />
+              {stepLabel}
+            </p>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+          {running ? (
+            <button
+              onClick={(e) => { e.stopPropagation(); esRef.current?.close(); setRunning(false); }}
+              className="text-xs text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
+            >
+              Anulează
+            </button>
+          ) : (
+            <button
+              onClick={(e) => { e.stopPropagation(); if (canRun) run(false); }}
+              disabled={!canRun}
+              title={displayRemaining > 0 ? `Cooldown activ — ${fmtCooldown(displayRemaining)}` : undefined}
+              className={clsx(
+                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
+                canRun
+                  ? 'bg-red-600 hover:bg-red-700 text-white'
+                  : 'bg-stone-100 dark:bg-stone-800 text-stone-400 cursor-not-allowed',
+              )}
+            >
+              <TrendingDown className="w-3 h-3" />
+              {analysis ? 'Reanalyzează' : 'Analizează'}
+            </button>
+          )}
+          {!running && (
+            open
+              ? <ChevronUp className="w-4 h-4 text-stone-400" />
+              : <ChevronDown className="w-4 h-4 text-stone-400" />
+          )}
+        </div>
+      </div>
+
+      {/* Body — collapsible */}
+      {open && (
+        <div className="px-4 pb-4 border-t border-stone-100 dark:border-stone-800 pt-3">
+          {/* Progress */}
+          {running && (
+            <div className="mb-3">
+              <div className="h-1.5 bg-red-100 dark:bg-red-900/20 rounded-full overflow-hidden">
+                <div className="h-full bg-red-500 rounded-full animate-pulse w-full" />
+              </div>
+            </div>
+          )}
+
+          {/* Error */}
+          {errMsg && !running && (
+            <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-2 mb-3">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />{errMsg}
+            </p>
+          )}
+
+          {/* No results yet */}
+          {!analysis && !running && !errMsg && (
+            <p className="text-xs text-stone-400">
+              Analiza se rulează automat pe 1 ale fiecărei luni. Poți rula manual cu cooldown de 4 ore.
+            </p>
+          )}
+
+          {/* Results */}
+          {analysis && !running && (
+            <div className="space-y-4">
+              {/* Recurring themes */}
+              {(analysis.recurring_themes?.length ?? 0) > 0 && (
+                <div>
+                  <h4 className="text-[11px] font-semibold text-stone-400 uppercase tracking-wide mb-2">
+                    Teme recurente
+                  </h4>
+                  <div className="space-y-2">
+                    {analysis.recurring_themes.map((t, i) => {
+                      const trendIcon = t.trend === 'improving' ? '↓' : t.trend === 'worsening' ? '↑' : '→';
+                      const trendCls =
+                        t.trend === 'improving'
+                          ? 'text-emerald-500'
+                          : t.trend === 'worsening'
+                          ? 'text-red-500'
+                          : 'text-amber-500';
+                      return (
+                        <div
+                          key={i}
+                          className="flex items-start gap-2 p-2.5 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20"
+                        >
+                          <span className={clsx('text-sm font-bold flex-shrink-0 mt-0.5', trendCls)}>
+                            {trendIcon}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-medium text-stone-800 dark:text-stone-200">
+                                {t.theme}
+                              </span>
+                              <span className="text-[10px] bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded-full font-mono">
+                                {t.months_count} luni
+                              </span>
+                            </div>
+                            {t.description && (
+                              <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+                                {t.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Insights */}
+              {(analysis.insights?.length ?? 0) > 0 && (
+                <div>
+                  <h4 className="text-[11px] font-semibold text-stone-400 uppercase tracking-wide mb-2">
+                    Aspecte de studiat
+                  </h4>
+                  <ol className="space-y-2">
+                    {analysis.insights.map((item, i) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span
+                          className={clsx(
+                            'text-[10px] px-1.5 py-0.5 rounded font-bold flex-shrink-0 mt-0.5',
+                            item.importance === 'high'
+                              ? 'bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+                              : item.importance === 'medium'
+                              ? 'bg-amber-100 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
+                              : 'bg-stone-100 dark:bg-stone-800 text-stone-500',
+                          )}
+                        >
+                          {item.importance === 'high' ? '!' : item.importance === 'medium' ? '~' : '·'}
+                        </span>
+                        <div className="flex-1">
+                          <p className="text-sm text-stone-700 dark:text-stone-300">{item.observation}</p>
+                          {item.pattern && (
+                            <p className="text-xs text-stone-400 mt-0.5 italic">{item.pattern}</p>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
+              {/* Monthly breakdown — collapsible */}
+              {(analysis.months?.length ?? 0) > 0 && (
+                <div>
+                  <button
+                    onClick={() => setMonthsOpen((o) => !o)}
+                    className="flex items-center gap-1.5 text-[11px] font-semibold text-stone-400 uppercase tracking-wide hover:text-stone-600 dark:hover:text-stone-300 transition-colors"
+                  >
+                    {monthsOpen
+                      ? <ChevronUp className="w-3 h-3" />
+                      : <ChevronDown className="w-3 h-3" />}
+                    Detalii pe luni ({analysis.months.length} luni)
+                  </button>
+                  {monthsOpen && (
+                    <div className="mt-2 space-y-1">
+                      {[...analysis.months].reverse().map((m, i) => (
+                        <div
+                          key={i}
+                          className="flex items-start gap-3 py-1.5 border-b border-stone-100 dark:border-stone-800 last:border-0"
+                        >
+                          <span className="flex-shrink-0 w-16 text-xs font-mono text-stone-500">{m.month}</span>
+                          <span className="flex-shrink-0 text-xs text-red-500 font-medium w-8">
+                            ×{m.review_count ?? result?.monthly_counts?.[m.month] ?? 0}
+                          </span>
+                          <div className="flex flex-wrap gap-1">
+                            {(m.top_issues ?? []).map((issue, j) => (
+                              <span
+                                key={j}
+                                className="text-[10px] bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 px-1.5 py-0.5 rounded"
+                              >
+                                {issue}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+};
+
 // ─── Refresh button with cooldown ──────────────────────────────────────────
 
 const RefreshButton: React.FC = () => {
@@ -1385,6 +1709,9 @@ export const ReviewGooglePage: React.FC = () => {
 
       {/* AI Analysis */}
       {reviews.length > 0 && <AIAnalysis />}
+
+      {/* Negative monthly analysis */}
+      {reviews.length > 0 && <NegativeMonthlyAnalysis />}
 
       {/* Filter bar */}
       {reviews.length > 0 && (

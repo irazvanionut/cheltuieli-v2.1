@@ -38,6 +38,7 @@ def _log_serp_call(*, key_index: int, source: str, page: int,
 COOLDOWN_MINUTES = 5
 ANALYSIS_COOLDOWN_HOURS = 4
 SERPAPI_BASE = "https://serpapi.com/search.json"
+NEGATIVE_ANALYSIS_COOLDOWN_HOURS = 4
 
 
 def _get_next_url(page_data: dict, data_id: str) -> str | None:
@@ -134,8 +135,9 @@ async def _set_setting(db, key: str, value: str):
 async def _select_serpapi_key(db) -> tuple[str, int]:
     """
     Selectează cheia SerpAPI activă și resetează contoarele lunar.
-    Zile pare (1, 3, 5...) → cheie 1 | Zile impare (2, 4, 6...) → cheie 2
-    Dacă cheia preferată nu e configurată, cade pe cealaltă.
+    Mod rotație (serpapi_rotation_mode):
+      - day_split: distribuie pe zi → (ziua-1) % N chei configurate
+      - round_robin: ciclu consecutiv, avansează indexul după fiecare apel
     Returnează (api_key, key_index).
     """
     current_month = date.today().strftime("%Y-%m")
@@ -143,25 +145,39 @@ async def _select_serpapi_key(db) -> tuple[str, int]:
     if stored_month != current_month:
         await _set_setting(db, "serpapi_calls_1", "0")
         await _set_setting(db, "serpapi_calls_2", "0")
+        await _set_setting(db, "serpapi_calls_3", "0")
+        await _set_setting(db, "serpapi_rotation_index", "0")
         await _set_setting(db, "serpapi_calls_month", current_month)
         await db.commit()
 
     key1 = await _get_setting(db, "serpapi_api_key")
     key2 = await _get_setting(db, "serpapi_api_key_2")
+    key3 = await _get_setting(db, "serpapi_api_key_3")
 
-    # Zile impare (1,3,5...) → cheie 1 | Zile pare (2,4,6...) → cheie 2
-    preferred = 1 if date.today().day % 2 == 1 else 2
+    configured = [(k, i) for k, i in [(key1, 1), (key2, 2), (key3, 3)] if k]
+    if not configured:
+        raise ValueError("Nicio cheie SerpAPI configurată")
 
-    if preferred == 1 and key1:
-        return key1, 1
-    if preferred == 2 and key2:
-        return key2, 2
-    # fallback
-    if key1:
-        return key1, 1
-    if key2:
-        return key2, 2
-    raise ValueError("serpapi_api_key sau serpapi_data_id nu sunt configurate")
+    # Cheie forțată (override rotație — pentru când celelalte sunt epuizate)
+    force_key = (await _get_setting(db, "serpapi_force_key")) or ""
+    if force_key in ("1", "2", "3"):
+        forced_idx = int(force_key)
+        key_map = {1: key1, 2: key2, 3: key3}
+        forced_val = key_map.get(forced_idx, "")
+        if forced_val:
+            return forced_val, forced_idx
+
+    rotation_mode = (await _get_setting(db, "serpapi_rotation_mode")) or "day_split"
+
+    if rotation_mode == "round_robin":
+        idx = int((await _get_setting(db, "serpapi_rotation_index")) or "0")
+        idx = idx % len(configured)
+        await _set_setting(db, "serpapi_rotation_index", str((idx + 1) % len(configured)))
+        await db.commit()
+        return configured[idx]
+    else:  # day_split
+        pos = (date.today().day - 1) % len(configured)
+        return configured[pos]
 
 
 async def _increment_serpapi_counter(db, key_index: int, pages: int):
@@ -312,17 +328,16 @@ async def do_refetch_from_date(
 
         key1 = await _get_setting(db, "serpapi_api_key")
         key2 = await _get_setting(db, "serpapi_api_key_2")
+        key3 = await _get_setting(db, "serpapi_api_key_3")
 
         if key_mode == "key1":
             available_keys: list[tuple[str, int]] = [(key1, 1)] if key1 else []
         elif key_mode == "key2":
             available_keys = [(key2, 2)] if key2 else []
-        else:  # alternate
-            available_keys = []
-            if key1:
-                available_keys.append((key1, 1))
-            if key2:
-                available_keys.append((key2, 2))
+        elif key_mode == "key3":
+            available_keys = [(key3, 3)] if key3 else []
+        else:  # "all" / "alternate" — folosește toate cheile configurate
+            available_keys = [(k, i) for k, i in [(key1, 1), (key2, 2), (key3, 3)] if k]
 
         if not available_keys:
             raise ValueError("Nicio cheie SerpAPI disponibilă pentru modul selectat")
@@ -333,6 +348,7 @@ async def do_refetch_from_date(
         if stored_month != current_month:
             await _set_setting(db, "serpapi_calls_1", "0")
             await _set_setting(db, "serpapi_calls_2", "0")
+            await _set_setting(db, "serpapi_calls_3", "0")
             await _set_setting(db, "serpapi_calls_month", current_month)
             await db.commit()
 
@@ -455,16 +471,17 @@ ACCOUNT_FIELDS = [
 
 async def do_fetch_serpapi_account() -> dict:
     """
-    Fetch /account from SerpAPI for each configured key.
-    Stores results as JSON in serpapi_account_1 / serpapi_account_2.
-    Returns {"key1": {...}, "key2": {...}, "fetched_at": "..."}.
+    Fetch /account from SerpAPI for each configured key (1, 2, 3).
+    Stores results as JSON in serpapi_account_1/2/3.
+    Returns {"key1": {...}, "key2": {...}, "key3": {...}, "fetched_at": "..."}.
     """
     async with AsyncSessionLocal() as db:
         key1 = await _get_setting(db, "serpapi_api_key")
         key2 = await _get_setting(db, "serpapi_api_key_2")
+        key3 = await _get_setting(db, "serpapi_api_key_3")
 
     results = {}
-    for label, api_key in [("key1", key1), ("key2", key2)]:
+    for label, api_key in [("key1", key1), ("key2", key2), ("key3", key3)]:
         if not api_key:
             results[label] = None
             continue
@@ -483,6 +500,7 @@ async def do_fetch_serpapi_account() -> dict:
     async with AsyncSessionLocal() as db:
         await _set_setting(db, "serpapi_account_1", json.dumps(results.get("key1") or {}))
         await _set_setting(db, "serpapi_account_2", json.dumps(results.get("key2") or {}))
+        await _set_setting(db, "serpapi_account_3", json.dumps(results.get("key3") or {}))
         await _set_setting(db, "serpapi_account_fetched_at", fetched_at)
         await db.commit()
 
@@ -500,6 +518,7 @@ async def get_serpapi_account(refresh: bool = False):
     async with AsyncSessionLocal() as db:
         raw1 = await _get_setting(db, "serpapi_account_1")
         raw2 = await _get_setting(db, "serpapi_account_2")
+        raw3 = await _get_setting(db, "serpapi_account_3")
         fetched_at = await _get_setting(db, "serpapi_account_fetched_at")
 
     def parse(raw: str) -> dict | None:
@@ -514,6 +533,7 @@ async def get_serpapi_account(refresh: bool = False):
     return {
         "key1": parse(raw1),
         "key2": parse(raw2),
+        "key3": parse(raw3),
         "fetched_at": fetched_at or None,
     }
 
@@ -612,9 +632,11 @@ async def refetch_from_date(request: Request):
     if max_calls < 1:
         max_calls = 1
 
-    key_mode = body.get("key_mode", "alternate")
-    if key_mode not in ("key1", "key2", "alternate"):
-        key_mode = "alternate"
+    key_mode = body.get("key_mode", "all")
+    if key_mode not in ("key1", "key2", "key3", "all", "alternate"):
+        key_mode = "all"
+    if key_mode == "alternate":
+        key_mode = "all"
 
     no_cache = bool(body.get("no_cache", True))
 
@@ -1391,6 +1413,235 @@ async def analyze_reviews_stream(force: bool = False):
             await _set_setting(db, "google_reviews_analysis", json.dumps(result_data, ensure_ascii=False))
             if len(valid) > 0:
                 await _set_setting(db, "google_reviews_analysis_at", datetime.now(timezone.utc).isoformat())
+            await db.commit()
+
+        yield f"data: {json.dumps({'type': 'done', **result_data})}\n\n"
+
+    return StreamingResponse(
+        _stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+# ─── Negative monthly analysis ────────────────────────────────────────────────
+
+_PROMPT_NEGATIVE_MONTHLY = """\
+You are a restaurant data analyst. Below are ALL negative reviews (1-3 stars) ever recorded, grouped by month.
+Your task: identify patterns that repeat across time, note when they disappear and reappear, and produce neutral observations for study — NOT recommendations.
+
+Reviews by month:
+{monthly_data}
+
+Respond EXCLUSIVELY with valid JSON (no markdown, no extra text):
+{{
+  "months": [
+    {{
+      "month": "YYYY-MM",
+      "review_count": 0,
+      "top_issues": ["issue in Romanian", "issue in Romanian"]
+    }}
+  ],
+  "recurring_themes": [
+    {{
+      "theme": "<theme name in Romanian>",
+      "months_present": ["YYYY-MM"],
+      "months_count": 0,
+      "trend": "<persistent|improving|worsening|intermittent>",
+      "description": "<one sentence describing the pattern across time, in Romanian>"
+    }}
+  ],
+  "insights": [
+    {{
+      "importance": "<high|medium|low>",
+      "observation": "<neutral factual observation in Romanian>",
+      "pattern": "<when and how this appears across the data, in Romanian>"
+    }}
+  ]
+}}
+
+Rules:
+- "months": include ALL months from the input, in chronological order
+- "top_issues": max 3 most frequent issues per month, written in Romanian
+- "recurring_themes": ONLY themes present in 2 or more months, sorted by months_count descending, max 10 items
+- trend: "persistent" = unchanged throughout, "improving" = less frequent over time, "worsening" = more frequent over time, "intermittent" = disappears then reappears
+- "insights": max 5 neutral observations (no prescriptions, no instructions), sorted by importance descending
+- All text values MUST be in Romanian
+- Respond ONLY with JSON\
+"""
+
+
+def _build_monthly_data_str(reviews: list) -> tuple[dict, str]:
+    """Group reviews by month and build the text block for the Ollama prompt."""
+    by_month: dict[str, list] = {}
+    for rev in reviews:
+        month = rev.iso_date.strftime("%Y-%m")
+        if month not in by_month:
+            by_month[month] = []
+        by_month[month].append(rev)
+
+    parts = []
+    for month in sorted(by_month.keys()):
+        month_reviews = by_month[month]
+        avg_rating = sum(r.rating for r in month_reviews) / len(month_reviews)
+        lines = [f"=== {month} — {len(month_reviews)} recenzii, medie {avg_rating:.1f}★ ==="]
+        sample = month_reviews[:8]
+        for i, rev in enumerate(sample, 1):
+            snippet = (rev.snippet or "").strip()[:160]
+            lines.append(f"{i}. [{rev.rating}★] \"{snippet}\"")
+        if len(month_reviews) > 8:
+            lines.append(f"... și {len(month_reviews) - 8} alte recenzii")
+        parts.append("\n".join(lines))
+
+    monthly_data = "\n\n".join(parts)
+    if len(monthly_data) > 15000:
+        monthly_data = monthly_data[:15000] + "\n... (trunchiat)"
+
+    return by_month, monthly_data
+
+
+async def do_negative_analysis() -> dict:
+    """Called by scheduler — analyze ALL negative reviews by month, store in DB."""
+    async with AsyncSessionLocal() as db:
+        ollama_host = (await _get_setting(db, "ollama_host")) or "http://ollama:11434"
+        chat_model = (await _get_setting(db, "ollama_chat_model")) or "llama3.2"
+        result = await db.execute(
+            select(GoogleReview)
+            .where(GoogleReview.rating <= 3)
+            .where(GoogleReview.snippet.isnot(None))
+            .order_by(GoogleReview.iso_date.asc())
+        )
+        reviews = result.scalars().all()
+
+    if not reviews:
+        return {"error": "Nicio recenzie negativă cu text în baza de date"}
+
+    by_month, monthly_data = _build_monthly_data_str(reviews)
+    prompt = _PROMPT_NEGATIVE_MONTHLY.format(monthly_data=monthly_data)
+
+    try:
+        raw = await _ollama_generate(ollama_host, chat_model, prompt, timeout=300)
+        analysis = _extract_json(raw)
+    except Exception as e:
+        return {"error": str(e), "total_negative": len(reviews)}
+
+    result_data = {
+        "months_analyzed": len(by_month),
+        "total_negative": len(reviews),
+        "monthly_counts": {month: len(revs) for month, revs in by_month.items()},
+        "analysis": analysis,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    async with AsyncSessionLocal() as db:
+        await _set_setting(db, "google_reviews_negative_analysis",
+                           json.dumps(result_data, ensure_ascii=False))
+        await _set_setting(db, "google_reviews_negative_analysis_at",
+                           datetime.now(timezone.utc).isoformat())
+        await db.commit()
+
+    return result_data
+
+
+@router.get("/google-reviews/negative-analysis")
+async def get_stored_negative_analysis():
+    """Return the last stored negative monthly analysis + cooldown info."""
+    async with AsyncSessionLocal() as db:
+        raw = await _get_setting(db, "google_reviews_negative_analysis")
+        last_str = await _get_setting(db, "google_reviews_negative_analysis_at")
+
+    result = json.loads(raw) if raw else None
+    remaining_seconds = 0
+    if last_str:
+        try:
+            last_dt = datetime.fromisoformat(last_str)
+            if last_dt.tzinfo is None:
+                last_dt = last_dt.replace(tzinfo=timezone.utc)
+            elapsed = (datetime.now(timezone.utc) - last_dt).total_seconds()
+            cooldown_secs = NEGATIVE_ANALYSIS_COOLDOWN_HOURS * 3600
+            remaining_seconds = max(0, int(cooldown_secs - elapsed))
+        except Exception:
+            pass
+
+    return {
+        "result": result,
+        "last_analysis_at": last_str or None,
+        "remaining_seconds": remaining_seconds,
+        "cooldown_hours": NEGATIVE_ANALYSIS_COOLDOWN_HOURS,
+    }
+
+
+@router.get("/google-reviews/negative-analyze")
+async def analyze_negative_reviews_stream(force: bool = False):
+    """
+    SSE stream: analizează recenziile negative (≤3★) pe luni cu Ollama.
+    Cooldown de 4 ore (unless force=True).
+    """
+    async def _stream() -> AsyncGenerator[str, None]:
+        # Cooldown check
+        async with AsyncSessionLocal() as db:
+            last_str = await _get_setting(db, "google_reviews_negative_analysis_at")
+            ollama_host = (await _get_setting(db, "ollama_host")) or "http://ollama:11434"
+            chat_model = (await _get_setting(db, "ollama_chat_model")) or "llama3.2"
+
+        if not force and last_str:
+            try:
+                last_dt = datetime.fromisoformat(last_str)
+                if last_dt.tzinfo is None:
+                    last_dt = last_dt.replace(tzinfo=timezone.utc)
+                elapsed = (datetime.now(timezone.utc) - last_dt).total_seconds()
+                cooldown_secs = NEGATIVE_ANALYSIS_COOLDOWN_HOURS * 3600
+                if elapsed < cooldown_secs:
+                    remaining = int(cooldown_secs - elapsed)
+                    yield f"data: {json.dumps({'type': 'cooldown', 'remaining_seconds': remaining})}\n\n"
+                    return
+            except Exception:
+                pass
+
+        # Load ALL negative reviews (≤3★) from DB — no date limit
+        async with AsyncSessionLocal() as db:
+            result = await db.execute(
+                select(GoogleReview)
+                .where(GoogleReview.rating <= 3)
+                .where(GoogleReview.snippet.isnot(None))
+                .order_by(GoogleReview.iso_date.asc())
+            )
+            reviews = result.scalars().all()
+
+        if not reviews:
+            yield f"data: {json.dumps({'type': 'error', 'message': 'Nicio recenzie negativă cu text în baza de date'})}\n\n"
+            return
+
+        by_month, monthly_data = _build_monthly_data_str(reviews)
+        total = len(reviews)
+        months_count = len(by_month)
+
+        yield f"data: {json.dumps({'type': 'start', 'total': total, 'months': months_count})}\n\n"
+
+        # Call Ollama
+        yield f"data: {json.dumps({'type': 'working', 'step': 'ollama'})}\n\n"
+        prompt = _PROMPT_NEGATIVE_MONTHLY.format(monthly_data=monthly_data)
+
+        try:
+            raw = await _ollama_generate(ollama_host, chat_model, prompt, timeout=300)
+            analysis = _extract_json(raw)
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+            return
+
+        result_data = {
+            "months_analyzed": months_count,
+            "total_negative": total,
+            "monthly_counts": {month: len(revs) for month, revs in by_month.items()},
+            "analysis": analysis,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+        async with AsyncSessionLocal() as db:
+            await _set_setting(db, "google_reviews_negative_analysis",
+                               json.dumps(result_data, ensure_ascii=False))
+            await _set_setting(db, "google_reviews_negative_analysis_at",
+                               datetime.now(timezone.utc).isoformat())
             await db.commit()
 
         yield f"data: {json.dumps({'type': 'done', **result_data})}\n\n"

@@ -683,6 +683,26 @@ class ApiService {
     return data;
   }
 
+  async getNegativeAnalysis(): Promise<{
+    result: {
+      months_analyzed: number;
+      total_negative: number;
+      monthly_counts: Record<string, number>;
+      analysis: {
+        months: { month: string; review_count: number; top_issues: string[] }[];
+        recurring_themes: { theme: string; months_present: string[]; months_count: number; trend: string; description: string }[];
+        insights: { importance: string; observation: string; pattern: string }[];
+      };
+      generated_at: string;
+    } | null;
+    last_analysis_at: string | null;
+    remaining_seconds: number;
+    cooldown_hours: number;
+  }> {
+    const { data } = await this.client.get('/google-reviews/negative-analysis');
+    return data;
+  }
+
   async ingestGoogleReviews(file: File): Promise<IngestResult> {
     const formData = new FormData();
     formData.append('file', file);
