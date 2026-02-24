@@ -291,6 +291,7 @@ async def do_refetch_from_date(
     max_calls: int = 10,
     key_mode: str = "alternate",  # "key1" | "key2" | "alternate"
     use_date: bool = True,
+    no_cache: bool = True,
 ) -> dict:
     """
     Re-fetchează review-uri din SerpAPI (no_cache=true, newest first).
@@ -336,9 +337,10 @@ async def do_refetch_from_date(
             await db.commit()
 
         # 2. Re-fetch
+        _nc = "&no_cache=true" if no_cache else ""
         current_url = (
             f"{SERPAPI_BASE}?engine=google_maps_reviews"
-            f"&data_id={data_id}&hl=en&sort_by=newestFirst&no_cache=true"
+            f"&data_id={data_id}&hl=en&sort_by=newestFirst{_nc}"
         )
 
         inserted = 0
@@ -615,7 +617,7 @@ async def refetch_from_date(request: Request):
         key_mode = "alternate"
 
     try:
-        result = await do_refetch_from_date(from_date, max_calls=max_calls, key_mode=key_mode, use_date=use_date)
+        result = await do_refetch_from_date(from_date, max_calls=max_calls, key_mode=key_mode, use_date=use_date, no_cache=no_cache)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except httpx.HTTPError as e:

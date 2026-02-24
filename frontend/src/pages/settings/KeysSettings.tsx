@@ -293,6 +293,7 @@ const RefetchWidget: React.FC = () => {
   const qc = useQueryClient();
   const [dateVal, setDateVal] = useState('');
   const [useDate, setUseDate] = useState(true);
+  const [noCache, setNoCache] = useState(true);
   const [maxCalls, setMaxCalls] = useState(10);
   const [keyMode, setKeyMode] = useState<'alternate' | 'key1' | 'key2'>('alternate');
   const [confirm, setConfirm] = useState(false);
@@ -302,7 +303,7 @@ const RefetchWidget: React.FC = () => {
   } | null>(null);
 
   const mutation = useMutation({
-    mutationFn: () => api.refetchReviewsFromDate(useDate ? dateVal : '', maxCalls, keyMode, useDate),
+    mutationFn: () => api.refetchReviewsFromDate(useDate ? dateVal : '', maxCalls, keyMode, useDate, noCache),
     onSuccess: (res) => {
       setResult(res);
       setConfirm(false);
@@ -379,6 +380,18 @@ const RefetchWidget: React.FC = () => {
               <option value="key1">Cheie 1</option>
               <option value="key2">Cheie 2</option>
             </select>
+            <label className="flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-400 cursor-pointer select-none whitespace-nowrap">
+              <input
+                type="checkbox"
+                checked={noCache}
+                onChange={(e) => setNoCache(e.target.checked)}
+                className="rounded"
+              />
+              {noCache
+                ? <span title="Date proaspete de la Google — consumă 1 credit/apel">Date noi <span className="text-amber-500">(credit)</span></span>
+                : <span title="Returnează date din cache SerpAPI (max 1h vechime) — gratuit, nu consumă credite">Din cache <span className="text-emerald-600 dark:text-emerald-400">(gratuit)</span></span>
+              }
+            </label>
             <button
               onClick={() => (!useDate || dateVal) && setConfirm(true)}
               disabled={useDate && !dateVal}
