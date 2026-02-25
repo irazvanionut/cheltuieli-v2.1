@@ -300,30 +300,94 @@ const RefetchWidget: React.FC = () => {
   const [dateVal, setDateVal] = useState('');
   const [useDate, setUseDate] = useState(true);
   const [noCache, setNoCache] = useState(true);
-  const [maxCalls, setMaxCalls] = useState(10);
+  const [maxCalls, setMaxCalls] = useState(50);
   const [keyMode, setKeyMode] = useState<'all' | 'key1' | 'key2' | 'key3'>('all');
-  const [confirm, setConfirm] = useState(false);
-  const [result, setResult] = useState<{
-    inserted: number; skipped: number; pages_fetched: number;
-    calls_per_key: Record<string, number>; from_date: string; stop_reason?: string;
-  } | null>(null);
+  const [confirm, setConfirm] = useState<'fresh' | 'resume' | null>(null);
+  const [tokenCopied, setTokenCopied] = useState(false);
+  // isStarting: rămâne true câteva secunde după start ca să activeze polling-ul
+  // chiar dacă primul răspuns de status sosește înainte ca task-ul să seteze running=true
+  const [isStarting, setIsStarting] = useState(false);
 
-  const mutation = useMutation({
-    mutationFn: () => api.refetchReviewsFromDate(useDate ? dateVal : '', maxCalls, keyMode, useDate, noCache),
-    onSuccess: (res) => {
-      setResult(res);
-      setConfirm(false);
-      qc.invalidateQueries({ queryKey: ['settings-all'] });
+  // Token state (salvat în DB — persistent)
+  const { data: tokenState, refetch: refetchToken } = useQuery({
+    queryKey: ['refetch-token'],
+    queryFn: () => api.getRefetchToken(),
+    staleTime: 10_000,
+  });
+
+  // Status task background (polling cât timp rulează)
+  const { data: status, refetch: refetchStatus } = useQuery({
+    queryKey: ['refetch-status'],
+    queryFn: () => api.getRefetchStatus(),
+    refetchInterval: (q) => (q.state.data?.running || isStarting ? 2000 : false),
+    staleTime: 0,
+  });
+
+  // Când task-ul se termină, reîncarcă token-ul
+  const prevRunning = useRef(false);
+  useEffect(() => {
+    if (status?.running) {
+      setIsStarting(false); // running confirmat — isStarting nu mai e necesar
+    }
+    if (prevRunning.current && status && !status.running) {
+      setIsStarting(false);
+      refetchToken();
       qc.invalidateQueries({ queryKey: ['google-reviews-summary'] });
+    }
+    prevRunning.current = status?.running ?? false;
+  }, [status?.running]);
+
+  const clearTokenMutation = useMutation({
+    mutationFn: () => api.clearRefetchToken(),
+    onSuccess: () => { refetchToken(); toast.success('Token șters'); },
+    onError: () => toast.error('Eroare la ștergere token'),
+  });
+
+  const startMutation = useMutation({
+    mutationFn: (resumeFromToken: boolean) => api.startRefetch({
+      date: useDate ? dateVal : '',
+      max_calls: maxCalls,
+      key_mode: keyMode,
+      use_date: useDate,
+      no_cache: noCache,
+      resume_from_token: resumeFromToken,
+    }),
+    onSuccess: () => {
+      setConfirm(null);
+      setIsStarting(true);
+      refetchStatus();
+      refetchToken();
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.detail || 'Eroare la re-fetch');
-      setConfirm(false);
+      toast.error(err?.response?.data?.detail || 'Eroare la pornire refetch');
+      setConfirm(null);
     },
+  });
+
+  const stopMutation = useMutation({
+    mutationFn: () => api.stopRefetch(),
+    onSuccess: () => { refetchStatus(); refetchToken(); toast.success('Refetch oprit'); },
   });
 
   const maxDate = new Date().toISOString().split('T')[0];
   const inputCls = 'px-2.5 py-1.5 text-xs rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-400';
+
+  const hasToken = tokenState?.has_token ?? false;
+  const isExhausted = tokenState?.exhausted ?? false;
+  const isRunning = status?.running ?? false;
+
+  const fmtDate = (iso: string | null) => {
+    if (!iso) return '';
+    try { return new Date(iso).toLocaleString('ro-RO', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); }
+    catch { return iso; }
+  };
+
+  const copyToken = async () => {
+    if (!tokenState?.token) return;
+    await navigator.clipboard.writeText(tokenState.token);
+    setTokenCopied(true);
+    setTimeout(() => setTokenCopied(false), 2000);
+  };
 
   return (
     <div className="mx-4 mb-3 p-3 rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/10">
@@ -332,111 +396,176 @@ const RefetchWidget: React.FC = () => {
         Re-fetch de la dată
       </div>
 
-      {result && !mutation.isPending && (
+      {/* Progress bar cât rulează */}
+      {isRunning && status && (
+        <div className="mb-2 p-2 rounded-lg bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/50 text-xs">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-blue-700 dark:text-blue-400 font-medium flex items-center gap-1.5">
+              <RefreshCw className="w-3 h-3 animate-spin" />
+              Se procesează…
+            </span>
+            <button
+              onClick={() => stopMutation.mutate()}
+              disabled={stopMutation.isPending}
+              className="text-red-500 hover:text-red-700 dark:hover:text-red-400 text-[10px] font-medium"
+            >
+              Stop
+            </button>
+          </div>
+          <div className="w-full bg-blue-200 dark:bg-blue-900/30 rounded-full h-1.5 mb-1 overflow-hidden">
+            <div
+              className="h-full bg-blue-500 rounded-full transition-all duration-500"
+              style={{ width: status.max_calls > 0 ? `${Math.min(100, (status.pages_fetched / status.max_calls) * 100)}%` : '0%' }}
+            />
+          </div>
+          <div className="text-blue-600 dark:text-blue-400 text-[10px]">
+            Pagini: <strong>{status.pages_fetched}</strong> / {status.max_calls} ·
+            Adăugate: <strong>{status.inserted}</strong> ·
+            Existente: {status.skipped}
+            {status.started_at && <span className="text-stone-400 ml-1">· pornit {fmtDate(status.started_at)}</span>}
+          </div>
+        </div>
+      )}
+
+      {/* Rezultat ultima rulare (dacă nu rulează) */}
+      {!isRunning && status?.finished_at && (
         <div className="mb-2 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 text-xs text-emerald-700 dark:text-emerald-400 flex items-start gap-2">
           <CheckCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
           <span>
-            Adăugat <strong>{result.inserted}</strong> · Existente <strong>{result.skipped}</strong> · Pagini <strong>{result.pages_fetched}</strong>
-            {Object.keys(result.calls_per_key).length > 0 && (
-              <> · Apeluri: {Object.entries(result.calls_per_key).map(([k, v]) => `cheie ${k}: ${v}`).join(', ')}</>
+            Adăugat <strong>{status.inserted}</strong> · Existente <strong>{status.skipped}</strong> · Pagini <strong>{status.pages_fetched}</strong>
+            {Object.keys(status.calls_per_key || {}).length > 0 && (
+              <> · {Object.entries(status.calls_per_key).map(([k, v]) => `K${k}: ${v}`).join(', ')}</>
             )}
-            {result.stop_reason && (
-              <> · <span className="text-stone-400">Stop: {result.stop_reason}</span></>
-            )}
+            {status.stop_reason && <> · <span className="text-stone-400">Stop: {status.stop_reason}</span></>}
+            {status.has_next_token && !status.exhausted && <span className="ml-1 text-blue-500"> · Token salvat</span>}
+            {status.exhausted && <span className="ml-1 text-stone-400"> · Toate paginile epuizate</span>}
           </span>
         </div>
       )}
 
-      {!confirm ? (
+      {/* Token banner */}
+      {hasToken && (
+        <div className={`mb-2 rounded-lg border text-xs ${
+          isExhausted
+            ? 'bg-stone-50 dark:bg-stone-800/50 border-stone-200 dark:border-stone-700'
+            : 'bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800/50'
+        }`}>
+          <div className="flex items-center justify-between gap-2 px-2 py-1.5">
+            <span className={`font-medium ${isExhausted ? 'text-stone-500 dark:text-stone-400' : 'text-blue-700 dark:text-blue-400'}`}>
+              {isExhausted ? 'Nu mai există pagini noi' : 'Token salvat'}
+            </span>
+            <div className="flex items-center gap-1">
+              {tokenState?.saved_at && (
+                <span className="text-stone-400 dark:text-stone-500 text-[10px]">{fmtDate(tokenState.saved_at)}</span>
+              )}
+              {!isExhausted && tokenState?.token && (
+                <button onClick={copyToken} className="p-1 rounded text-stone-400 hover:text-stone-600 dark:hover:text-stone-300" title="Copiază token">
+                  {tokenCopied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                </button>
+              )}
+              <button
+                onClick={() => clearTokenMutation.mutate()}
+                disabled={clearTokenMutation.isPending}
+                className="p-1 rounded text-stone-400 hover:text-red-500 dark:hover:text-red-400"
+                title="Șterge token"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+          {!isExhausted && tokenState?.token && (
+            <div className="px-2 pb-1.5 font-mono text-[10px] text-stone-500 dark:text-stone-400 break-all select-all cursor-text leading-relaxed">
+              {tokenState.token}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Formular (ascuns cât rulează sau confirmare activă) */}
+      {!isRunning && confirm === null && (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <label className="flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-400 cursor-pointer select-none whitespace-nowrap">
-              <input
-                type="checkbox"
-                checked={useDate}
-                onChange={(e) => { setUseDate(e.target.checked); setResult(null); }}
-                className="rounded"
-              />
+              <input type="checkbox" checked={useDate} onChange={(e) => setUseDate(e.target.checked)} className="rounded" />
               Oprire la dată
             </label>
             <input
-              type="date"
-              value={dateVal}
-              max={maxDate}
-              disabled={!useDate}
-              onChange={(e) => { setDateVal(e.target.value); setResult(null); }}
+              type="date" value={dateVal} max={maxDate} disabled={!useDate}
+              onChange={(e) => setDateVal(e.target.value)}
               className={`flex-1 ${inputCls} disabled:opacity-40`}
             />
             <input
-              type="number"
-              value={maxCalls}
-              min={1}
+              type="number" value={maxCalls} min={1}
               onChange={(e) => setMaxCalls(Math.max(1, parseInt(e.target.value) || 1))}
               className={`w-20 ${inputCls}`}
-              title="Număr maxim de apeluri API"
+              title="Nr. apeluri (50/oră throughput SerpAPI)"
             />
           </div>
           <div className="flex items-center gap-2">
-            <select
-              value={keyMode}
-              onChange={(e) => setKeyMode(e.target.value as 'all' | 'key1' | 'key2' | 'key3')}
-              className={`flex-1 ${inputCls}`}
-            >
+            <select value={keyMode} onChange={(e) => setKeyMode(e.target.value as any)} className={`flex-1 ${inputCls}`}>
               <option value="all">Toate cheile (rotație)</option>
               <option value="key1">Cheie 1</option>
               <option value="key2">Cheie 2</option>
               <option value="key3">Cheie 3</option>
             </select>
             <label className="flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-400 cursor-pointer select-none whitespace-nowrap">
-              <input
-                type="checkbox"
-                checked={noCache}
-                onChange={(e) => setNoCache(e.target.checked)}
-                className="rounded"
-              />
+              <input type="checkbox" checked={noCache} onChange={(e) => setNoCache(e.target.checked)} className="rounded" />
               {noCache
-                ? <span title="Date proaspete de la Google — consumă 1 credit/apel">Date noi <span className="text-amber-500">(credit)</span></span>
-                : <span title="Returnează date din cache SerpAPI (max 1h vechime) — gratuit, nu consumă credite">Din cache <span className="text-emerald-600 dark:text-emerald-400">(gratuit)</span></span>
+                ? <span title="Date proaspete — consumă 1 credit/apel">Date noi <span className="text-amber-500">(credit)</span></span>
+                : <span title="Cache SerpAPI — gratuit">Din cache <span className="text-emerald-600 dark:text-emerald-400">(gratuit)</span></span>
               }
             </label>
+          </div>
+          <div className="flex items-center gap-2">
+            {hasToken && !isExhausted && (
+              <button
+                onClick={() => setConfirm('resume')}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+              >
+                <RefreshCw className="w-3 h-3" /> Resume
+              </button>
+            )}
             <button
-              onClick={() => (!useDate || dateVal) && setConfirm(true)}
+              onClick={() => (!useDate || dateVal) ? setConfirm('fresh') : undefined}
               disabled={useDate && !dateVal}
-              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-40 transition-colors whitespace-nowrap"
+              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-40 transition-colors"
             >
-              Execută
+              {hasToken ? 'De la zero' : 'Execută'}
             </button>
           </div>
         </div>
-      ) : (
+      )}
+
+      {/* Confirmare */}
+      {!isRunning && confirm !== null && (
         <div className="space-y-2">
           <div className="flex items-start gap-1.5 text-xs text-amber-700 dark:text-amber-400">
             <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
             <span>
-              {useDate
-                ? <>Se vor fetcha review-uri din <strong>{dateVal}</strong> până azi, </>
-                : <>Se vor fetcha review-uri fără limită de dată, </>
+              {confirm === 'resume'
+                ? <>Resume de la token-ul salvat, </>
+                : useDate
+                  ? <>Fetch din <strong>{dateVal}</strong>, </>
+                  : <>Fetch fără limită de dată, </>
               }
-              max <strong>{maxCalls}</strong> apeluri, {keyMode === 'all' ? 'rotând toate cheile' : `cheie ${keyMode === 'key1' ? '1' : keyMode === 'key2' ? '2' : '3'}`}.
-              Review-urile existente sunt păstrate. Confirmă?
+              max <strong>{maxCalls}</strong> apeluri,{' '}
+              {keyMode === 'all' ? 'toate cheile' : `cheie ${keyMode.replace('key', '')}`}.
+              {confirm === 'fresh' && hasToken && <> Token-ul existent va fi <strong>șters</strong>.</>}
+              {' '}Task-ul rulează în background — poți închide pagina.
             </span>
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => mutation.mutate()}
-              disabled={mutation.isPending}
+              onClick={() => startMutation.mutate(confirm === 'resume')}
+              disabled={startMutation.isPending}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-50 transition-colors"
             >
-              {mutation.isPending
-                ? <><RefreshCw className="w-3 h-3 animate-spin" /> Se procesează...</>
+              {startMutation.isPending
+                ? <><RefreshCw className="w-3 h-3 animate-spin" /> Se pornește...</>
                 : <><Check className="w-3 h-3" /> Confirmă</>
               }
             </button>
-            <button
-              onClick={() => setConfirm(false)}
-              disabled={mutation.isPending}
-              className="px-3 py-1.5 text-xs rounded-lg text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
-            >
+            <button onClick={() => setConfirm(null)} className="px-3 py-1.5 text-xs rounded-lg text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors">
               Anulează
             </button>
           </div>

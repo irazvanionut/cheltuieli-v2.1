@@ -18,6 +18,7 @@ import {
   ChevronRight,
   ArrowLeft,
   Building2,
+  ScrollText,
 } from 'lucide-react';
 
 // Import setting pages
@@ -35,6 +36,7 @@ import { ScheduleSettings } from './settings/ScheduleSettings';
 import { KeysSettings } from './settings/KeysSettings';
 import { FurnizoriSettings } from './settings/FurnizoriSettings';
 import { SmsSettings } from './settings/SmsSettings';
+import { LogSettings } from './settings/LogSettings';
 
 interface MenuItem {
   path: string;
@@ -68,6 +70,7 @@ const settingsGroups: MenuGroup[] = [
       { path: '/settings/ui', name: 'Interfață', icon: Palette, description: 'Temă și preferințe vizuale' },
       { path: '/settings/ollama', name: 'Conexiune AI', icon: Bot, description: 'Configurare autocomplete AI' },
       { path: '/settings/schedule', name: 'Programări', icon: Clock, description: 'Calendar task-uri automate & polling' },
+      { path: '/settings/log', name: 'Log Sistem', icon: ScrollText, description: 'Erori și evenimente de sistem' },
     ],
   },
   {
@@ -202,6 +205,7 @@ export const SettingsPage: React.FC = () => {
           <Route path="keys" element={<KeysSettings />} />
           <Route path="furnizori" element={<FurnizoriSettings />} />
           <Route path="sms" element={<SmsSettings />} />
+          <Route path="log" element={<LogSettings />} />
         </Routes>
       </div>
     </div>

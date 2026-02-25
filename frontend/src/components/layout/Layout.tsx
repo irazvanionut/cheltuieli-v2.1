@@ -175,7 +175,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       icon: Phone,
       items: [
         { name: 'Apeluri Azi', href: '/apeluri/primite', icon: PhoneIncoming, show: true, badge: null, badgeApeluri: apeluriData?.summary || null },
-        { name: 'Lista Apeluri', href: '/apeluri/lista', icon: PhoneCall, show: true, badge: null, badgeApeluri: null },
+        { name: 'Monitor Coadă', href: '/apeluri/lista', icon: PhoneCall, show: true, badge: null, badgeApeluri: null },
         { name: 'Recomandari Apeluri', href: '/apeluri/recomandari', icon: Lightbulb, show: true, badge: null, badgeApeluri: null },
         { name: 'Statistici & Trend', href: '/apeluri/trend', icon: TrendingUp, show: true, badge: null, badgeApeluri: null },
       ],

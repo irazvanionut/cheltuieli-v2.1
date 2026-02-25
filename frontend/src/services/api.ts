@@ -427,16 +427,42 @@ class ApiService {
     return data;
   }
 
-  async refetchReviewsFromDate(date: string, max_calls: number, key_mode: string, use_date: boolean = true, no_cache: boolean = true): Promise<{
-    inserted: number;
-    skipped: number;
-    pages_fetched: number;
-    calls_per_key: Record<string, number>;
-    from_date: string;
-    refreshed_at: string;
-    stop_reason?: string;
+  async refetchReviewsFromDate(date: string, max_calls: number, key_mode: string, use_date: boolean = true, no_cache: boolean = true, resume_from_token: boolean = false): Promise<{
+    inserted: number; skipped: number; pages_fetched: number;
+    calls_per_key: Record<string, number>; from_date: string; refreshed_at: string;
+    stop_reason?: string; has_next_token: boolean; exhausted: boolean;
   }> {
-    const { data } = await this.client.post('/google-reviews/refetch-from-date', { date, max_calls, key_mode, use_date, no_cache });
+    const { data } = await this.client.post('/google-reviews/refetch-from-date', { date, max_calls, key_mode, use_date, no_cache, resume_from_token });
+    return data;
+  }
+
+  async startRefetch(params: { date: string; max_calls: number; key_mode: string; use_date: boolean; no_cache: boolean; resume_from_token: boolean }): Promise<{ started: boolean; max_calls: number }> {
+    const { data } = await this.client.post('/google-reviews/refetch-start', params);
+    return data;
+  }
+
+  async getRefetchStatus(): Promise<{
+    running: boolean; pages_fetched: number; inserted: number; skipped: number;
+    calls_per_key: Record<string, number>; stop_reason: string | null;
+    started_at: string | null; finished_at: string | null; error: string | null;
+    max_calls: number; has_next_token?: boolean; exhausted?: boolean;
+  }> {
+    const { data } = await this.client.get('/google-reviews/refetch-status');
+    return data;
+  }
+
+  async stopRefetch(): Promise<{ stopped: boolean }> {
+    const { data } = await this.client.post('/google-reviews/refetch-stop');
+    return data;
+  }
+
+  async getRefetchToken(): Promise<{ has_token: boolean; token: string; saved_at: string | null; exhausted: boolean }> {
+    const { data } = await this.client.get('/google-reviews/refetch-token');
+    return data;
+  }
+
+  async clearRefetchToken(): Promise<{ ok: boolean }> {
+    const { data } = await this.client.delete('/google-reviews/refetch-token');
     return data;
   }
 
@@ -906,6 +932,20 @@ class ApiService {
 
   async createAgendaContactStandalone(body: import('@/types').AgendaContactCreateStandalone): Promise<AgendaContact> {
     const { data } = await this.client.post<AgendaContact>('/agenda/contacte', body);
+    return data;
+  }
+
+  // ============================================
+  // SYS LOG
+  // ============================================
+
+  async getSysLog(params?: { sursa?: string; nivel?: string; limit?: number }): Promise<import('@/types').SysLogEntry[]> {
+    const { data } = await this.client.get('/settings/log', { params });
+    return data;
+  }
+
+  async deleteOldSysLog(): Promise<{ deleted: number }> {
+    const { data } = await this.client.delete('/settings/log');
     return data;
   }
 }

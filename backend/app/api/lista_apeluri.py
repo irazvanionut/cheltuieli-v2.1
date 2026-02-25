@@ -451,8 +451,12 @@ async def ami_event_loop() -> None:
         except (asyncio.TimeoutError, ConnectionRefusedError,
                 ConnectionResetError, OSError) as e:
             print(f"[AMI] Connection lost: {e} — reconnect in {RECONNECT_DELAY}s")
+            from app.core.log import write_log
+            await write_log("ERROR", "ami", f"AMI connection lost: {type(e).__name__}", str(e))
         except Exception as e:
             print(f"[AMI] Error ({type(e).__name__}: {e}) — reconnect in {RECONNECT_DELAY}s")
+            from app.core.log import write_log
+            await write_log("ERROR", "ami", f"AMI error: {type(e).__name__}", str(e))
         finally:
             _ami_connected = False
             stop_event.set()

@@ -478,3 +478,12 @@ export interface Toast {
   type: 'success' | 'error' | 'info' | 'warning';
   message: string;
 }
+
+export interface SysLogEntry {
+  id: number;
+  ts: string;
+  nivel: string;
+  sursa: string;
+  mesaj: string;
+  detalii: string | null;
+}

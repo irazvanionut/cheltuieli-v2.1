@@ -258,6 +258,8 @@ async def refresh_pontaj_cache():
         pontaj_cache["error"] = f"Date intarziate - probleme de conectare la Legacy: {e}"
         pontaj_cache["last_updated"] = datetime.now().isoformat()
         print(f"Pontaj: refresh error — {e}")
+        from app.core.log import write_log
+        await write_log("ERROR", "erp", "Pontaj fetch failed", str(e))
 
 
 # ---------------------------------------------------------------------------

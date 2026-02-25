@@ -17,6 +17,7 @@ from app.models.models import (
     AmiApel,
     SmsTemplate,
     SmsLog,
+    SysLog,
 )
 
 __all__ = [
@@ -38,4 +39,5 @@ __all__ = [
     "AmiApel",
     "SmsTemplate",
     "SmsLog",
+    "SysLog",
 ]

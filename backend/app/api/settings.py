@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from typing import List, Dict, Optional
 from pathlib import Path
+from datetime import datetime, timezone, timedelta
 import httpx
 
 from app.core.database import get_db
 from app.core.security import get_current_user, require_admin, require_sef
-from app.models import User, Setting, Categorie, Grupa
+from app.models import User, Setting, Categorie, Grupa, SysLog
 
 SET_FILE = Path("/opt/cheltuieli-v2.1/.set")
 from app.schemas import (
@@ -498,5 +499,51 @@ async def chat_with_ai(
     
     await ai_service.update_settings(db)
     response = await ai_service.chat(request.message, db, current_user.id)
-    
+
+
+# ============================================
+# SYS LOG
+# ============================================
+
+@router.get("/settings/log")
+async def get_sys_log(
+    sursa: Optional[str] = Query(None),
+    nivel: Optional[str] = Query(None),
+    limit: int = Query(200, le=500),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    """Returnează intrările din sys_log (doar admin)."""
+    q = select(SysLog).order_by(SysLog.ts.desc()).limit(limit)
+    if sursa:
+        q = q.where(SysLog.sursa == sursa)
+    if nivel:
+        q = q.where(SysLog.nivel == nivel)
+    rows = (await db.execute(q)).scalars().all()
+    return [
+        {
+            "id": r.id,
+            "ts": r.ts.isoformat() if r.ts else None,
+            "nivel": r.nivel,
+            "sursa": r.sursa,
+            "mesaj": r.mesaj,
+            "detalii": r.detalii,
+        }
+        for r in rows
+    ]
+
+
+@router.delete("/settings/log")
+async def delete_old_sys_log(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    """Șterge înregistrările mai vechi de 30 de zile."""
+    cutoff = datetime.now(timezone.utc) - timedelta(days=30)
+    result = await db.execute(
+        delete(SysLog).where(SysLog.ts < cutoff)
+    )
+    await db.commit()
+    return {"deleted": result.rowcount}
+
     return ChatResponse(response=response)

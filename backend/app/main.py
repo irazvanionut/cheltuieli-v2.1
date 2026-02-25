@@ -5,14 +5,15 @@ import asyncio
 import json
 from datetime import datetime, date, time, timedelta
 from pathlib import Path
-
 from sqlalchemy import select, delete
 
 from app.core.config import settings
 from app.core.database import init_db, AsyncSessionLocal
+from app.core.log import write_log
 from app.models import Exercitiu, ApeluriZilnic, ApeluriDetalii
 from app.api import api_router
-from app.api.apeluri import parse_queue_log, QUEUE_LOG_DIR
+from app.api.apeluri import compute_stats
+from app.models import AmiApel
 from app.api.lista_apeluri import ami_event_loop
 from app.api.pontaj import pontaj_fetch_loop
 from app.api.google_reviews import do_refresh as google_reviews_refresh, do_analysis as google_reviews_analyze, do_fetch_serpapi_account, do_negative_analysis as google_reviews_negative_analyze
@@ -43,6 +44,7 @@ async def auto_close_exercitiu_loop():
             return
         except Exception as e:
             print(f"Auto-close scheduler error: {e}")
+            await write_log("ERROR", "sistem", "Auto-close scheduler error", str(e))
             await asyncio.sleep(60)
 
 
@@ -102,25 +104,34 @@ async def save_apeluri_loop():
             return
         except Exception as e:
             print(f"Apeluri save scheduler error: {e}")
+            await write_log("ERROR", "sistem", "Save apeluri scheduler error", str(e))
             await asyncio.sleep(60)
 
 
 async def do_save_apeluri(target_date: date | None = None):
-    """Parse queue_log for a date and upsert into apeluri_zilnic + apeluri_detalii."""
+    """Read ami_apeluri for a date and upsert into apeluri_zilnic + apeluri_detalii."""
     target = target_date or date.today()
-    today_str = target.strftime("%Y%m%d")
 
-    # Determine file path
-    if target == date.today():
-        file_path = QUEUE_LOG_DIR / "queue_log"
-        if not file_path.exists():
-            file_path = QUEUE_LOG_DIR / f"queue_log-{today_str}"
-    else:
-        file_path = QUEUE_LOG_DIR / f"queue_log-{today_str}"
+    async with AsyncSessionLocal() as session:
+        rows = (await session.execute(
+            select(AmiApel)
+            .where(AmiApel.data == target)
+            .where(AmiApel.status.in_(["COMPLETAT", "ABANDONAT"]))
+        )).scalars().all()
 
-    result = parse_queue_log(file_path)
-    stats = result.get("stats", {})
-    calls = result.get("calls", [])
+    calls = [
+        {
+            "callid": r.callid,
+            "caller_id": r.caller_id or "",
+            "agent": r.agent or "",
+            "status": r.status,
+            "ora": r.ora or "",
+            "hold_time": r.hold_time or 0,
+            "call_time": r.call_time or 0,
+        }
+        for r in rows
+    ]
+    stats = compute_stats(calls)
 
     if not stats.get("total", 0):
         print(f"Apeluri save: no calls found for {target}, skipping")
@@ -135,23 +146,23 @@ async def do_save_apeluri(target_date: date | None = None):
 
         if zilnic:
             # Update existing
-            zilnic.total = stats.get("total", 0)
-            zilnic.answered = stats.get("answered", 0)
-            zilnic.abandoned = stats.get("abandoned", 0)
-            zilnic.answer_rate = stats.get("answer_rate", 0)
-            zilnic.abandon_rate = stats.get("abandon_rate", 0)
-            zilnic.asa = stats.get("asa", 0)
-            zilnic.waited_over_30 = stats.get("waited_over_30", 0)
-            zilnic.hold_answered_avg = stats.get("hold_answered", {}).get("avg", 0)
-            zilnic.hold_answered_median = stats.get("hold_answered", {}).get("median", 0)
-            zilnic.hold_answered_p90 = stats.get("hold_answered", {}).get("p90", 0)
-            zilnic.hold_abandoned_avg = stats.get("hold_abandoned", {}).get("avg", 0)
-            zilnic.hold_abandoned_median = stats.get("hold_abandoned", {}).get("median", 0)
-            zilnic.hold_abandoned_p90 = stats.get("hold_abandoned", {}).get("p90", 0)
-            zilnic.call_duration_avg = stats.get("call_duration", {}).get("avg", 0)
-            zilnic.call_duration_median = stats.get("call_duration", {}).get("median", 0)
-            zilnic.call_duration_p90 = stats.get("call_duration", {}).get("p90", 0)
-            zilnic.hourly_data = stats.get("hourly", [])
+            zilnic.total = stats["total"]
+            zilnic.answered = stats["answered"]
+            zilnic.abandoned = stats["abandoned"]
+            zilnic.answer_rate = stats["answer_rate"]
+            zilnic.abandon_rate = stats["abandon_rate"]
+            zilnic.asa = stats["asa"]
+            zilnic.waited_over_30 = stats["waited_over_30"]
+            zilnic.hold_answered_avg = stats["hold_answered"]["avg"]
+            zilnic.hold_answered_median = stats["hold_answered"]["median"]
+            zilnic.hold_answered_p90 = stats["hold_answered"]["p90"]
+            zilnic.hold_abandoned_avg = stats["hold_abandoned"]["avg"]
+            zilnic.hold_abandoned_median = stats["hold_abandoned"]["median"]
+            zilnic.hold_abandoned_p90 = stats["hold_abandoned"]["p90"]
+            zilnic.call_duration_avg = stats["call_duration"]["avg"]
+            zilnic.call_duration_median = stats["call_duration"]["median"]
+            zilnic.call_duration_p90 = stats["call_duration"]["p90"]
+            zilnic.hourly_data = stats["hourly"]
             # Delete old details and re-insert
             await session.execute(
                 delete(ApeluriDetalii).where(ApeluriDetalii.apeluri_zilnic_id == zilnic.id)
@@ -160,23 +171,23 @@ async def do_save_apeluri(target_date: date | None = None):
             # Create new
             zilnic = ApeluriZilnic(
                 data=target,
-                total=stats.get("total", 0),
-                answered=stats.get("answered", 0),
-                abandoned=stats.get("abandoned", 0),
-                answer_rate=stats.get("answer_rate", 0),
-                abandon_rate=stats.get("abandon_rate", 0),
-                asa=stats.get("asa", 0),
-                waited_over_30=stats.get("waited_over_30", 0),
-                hold_answered_avg=stats.get("hold_answered", {}).get("avg", 0),
-                hold_answered_median=stats.get("hold_answered", {}).get("median", 0),
-                hold_answered_p90=stats.get("hold_answered", {}).get("p90", 0),
-                hold_abandoned_avg=stats.get("hold_abandoned", {}).get("avg", 0),
-                hold_abandoned_median=stats.get("hold_abandoned", {}).get("median", 0),
-                hold_abandoned_p90=stats.get("hold_abandoned", {}).get("p90", 0),
-                call_duration_avg=stats.get("call_duration", {}).get("avg", 0),
-                call_duration_median=stats.get("call_duration", {}).get("median", 0),
-                call_duration_p90=stats.get("call_duration", {}).get("p90", 0),
-                hourly_data=stats.get("hourly", []),
+                total=stats["total"],
+                answered=stats["answered"],
+                abandoned=stats["abandoned"],
+                answer_rate=stats["answer_rate"],
+                abandon_rate=stats["abandon_rate"],
+                asa=stats["asa"],
+                waited_over_30=stats["waited_over_30"],
+                hold_answered_avg=stats["hold_answered"]["avg"],
+                hold_answered_median=stats["hold_answered"]["median"],
+                hold_answered_p90=stats["hold_answered"]["p90"],
+                hold_abandoned_avg=stats["hold_abandoned"]["avg"],
+                hold_abandoned_median=stats["hold_abandoned"]["median"],
+                hold_abandoned_p90=stats["hold_abandoned"]["p90"],
+                call_duration_avg=stats["call_duration"]["avg"],
+                call_duration_median=stats["call_duration"]["median"],
+                call_duration_p90=stats["call_duration"]["p90"],
+                hourly_data=stats["hourly"],
             )
             session.add(zilnic)
             await session.flush()  # get zilnic.id
@@ -228,6 +239,7 @@ async def google_reviews_analysis_loop():
             return
         except Exception as e:
             print(f"Google Reviews Analysis scheduler error: {e}")
+            await write_log("ERROR", "sistem", "Google Reviews analysis scheduler error", str(e))
             await asyncio.sleep(300)
 
 
@@ -251,6 +263,7 @@ async def serpapi_account_loop():
             return
         except Exception as e:
             print(f"SerpAPI account scheduler error: {e}")
+            await write_log("ERROR", "sistem", "SerpAPI account scheduler error", str(e))
             await asyncio.sleep(300)
 
 
@@ -284,6 +297,7 @@ async def google_reviews_refresh_loop():
             return
         except Exception as e:
             print(f"Google Reviews scheduler error: {e}")
+            await write_log("ERROR", "sistem", "Google Reviews refresh scheduler error", str(e))
             await asyncio.sleep(300)  # retry in 5 min on error
 
 
@@ -313,7 +327,34 @@ async def google_reviews_negative_analysis_loop():
             return
         except Exception as e:
             print(f"Negative analysis scheduler error: {e}")
+            await write_log("ERROR", "sistem", "Negative reviews analysis scheduler error", str(e))
             await asyncio.sleep(3600)
+
+
+MASTER_CSV = Path("/mnt/asterisk/Master.csv")
+MNT_CHECK_INTERVAL = 3600  # check every hour
+
+
+async def mnt_monitor_loop():
+    """Background task: check /mnt/asterisk/Master.csv accessibility every hour."""
+    was_ok: bool | None = None  # unknown at start
+    while True:
+        try:
+            is_ok = MASTER_CSV.exists()
+            if was_ok is None:
+                # First check at startup — always log the state
+                if is_ok:
+                    await write_log("INFO", "sistem", "Master.csv accesibil", str(MASTER_CSV))
+                else:
+                    await write_log("WARN", "sistem", "Master.csv nu este accesibil — /mnt/asterisk nemountat?", str(MASTER_CSV))
+            elif is_ok and not was_ok:
+                await write_log("INFO", "sistem", "Master.csv a redevenit accesibil", str(MASTER_CSV))
+            elif not is_ok and was_ok:
+                await write_log("WARN", "sistem", "Master.csv nu mai este accesibil — /mnt/asterisk pierdut?", str(MASTER_CSV))
+            was_ok = is_ok
+        except Exception as e:
+            print(f"mnt_monitor error: {e}")
+        await asyncio.sleep(MNT_CHECK_INTERVAL)
 
 
 @asynccontextmanager
@@ -329,11 +370,12 @@ async def lifespan(app: FastAPI):
     task_google_neg_analysis = asyncio.create_task(google_reviews_negative_analysis_loop())
     task_serpapi_account = asyncio.create_task(serpapi_account_loop())
     task_ami = asyncio.create_task(ami_event_loop())
+    task_mnt = asyncio.create_task(mnt_monitor_loop())
     yield
     # Shutdown
-    for task in [task_close, task_apeluri, task_pontaj, task_google_reviews, task_google_analysis, task_google_neg_analysis, task_serpapi_account, task_ami]:
+    for task in [task_close, task_apeluri, task_pontaj, task_google_reviews, task_google_analysis, task_google_neg_analysis, task_serpapi_account, task_ami, task_mnt]:
         task.cancel()
-    for task in [task_close, task_apeluri, task_pontaj, task_google_reviews, task_google_analysis, task_google_neg_analysis, task_serpapi_account, task_ami]:
+    for task in [task_close, task_apeluri, task_pontaj, task_google_reviews, task_google_analysis, task_google_neg_analysis, task_serpapi_account, task_ami, task_mnt]:
         try:
             await task
         except asyncio.CancelledError:

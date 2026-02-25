@@ -452,6 +452,17 @@ class SmsLog(Base):
     created_at = Column(DateTime, server_default=func.now())
 
 
+class SysLog(Base):
+    __tablename__ = "sys_log"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ts = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    nivel = Column(String(10), nullable=False, default='ERROR')
+    sursa = Column(String(50), nullable=False)
+    mesaj = Column(Text, nullable=False)
+    detalii = Column(Text, nullable=True)
+
+
 class AgendaTodo(Base):
     __tablename__ = "agenda_todos"
 

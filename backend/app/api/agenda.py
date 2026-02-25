@@ -208,8 +208,10 @@ async def sync_erp(
 
                 await _upsert_setting(db, 'agenda_erp_cache', json.dumps(vendors))
                 await _upsert_setting(db, 'agenda_erp_cache_at', now.isoformat())
-            except Exception:
+            except Exception as e:
                 vendors = None
+                from app.core.log import write_log
+                await write_log("ERROR", "erp", "Furnizori ERP sync failed", str(e))
 
         # Fallback: name-only cache
         if vendors is None:

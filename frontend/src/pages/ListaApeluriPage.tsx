@@ -560,7 +560,7 @@ export const ListaApeluriPage: React.FC = () => {
         <div className="sticky top-0 z-10 bg-white dark:bg-stone-900 border-b border-stone-200 dark:border-stone-700 px-4 py-2.5 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-2">
             <Phone className="w-4 h-4 text-stone-500" />
-            <span className="font-bold text-stone-900 dark:text-stone-100 text-sm">Lista Apeluri</span>
+            <span className="font-bold text-stone-900 dark:text-stone-100 text-sm">Monitor Coadă</span>
             <span className="text-xs text-stone-400 font-mono">live</span>
           </div>
           <div className="flex items-center gap-2 text-xs">
@@ -592,7 +592,7 @@ export const ListaApeluriPage: React.FC = () => {
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <h1 className="text-xl font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
               <Phone className="w-5 h-5 text-stone-500" />
-              Lista Apeluri
+              Monitor Coadă
             </h1>
 
             <div className="flex items-center gap-2">

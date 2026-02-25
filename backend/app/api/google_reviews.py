@@ -1,3 +1,4 @@
+import asyncio
 import json
 import time as time_module
 from collections import deque
@@ -14,6 +15,21 @@ from app.core.database import AsyncSessionLocal
 from app.models.models import GoogleReview, Setting
 
 router = APIRouter(tags=["google-reviews"])
+
+# ─── Background refetch task state (in-memory, survives UI disconnect) ─────────
+_refetch_task: asyncio.Task | None = None
+_refetch_status: dict = {
+    "running": False,
+    "pages_fetched": 0,
+    "inserted": 0,
+    "skipped": 0,
+    "calls_per_key": {},
+    "stop_reason": None,
+    "started_at": None,
+    "finished_at": None,
+    "error": None,
+    "max_calls": 0,
+}
 
 # ─── In-memory SerpAPI call log (max 500 entries, lost on restart) ─────────────
 _serp_log: deque = deque(maxlen=500)
@@ -302,12 +318,24 @@ async def do_refresh(source: str = "scheduler") -> dict:
     }
 
 
+async def _save_refetch_token(next_url: str) -> None:
+    """Salvează next_url într-o sesiune separată (commit imediat) pentru resume."""
+    token_raw = parse_qs(urlparse(next_url).query).get("next_page_token", [""])[0]
+    async with AsyncSessionLocal() as tdb:
+        await _set_setting(tdb, "refetch_next_url", next_url)
+        await _set_setting(tdb, "refetch_next_token", token_raw if token_raw else "")
+        await _set_setting(tdb, "refetch_saved_at", datetime.now(timezone.utc).isoformat())
+        await _set_setting(tdb, "refetch_exhausted", "")
+        await tdb.commit()
+
+
 async def do_refetch_from_date(
     from_date: date,
-    max_calls: int = 10,
+    max_calls: int = 50,
     key_mode: str = "alternate",  # "key1" | "key2" | "alternate"
     use_date: bool = True,
     no_cache: bool = True,
+    resume_from_token: bool = False,
 ) -> dict:
     """
     Re-fetchează review-uri din SerpAPI (no_cache=true, newest first).
@@ -317,6 +345,7 @@ async def do_refetch_from_date(
       - a efectuat max_calls apeluri API, SAU
       - nu mai există pagini.
     key_mode: "key1" = doar cheie 1, "key2" = doar cheie 2, "alternate" = alternare per pagină.
+    resume_from_token: dacă True, pornește de la token-ul salvat anterior (dacă există).
     """
     from_dt = datetime.combine(from_date, datetime.min.time()).replace(tzinfo=timezone.utc)
 
@@ -352,12 +381,31 @@ async def do_refetch_from_date(
             await _set_setting(db, "serpapi_calls_month", current_month)
             await db.commit()
 
-        # 2. Re-fetch
+        # 2. Determină URL-ul de start
         _nc = "&no_cache=true" if no_cache else ""
-        current_url = (
+        base_url = (
             f"{SERPAPI_BASE}?engine=google_maps_reviews"
             f"&data_id={data_id}&hl=en&sort_by=newestFirst{_nc}"
         )
+
+        if resume_from_token:
+            saved_url = (await _get_setting(db, "refetch_next_url")) or ""
+            if saved_url:
+                if no_cache and "no_cache=true" not in saved_url:
+                    saved_url += "&no_cache=true"
+                current_url = saved_url
+                print(f"[Refetch] Resuming from saved token")
+            else:
+                current_url = base_url
+                print(f"[Refetch] No saved token found, starting from scratch")
+        else:
+            # Start de la zero — șterge token-ul salvat
+            await _set_setting(db, "refetch_next_url", "")
+            await _set_setting(db, "refetch_next_token", "")
+            await _set_setting(db, "refetch_saved_at", "")
+            await _set_setting(db, "refetch_exhausted", "")
+            await db.commit()
+            current_url = base_url
 
         inserted = 0
         skipped = 0
@@ -367,74 +415,107 @@ async def do_refetch_from_date(
         stop = False
         stop_reason = "unknown"
 
-        print(f"[Refetch] START from_date={from_date} max_calls={max_calls} key_mode={key_mode}")
+        _refetch_status.update({
+            "running": True,
+            "pages_fetched": 0,
+            "inserted": 0,
+            "skipped": 0,
+            "calls_per_key": {},
+            "stop_reason": None,
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "finished_at": None,
+            "error": None,
+            "max_calls": max_calls,
+        })
 
-        while not stop:
-            if pages_fetched >= max_calls:
-                stop_reason = f"max_calls_reached ({max_calls})"
-                print(f"[Refetch] Stopping: {stop_reason}")
-                break
+        print(f"[Refetch] START from_date={from_date} max_calls={max_calls} key_mode={key_mode} resume={resume_from_token}")
 
-            api_key, key_index = available_keys[key_idx % len(available_keys)]
-            key_idx += 1
+        try:
+            while not stop:
+                if pages_fetched >= max_calls:
+                    stop_reason = f"max_calls_reached ({max_calls})"
+                    print(f"[Refetch] Stopping: {stop_reason}")
+                    break
 
-            page_data = await _fetch_serpapi_page(
-                current_url, api_key,
-                key_index=key_index, source="refetch", page=pages_fetched + 1
-            )
-            pages_fetched += 1
-            calls_per_key[key_index] = calls_per_key.get(key_index, 0) + 1
+                api_key, key_index = available_keys[key_idx % len(available_keys)]
+                key_idx += 1
 
-            reviews = page_data.get("reviews", [])
-            pagination_raw = page_data.get("serpapi_pagination", {})
-            print(f"[Refetch] Page {pages_fetched}: {len(reviews)} reviews, "
-                  f"has_next={'next' in pagination_raw}, "
-                  f"has_token={'next_page_token' in pagination_raw}")
-
-            if not reviews:
-                stop_reason = "empty_page"
-                print(f"[Refetch] Stopping: empty reviews on page {pages_fetched}")
-                break
-
-            new_on_page = 0
-            old_on_page = 0
-            for r in reviews:
-                rid = r.get("review_id", "")
-                if not rid:
-                    continue
-                parsed = _parse_review(r)
-                review_dt = parsed["iso_date"]
-                is_old = use_date and (review_dt < from_dt)
-                print(f"[Refetch]   review_id={rid[:12]} iso_date={review_dt.isoformat()} old={is_old}")
-                if is_old:
-                    old_on_page += 1
-                    continue
-                new_on_page += 1
-                # Inserează doar dacă nu există deja
-                existing = await db.execute(
-                    select(GoogleReview).where(GoogleReview.review_id == rid)
+                page_data = await _fetch_serpapi_page(
+                    current_url, api_key,
+                    key_index=key_index, source="refetch", page=pages_fetched + 1
                 )
-                if existing.scalar_one_or_none() is None:
-                    db.add(GoogleReview(**parsed))
-                    inserted += 1
-                else:
-                    skipped += 1
+                pages_fetched += 1
+                calls_per_key[key_index] = calls_per_key.get(key_index, 0) + 1
 
-            print(f"[Refetch] Page {pages_fetched}: new={new_on_page} old={old_on_page}")
+                reviews = page_data.get("reviews", [])
+                pagination_raw = page_data.get("serpapi_pagination", {})
+                print(f"[Refetch] Page {pages_fetched}: {len(reviews)} reviews, "
+                      f"has_next={'next' in pagination_raw}, "
+                      f"has_token={'next_page_token' in pagination_raw}")
 
-            # Dacă use_date=True, oprim când toată pagina e veche
-            if use_date and new_on_page == 0 and old_on_page > 0:
-                stop = True
-                stop_reason = f"full_page_old (page {pages_fetched})"
-                print(f"[Refetch] Stopping: {stop_reason}")
-            else:
+                if not reviews:
+                    stop_reason = "empty_page"
+                    print(f"[Refetch] Stopping: empty reviews on page {pages_fetched}")
+                    break
+
+                new_on_page = 0
+                old_on_page = 0
+                for r in reviews:
+                    rid = r.get("review_id", "")
+                    if not rid:
+                        continue
+                    parsed = _parse_review(r)
+                    review_dt = parsed["iso_date"]
+                    is_old = use_date and (review_dt < from_dt)
+                    print(f"[Refetch]   review_id={rid[:12]} iso_date={review_dt.isoformat()} old={is_old}")
+                    if is_old:
+                        old_on_page += 1
+                        continue
+                    new_on_page += 1
+                    existing = await db.execute(
+                        select(GoogleReview).where(GoogleReview.review_id == rid)
+                    )
+                    if existing.scalar_one_or_none() is None:
+                        db.add(GoogleReview(**parsed))
+                        inserted += 1
+                    else:
+                        skipped += 1
+
+                print(f"[Refetch] Page {pages_fetched}: new={new_on_page} old={old_on_page}")
+
+                # Actualizează status în memorie după fiecare pagină
+                _refetch_status.update({
+                    "pages_fetched": pages_fetched,
+                    "inserted": inserted,
+                    "skipped": skipped,
+                    "calls_per_key": dict(calls_per_key),
+                })
+
+                # Obține URL-ul următor
                 next_url = _get_next_url(page_data, data_id)
                 print(f"[Refetch] Page {pages_fetched}: next_url={'YES' if next_url else 'NONE'}")
-                if next_url:
-                    current_url = next_url
-                else:
+
+                if use_date and new_on_page == 0 and old_on_page > 0:
                     stop = True
-                    stop_reason = "no_next_token"
+                    stop_reason = f"full_page_old (page {pages_fetched})"
+                    print(f"[Refetch] Stopping: {stop_reason}")
+                    if next_url:
+                        await _save_refetch_token(next_url)
+                else:
+                    if next_url:
+                        current_url = next_url
+                        await _save_refetch_token(next_url)
+                    else:
+                        stop = True
+                        stop_reason = "no_next_token"
+                        async with AsyncSessionLocal() as tdb:
+                            await _set_setting(tdb, "refetch_exhausted", "true")
+                            await tdb.commit()
+
+        except asyncio.CancelledError:
+            stop_reason = "cancelled"
+            print(f"[Refetch] Cancelled after {pages_fetched} pages")
+            # Token-ul deja salvat după ultima pagină — ok pentru resume
 
         print(f"[Refetch] DONE pages={pages_fetched} inserted={inserted} skipped={skipped} stop_reason={stop_reason}")
 
@@ -448,6 +529,20 @@ async def do_refetch_from_date(
                 await _increment_serpapi_counter(db, kidx, calls)
         await db.commit()
 
+    # Citește starea token-ului pentru răspuns
+    async with AsyncSessionLocal() as rdb:
+        saved_url_check = (await _get_setting(rdb, "refetch_next_url")) or ""
+        exhausted_check = ((await _get_setting(rdb, "refetch_exhausted")) or "") == "true"
+
+    finished_at = datetime.now(timezone.utc).isoformat()
+    _refetch_status.update({
+        "running": False,
+        "stop_reason": stop_reason,
+        "finished_at": finished_at,
+        "has_next_token": bool(saved_url_check),
+        "exhausted": exhausted_check,
+    })
+
     return {
         "inserted": inserted,
         "skipped": skipped,
@@ -456,6 +551,8 @@ async def do_refetch_from_date(
         "from_date": from_date.isoformat(),
         "refreshed_at": now_iso,
         "stop_reason": stop_reason,
+        "has_next_token": bool(saved_url_check),
+        "exhausted": exhausted_check,
     }
 
 
@@ -612,11 +709,106 @@ async def trigger_refresh(force: bool = False):
     return result
 
 
+@router.post("/google-reviews/refetch-start")
+async def refetch_start(request: Request):
+    """
+    Pornește un refetch în background (nu blochează request-ul).
+    Poți închide browser-ul — task-ul continuă în backend.
+    Body: { "date": "YYYY-MM-DD", "max_calls": 500, "key_mode": "all", "resume_from_token": false, ... }
+    """
+    global _refetch_task
+    if _refetch_task and not _refetch_task.done():
+        raise HTTPException(status_code=409, detail="Un refetch este deja în desfășurare")
+
+    body = await request.json()
+    use_date = bool(body.get("use_date", True))
+    date_str = body.get("date", "")
+    if use_date and not date_str:
+        raise HTTPException(status_code=400, detail="Câmpul 'date' este obligatoriu când 'Oprire la dată' e activ")
+    try:
+        from_date = date.fromisoformat(date_str) if date_str else date.today()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Format dată invalid (YYYY-MM-DD)")
+
+    max_calls = max(1, int(body.get("max_calls", 50)))
+    key_mode = body.get("key_mode", "all")
+    if key_mode not in ("key1", "key2", "key3", "all", "alternate"):
+        key_mode = "all"
+    if key_mode == "alternate":
+        key_mode = "all"
+    no_cache = bool(body.get("no_cache", True))
+    resume_from_token = bool(body.get("resume_from_token", False))
+
+    # Setăm running=True ÎNAINTE de create_task — altfel primul poll vede running=False
+    _refetch_status.update({
+        "running": True,
+        "pages_fetched": 0,
+        "inserted": 0,
+        "skipped": 0,
+        "calls_per_key": {},
+        "stop_reason": None,
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "finished_at": None,
+        "error": None,
+        "max_calls": max_calls,
+    })
+    _refetch_task = asyncio.create_task(
+        do_refetch_from_date(from_date, max_calls=max_calls, key_mode=key_mode,
+                             use_date=use_date, no_cache=no_cache,
+                             resume_from_token=resume_from_token)
+    )
+    return {"started": True, "max_calls": max_calls}
+
+
+@router.get("/google-reviews/refetch-status")
+async def get_refetch_status():
+    """Returnează statusul curent al task-ului de refetch (polling)."""
+    return dict(_refetch_status)
+
+
+@router.post("/google-reviews/refetch-stop")
+async def stop_refetch():
+    """Oprește forțat task-ul de refetch. Token-ul salvat permite resume ulterior."""
+    global _refetch_task
+    if _refetch_task and not _refetch_task.done():
+        _refetch_task.cancel()
+        return {"stopped": True}
+    return {"stopped": False, "detail": "Niciun refetch activ"}
+
+
+@router.get("/google-reviews/refetch-token")
+async def get_refetch_token():
+    """Returnează starea token-ului salvat pentru resume."""
+    async with AsyncSessionLocal() as db:
+        url = (await _get_setting(db, "refetch_next_url")) or ""
+        token = (await _get_setting(db, "refetch_next_token")) or ""
+        saved_at = (await _get_setting(db, "refetch_saved_at")) or None
+        exhausted = ((await _get_setting(db, "refetch_exhausted")) or "") == "true"
+    return {
+        "has_token": bool(url),
+        "token": token,
+        "saved_at": saved_at,
+        "exhausted": exhausted,
+    }
+
+
+@router.delete("/google-reviews/refetch-token")
+async def clear_refetch_token():
+    """Șterge token-ul salvat pentru refetch."""
+    async with AsyncSessionLocal() as db:
+        await _set_setting(db, "refetch_next_url", "")
+        await _set_setting(db, "refetch_next_token", "")
+        await _set_setting(db, "refetch_saved_at", "")
+        await _set_setting(db, "refetch_exhausted", "")
+        await db.commit()
+    return {"ok": True}
+
+
 @router.post("/google-reviews/refetch-from-date")
 async def refetch_from_date(request: Request):
     """
     Re-fetchează review-uri de la data specificată, fără a șterge nimic.
-    Body: { "date": "YYYY-MM-DD", "max_calls": 10, "key_mode": "alternate"|"key1"|"key2" }
+    Body: { "date": "YYYY-MM-DD", "max_calls": 50, "key_mode": "alternate"|"key1"|"key2", "resume_from_token": false }
     """
     body = await request.json()
     use_date = bool(body.get("use_date", True))
@@ -639,9 +831,10 @@ async def refetch_from_date(request: Request):
         key_mode = "all"
 
     no_cache = bool(body.get("no_cache", True))
+    resume_from_token = bool(body.get("resume_from_token", False))
 
     try:
-        result = await do_refetch_from_date(from_date, max_calls=max_calls, key_mode=key_mode, use_date=use_date, no_cache=no_cache)
+        result = await do_refetch_from_date(from_date, max_calls=max_calls, key_mode=key_mode, use_date=use_date, no_cache=no_cache, resume_from_token=resume_from_token)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except httpx.HTTPError as e:
