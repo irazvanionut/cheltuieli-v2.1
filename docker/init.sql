@@ -37,7 +37,11 @@ INSERT INTO settings (cheie, valoare, tip, descriere) VALUES
     ('monede', 'RON:lei,EUR:€,USD:$', 'string', 'Lista monede active: CODE:label separate prin virgula'),
     ('serpapi_api_key', '', 'string', 'SerpAPI API key pentru Google Reviews'),
     ('serpapi_data_id', '', 'string', 'Google Maps data_id pentru restaurant (ex: 0x40b1f7...}'),
-    ('google_reviews_last_refresh', '', 'string', 'ISO datetime al ultimului refresh Google Reviews');
+    ('google_reviews_last_refresh', '', 'string', 'ISO datetime al ultimului refresh Google Reviews'),
+    ('ami_host', '10.170.7.32', 'string', 'IP/hostname server Asterisk (AMI)'),
+    ('ami_port', '5038', 'string', 'Port Asterisk AMI (implicit 5038)'),
+    ('ami_user', 'admin', 'string', 'Username AMI din /etc/asterisk/manager.conf'),
+    ('ami_pass', 'amp111', 'string', 'Parola AMI din /etc/asterisk/manager.conf');
 
 -- ============================================
 -- 2. USERS (Utilizatori)
@@ -700,3 +704,16 @@ CREATE INDEX IF NOT EXISTS idx_agenda_campuri_contact ON agenda_contacte_campuri
 CREATE INDEX IF NOT EXISTS idx_agenda_interactiuni_furnizor ON agenda_interactiuni(furnizor_id);
 CREATE INDEX IF NOT EXISTS idx_agenda_todos_furnizor_rezolvat ON agenda_todos(furnizor_id, rezolvat);
 COMMENT ON COLUMN google_reviews.details IS 'Câmpuri extra: price_per_person, noise_level, wait_time etc.';
+
+CREATE TABLE IF NOT EXISTS sys_log (
+    id SERIAL PRIMARY KEY,
+    ts TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    nivel VARCHAR(10) NOT NULL DEFAULT 'ERROR',
+    sursa VARCHAR(50) NOT NULL,
+    mesaj TEXT NOT NULL,
+    detalii TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_sys_log_ts ON sys_log(ts DESC);
+CREATE INDEX IF NOT EXISTS idx_sys_log_nivel ON sys_log(nivel);
+CREATE INDEX IF NOT EXISTS idx_sys_log_sursa ON sys_log(sursa);

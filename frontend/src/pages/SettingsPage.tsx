@@ -19,6 +19,7 @@ import {
   ArrowLeft,
   Building2,
   ScrollText,
+  BarChart2,
 } from 'lucide-react';
 
 // Import setting pages
@@ -37,6 +38,7 @@ import { KeysSettings } from './settings/KeysSettings';
 import { FurnizoriSettings } from './settings/FurnizoriSettings';
 import { SmsSettings } from './settings/SmsSettings';
 import { LogSettings } from './settings/LogSettings';
+import { CompetitoriSettings } from './settings/CompetitoriSettings';
 
 interface MenuItem {
   path: string;
@@ -84,6 +86,12 @@ const settingsGroups: MenuGroup[] = [
     label: 'Keys',
     items: [
       { path: '/settings/keys', name: 'Keys', icon: KeyRound, description: 'Chei API, tokenuri și credențiale externe' },
+    ],
+  },
+  {
+    label: 'Competitori',
+    items: [
+      { path: '/settings/competitori', name: 'Site-uri Competitori', icon: BarChart2, description: 'Monitorizare prețuri concurență' },
     ],
   },
 ];
@@ -206,6 +214,7 @@ export const SettingsPage: React.FC = () => {
           <Route path="furnizori" element={<FurnizoriSettings />} />
           <Route path="sms" element={<SmsSettings />} />
           <Route path="log" element={<LogSettings />} />
+          <Route path="competitori" element={<CompetitoriSettings />} />
         </Routes>
       </div>
     </div>

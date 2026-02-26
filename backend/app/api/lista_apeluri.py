@@ -28,7 +28,7 @@ from app.models import AmiApel, Setting, SmsTemplate, SmsLog
 
 router = APIRouter(tags=["lista-apeluri"])
 
-# ─── AMI config ───────────────────────────────────────────────────────────────
+# ─── AMI config (defaults — overridden by settings table at runtime) ──────────
 AMI_HOST = "10.170.7.32"
 AMI_PORT = 5038
 AMI_USER = "admin"
@@ -36,6 +36,28 @@ AMI_PASS = "amp111"
 MAX_ACTIVE = 500
 RECONNECT_DELAY = 10
 AMI_KEEPALIVE_INTERVAL = 25
+
+
+async def _get_ami_config() -> tuple[str, int, str, str]:
+    """Read AMI connection settings from DB. Falls back to hardcoded defaults."""
+    from sqlalchemy import select as _select
+    from app.models import Setting as _Setting
+    try:
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(
+                _select(_Setting).where(
+                    _Setting.cheie.in_(["ami_host", "ami_port", "ami_user", "ami_pass"])
+                )
+            )
+            cfg = {s.cheie: (s.valoare or "").strip() for s in result.scalars().all()}
+        host = cfg.get("ami_host") or AMI_HOST
+        port = int(cfg.get("ami_port") or AMI_PORT)
+        user = cfg.get("ami_user") or AMI_USER
+        pw   = cfg.get("ami_pass") or AMI_PASS
+        return host, port, user, pw
+    except Exception as e:
+        print(f"[AMI] Failed to read config from DB, using defaults: {e}")
+        return AMI_HOST, AMI_PORT, AMI_USER, AMI_PASS
 
 # ─── In-memory live state ─────────────────────────────────────────────────────
 _ami_active: dict[str, dict] = {}   # uniqueid → call currently in queue/talking
@@ -403,9 +425,10 @@ async def ami_event_loop() -> None:
         keepalive_task = None
         stop_event = asyncio.Event()
         try:
-            print(f"[AMI] Connecting to {AMI_HOST}:{AMI_PORT} ...")
+            host, port, user, pw = await _get_ami_config()
+            print(f"[AMI] Connecting to {host}:{port} ...")
             reader, writer = await asyncio.wait_for(
-                asyncio.open_connection(AMI_HOST, AMI_PORT), timeout=10.0
+                asyncio.open_connection(host, port), timeout=10.0
             )
             banner_raw = await asyncio.wait_for(reader.readline(), timeout=5.0)
             if not banner_raw:
@@ -414,7 +437,7 @@ async def ami_event_loop() -> None:
 
             # Login
             writer.write(
-                f"Action: Login\r\nUsername: {AMI_USER}\r\nSecret: {AMI_PASS}\r\n\r\n".encode()
+                f"Action: Login\r\nUsername: {user}\r\nSecret: {pw}\r\n\r\n".encode()
             )
             await writer.drain()
             resp = await _read_block(reader)

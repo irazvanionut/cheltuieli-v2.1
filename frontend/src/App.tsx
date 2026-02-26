@@ -20,6 +20,7 @@ import { ScenePage } from '@/pages/online/ScenePage';
 import { AgendaPage } from '@/pages/agenda/AgendaPage';
 import { FurnizorDetail } from '@/pages/agenda/FurnizorDetail';
 import { ListaApeluriPage } from '@/pages/ListaApeluriPage';
+import { CompetitoriPage } from '@/pages/CompetitoriPage';
 import { Spinner } from '@/components/ui';
 
 // Create React Query client
@@ -196,6 +197,15 @@ function App() {
               element={
                 <ProtectedRoute>
                   <FurnizorDetail />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/competitori"
+              element={
+                <ProtectedRoute>
+                  <CompetitoriPage />
                 </ProtectedRoute>
               }
             />

@@ -948,6 +948,73 @@ class ApiService {
     const { data } = await this.client.delete('/settings/log');
     return data;
   }
+
+  // ============================================
+  // COMPETITORI
+  // ============================================
+
+  async competitoriListSites(): Promise<any[]> {
+    const { data } = await this.client.get('/competitori/sites');
+    return data;
+  }
+
+  async competitoriAddSite(body: { nume: string; url: string; scraper_key: string; activ: boolean }): Promise<any> {
+    const { data } = await this.client.post('/competitori/sites', body);
+    return data;
+  }
+
+  async competitoriUpdateSite(id: number, body: Partial<{ nume: string; url: string; scraper_key: string; activ: boolean }>): Promise<any> {
+    const { data } = await this.client.put(`/competitori/sites/${id}`, body);
+    return data;
+  }
+
+  async competitoriDeleteSite(id: number): Promise<any> {
+    const { data } = await this.client.delete(`/competitori/sites/${id}`);
+    return data;
+  }
+
+  async competitoriScrapeSite(id: number): Promise<{ site_id: number; products: number; changes: number; embedded: number }> {
+    const { data } = await this.client.post(`/competitori/sites/${id}/scrape`);
+    return data;
+  }
+
+  async competitoriEmbedSite(id: number): Promise<{ total: number; embedded: number; errors: number }> {
+    const { data } = await this.client.post(`/competitori/sites/${id}/embed`);
+    return data;
+  }
+
+  async competitoriSummarize(siteA?: number, siteB?: number): Promise<{
+    summary: string;
+    uses_vectors: boolean;
+    stats: {
+      name_a: string; name_b: string;
+      matched: number; more_expensive: number; cheaper: number;
+      same: number; only_a: number; only_b: number;
+    };
+  }> {
+    const params: Record<string, any> = {};
+    if (siteA) params.site_a = siteA;
+    if (siteB) params.site_b = siteB;
+    const { data } = await this.client.get('/competitori/summarize', { params });
+    return data;
+  }
+
+  async competitoriListScrapers(): Promise<{ scrapers: string[] }> {
+    const { data } = await this.client.get('/competitori/scrapers');
+    return data;
+  }
+
+  async competitoriCompare(params?: { site_a?: number; site_b?: number; threshold?: number }): Promise<any> {
+    const { data } = await this.client.get('/competitori/compare', { params });
+    return data;
+  }
+
+  async competitoriPriceChanges(limit = 100, site_id?: number): Promise<any[]> {
+    const { data } = await this.client.get('/competitori/price-changes', {
+      params: { limit, ...(site_id ? { site_id } : {}) },
+    });
+    return data;
+  }
 }
 
 export const api = new ApiService();

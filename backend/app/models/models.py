@@ -481,3 +481,52 @@ class AgendaTodo(Base):
     # Relationships
     furnizor = relationship("AgendaFurnizor", back_populates="todos")
     user = relationship("User")
+
+
+# ============================================
+# COMPETITORI
+# ============================================
+
+class CompetitorSite(Base):
+    __tablename__ = "competitor_sites"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nume = Column(String(100), nullable=False)
+    url = Column(String(500), nullable=False)
+    scraper_key = Column(String(50), nullable=False)
+    activ = Column(Boolean, default=True)
+    last_scraped_at = Column(DateTime)
+    scrape_error = Column(Text)
+    created_at = Column(DateTime, server_default=func.now())
+
+    products = relationship("CompetitorProduct", back_populates="site", cascade="all, delete-orphan")
+    price_changes = relationship("CompetitorPriceChange", back_populates="site", cascade="all, delete-orphan")
+
+
+class CompetitorProduct(Base):
+    __tablename__ = "competitor_products"
+
+    id = Column(Integer, primary_key=True, index=True)
+    site_id = Column(Integer, ForeignKey("competitor_sites.id", ondelete="CASCADE"))
+    categorie = Column(String(200))
+    denumire = Column(String(500), nullable=False)
+    pret = Column(Numeric(10, 2))
+    unitate = Column(String(100))
+    extra = Column(JSONB)
+    embedding = Column(JSONB)  # Ollama vector as JSON array (dimension = configured model)
+    scraped_at = Column(DateTime, server_default=func.now())
+
+    site = relationship("CompetitorSite", back_populates="products")
+
+
+class CompetitorPriceChange(Base):
+    __tablename__ = "competitor_price_changes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    site_id = Column(Integer, ForeignKey("competitor_sites.id", ondelete="CASCADE"))
+    denumire = Column(String(500), nullable=False)
+    pret_vechi = Column(Numeric(10, 2))
+    pret_nou = Column(Numeric(10, 2))
+    changed_at = Column(DateTime, server_default=func.now())
+
+    site = relationship("CompetitorSite", back_populates="price_changes")

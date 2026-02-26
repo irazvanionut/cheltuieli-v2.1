@@ -31,6 +31,7 @@ import {
   Zap,
   BookUser,
   Building2,
+  BarChart2,
 } from 'lucide-react';
 import { useAppStore, useIsAdmin, useIsSef } from '@/hooks/useAppStore';
 import api from '@/services/api';
@@ -62,6 +63,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     automatizari: true,
     recenzii: true,
     online: false,
+    competitori: true,
   });
 
   // Banner apeluri ratate - dismissed per sesiune
@@ -212,6 +214,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       items: [
         { name: 'Comenzi', href: '/online/comenzi', icon: ShoppingCart, show: true, badge: null, badgeApeluri: null },
         { name: 'Statistici', href: '/online/statistici', icon: TrendingUp, show: true, badge: null, badgeApeluri: null },
+      ],
+    },
+    {
+      key: 'competitori',
+      label: 'Competitori',
+      icon: BarChart2,
+      items: [
+        { name: 'Comparație prețuri', href: '/competitori', icon: BarChart2, show: isSef, badge: null, badgeApeluri: null },
+        { name: 'Setări competitori', href: '/settings/competitori', icon: Building2, show: isAdmin, badge: null, badgeApeluri: null },
       ],
     },
   ];

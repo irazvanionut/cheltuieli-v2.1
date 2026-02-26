@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Eye, EyeOff, Copy, Check, Save, X, KeyRound, Lock, RefreshCw, AlertTriangle, CheckCircle, List, ChevronDown, Wifi, WifiOff, Bot, Send, XCircle } from 'lucide-react';
+import { Eye, EyeOff, Copy, Check, Save, X, KeyRound, Lock, RefreshCw, AlertTriangle, CheckCircle, List, ChevronDown, Wifi, WifiOff, Bot, Send, XCircle, Phone, Terminal } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/services/api';
 import type { Setting } from '@/types';
@@ -1156,6 +1156,171 @@ const SmsGatewayWidget: React.FC = () => {
 };
 
 
+// ─── AMI (Asterisk Manager Interface) widget ──────────────────────────────────
+
+const AMI_MANAGER_CONF = `# /etc/asterisk/manager.conf
+
+[general]
+enabled = yes
+port = 5038
+bindaddr = 0.0.0.0
+
+[admin]
+secret = <parola_ta>
+permit = 0.0.0.0/0.0.0.0   ; sau IP specific: 10.170.7.x/255.255.255.0
+read = agent,call,user
+write = agent,call
+
+# Reîncarcă fără restart Asterisk:
+# asterisk -rx "manager reload"`;
+
+const FAIL2BAN_CONF = `# /etc/fail2ban/jail.local
+[DEFAULT]
+ignoreip = 127.0.0.1/8 ::1 <IP_SERVER_APP>
+
+# Apoi:
+# systemctl reload fail2ban
+
+# Sau unban manual:
+# fail2ban-client set recidive unbanip <IP>`;
+
+const AmiConfigWidget: React.FC = () => {
+  const qc = useQueryClient();
+  const [amiHost, setAmiHost] = useState('');
+  const [amiPort, setAmiPort] = useState('');
+  const [amiUser, setAmiUser] = useState('');
+  const [amiPass, setAmiPass] = useState('');
+  const [showPass, setShowPass] = useState(false);
+  const [showConf, setShowConf] = useState(false);
+
+  const { data: settings = [] } = useQuery({
+    queryKey: ['settings-all'],
+    queryFn: () => api.getSettings(),
+  });
+
+  useEffect(() => {
+    const get = (k: string) => settings.find((s) => s.cheie === k)?.valoare ?? '';
+    if (!amiHost) setAmiHost(get('ami_host'));
+    if (!amiPort) setAmiPort(get('ami_port'));
+    if (!amiUser) setAmiUser(get('ami_user'));
+    if (!amiPass) setAmiPass(get('ami_pass'));
+  }, [settings]);
+
+  const saveMutation = useMutation({
+    mutationFn: ({ cheie, valoare }: { cheie: string; valoare: string }) =>
+      api.upsertSetting(cheie, valoare),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['settings-all'] }),
+  });
+
+  const handleSave = async () => {
+    try {
+      await Promise.all([
+        saveMutation.mutateAsync({ cheie: 'ami_host', valoare: amiHost }),
+        saveMutation.mutateAsync({ cheie: 'ami_port', valoare: amiPort }),
+        saveMutation.mutateAsync({ cheie: 'ami_user', valoare: amiUser }),
+        saveMutation.mutateAsync({ cheie: 'ami_pass', valoare: amiPass }),
+      ]);
+      toast.success('Configurare AMI salvată');
+    } catch {
+      toast.error('Eroare la salvare');
+    }
+  };
+
+  const inputCls = 'w-full px-3 py-2 text-xs rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-red-500 font-mono';
+  const labelCls = 'block text-xs font-medium text-stone-500 dark:text-stone-400 mb-1';
+
+  return (
+    <div className="bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
+      <div className="px-4 py-3 border-b border-stone-100 dark:border-stone-800 bg-stone-50 dark:bg-stone-800/50 flex items-center gap-2">
+        <Phone className="w-4 h-4 text-stone-500" />
+        <div>
+          <h3 className="text-sm font-semibold text-stone-800 dark:text-stone-200">Asterisk AMI</h3>
+          <p className="text-xs text-stone-400 mt-0.5">Conexiune la Asterisk Manager Interface pentru monitorizare apeluri</p>
+        </div>
+      </div>
+
+      <div className="px-4 py-4 space-y-3">
+        <div className="grid grid-cols-3 gap-3">
+          <div className="col-span-2">
+            <label className={labelCls}>Host / IP Asterisk</label>
+            <input value={amiHost} onChange={(e) => setAmiHost(e.target.value)} placeholder="10.170.7.32" className={inputCls} />
+          </div>
+          <div>
+            <label className={labelCls}>Port</label>
+            <input value={amiPort} onChange={(e) => setAmiPort(e.target.value)} placeholder="5038" className={inputCls} />
+          </div>
+        </div>
+        <div>
+          <label className={labelCls}>Utilizator AMI</label>
+          <input value={amiUser} onChange={(e) => setAmiUser(e.target.value)} placeholder="admin" className={inputCls} />
+        </div>
+        <div>
+          <label className={labelCls}>Parolă AMI</label>
+          <div className="relative">
+            <input
+              type={showPass ? 'text' : 'password'}
+              value={amiPass}
+              onChange={(e) => setAmiPass(e.target.value)}
+              placeholder="••••••••"
+              className={`${inputCls} pr-8`}
+            />
+            <button type="button" onClick={() => setShowPass((v) => !v)}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200"
+            >
+              {showPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+        </div>
+
+        <div className="pt-1 pb-2 border-b border-stone-100 dark:border-stone-800">
+          <button
+            onClick={handleSave}
+            disabled={saveMutation.isPending}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+          >
+            <Save className="w-3.5 h-3.5" />
+            {saveMutation.isPending ? 'Se salvează...' : 'Salvează'}
+          </button>
+        </div>
+
+        {/* Asterisk config hint */}
+        <div>
+          <button
+            onClick={() => setShowConf((v) => !v)}
+            className="flex items-center gap-1.5 text-xs font-semibold text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
+          >
+            <Terminal className="w-3.5 h-3.5" />
+            Configurare Asterisk &amp; fail2ban
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showConf ? 'rotate-180' : ''}`} />
+          </button>
+
+          {showConf && (
+            <div className="mt-3 space-y-3">
+              <div>
+                <p className="text-[11px] font-medium text-stone-500 dark:text-stone-400 mb-1.5">
+                  Pe serverul Asterisk — <code className="bg-stone-100 dark:bg-stone-800 px-1 rounded">cat /etc/asterisk/manager.conf</code>
+                </p>
+                <pre className="text-[11px] leading-relaxed font-mono bg-stone-900 dark:bg-stone-950 text-emerald-400 rounded-lg p-3 overflow-x-auto whitespace-pre select-all">
+                  {AMI_MANAGER_CONF}
+                </pre>
+              </div>
+              <div>
+                <p className="text-[11px] font-medium text-stone-500 dark:text-stone-400 mb-1.5">
+                  Whitelist IP în fail2ban (dacă serverul app e blocat de <code className="bg-stone-100 dark:bg-stone-800 px-1 rounded">recidive</code>)
+                </p>
+                <pre className="text-[11px] leading-relaxed font-mono bg-stone-900 dark:bg-stone-950 text-emerald-400 rounded-lg p-3 overflow-x-auto whitespace-pre select-all">
+                  {FAIL2BAN_CONF}
+                </pre>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export const KeysSettings: React.FC = () => {
@@ -1237,6 +1402,7 @@ const KeysContent: React.FC = () => {
 
       <OllamaConfigWidget />
       <SmsGatewayWidget />
+      <AmiConfigWidget />
     </div>
   );
 };
