@@ -19,8 +19,8 @@ class Settings(BaseSettings):
     CHAT_MODEL: str = "llama3.2:3b"
 
     # Application
-    ENVIRONMENT: str = "development"
-    DEBUG: bool = True
+    ENVIRONMENT: str = "production"
+    DEBUG: bool = False
     APP_NAME: str = "Cheltuieli V2"
     APP_VERSION: str = "2.0.0"
 

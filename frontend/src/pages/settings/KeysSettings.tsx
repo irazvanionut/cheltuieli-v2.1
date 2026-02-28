@@ -846,6 +846,7 @@ const SerpApiUsage: React.FC<{ settings: Setting[] }> = ({ settings }) => {
 
 const GeoUsageWidget: React.FC<{ settings: Setting[] }> = ({ settings }) => {
   const qc = useQueryClient();
+  const disabled  = getSetting(settings, 'google_maps_disabled') === 'true';
   const geoCalls  = parseInt(getSetting(settings, 'google_maps_geocoding_calls')  || '0', 10);
   const dirCalls  = parseInt(getSetting(settings, 'google_maps_directions_calls') || '0', 10);
   const jsCalls   = parseInt(getSetting(settings, 'google_maps_js_calls')         || '0', 10);
@@ -856,6 +857,14 @@ const GeoUsageWidget: React.FC<{ settings: Setting[] }> = ({ settings }) => {
   const dirCost   = (dirCalls * 0.01).toFixed(3);    // $10/1000
   const jsCost    = (jsCalls  * 0.007).toFixed(3);   // $7/1000 Dynamic Maps
 
+  const toggleMutation = useMutation({
+    mutationFn: () => api.upsertSetting('google_maps_disabled', disabled ? 'false' : 'true'),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['settings-all'] });
+      toast.success(disabled ? 'Google Maps API activat' : 'Google Maps API dezactivat');
+    },
+    onError: () => toast.error('Eroare la salvare'),
+  });
   const resetGeo = useMutation({
     mutationFn: () => api.upsertSetting('google_maps_geocoding_calls', '0'),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['settings-all'] }); toast.success('Counter geocodare resetat'); },
@@ -892,14 +901,46 @@ const GeoUsageWidget: React.FC<{ settings: Setting[] }> = ({ settings }) => {
   );
 
   return (
-    <div className="mx-4 mb-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/50">
-      <p className="text-xs font-semibold text-blue-700 dark:text-blue-400 mb-2">Apeluri API luna curentă</p>
-      <Row label="Geocoding"   calls={geoCalls} cost={geoCost} month={geoMonth} onReset={() => resetGeo.mutate()} pending={resetGeo.isPending} />
-      <Row label="Directions"  calls={dirCalls} cost={dirCost} month={dirMonth} onReset={() => resetDir.mutate()} pending={resetDir.isPending} />
-      <Row label="Maps JS"     calls={jsCalls}  cost={jsCost}  month={jsMonth}  onReset={() => resetJs.mutate()}  pending={resetJs.isPending}  />
-      <p className="text-[10px] text-stone-400 mt-2">
-        Geocoding $5/1000 · Directions $10/1000 · Maps JS $7/1000 · Credit gratuit $200/lună Google Cloud
-      </p>
+    <div className="mx-4 mb-3 space-y-2">
+      {/* Toggle dezactivare */}
+      <div className={`flex items-center justify-between p-3 rounded-lg border ${
+        disabled
+          ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800/50'
+          : 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/50'
+      }`}>
+        <div>
+          <p className={`text-xs font-semibold ${disabled ? 'text-red-700 dark:text-red-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
+            Google Maps API — {disabled ? 'DEZACTIVAT' : 'ACTIV'}
+          </p>
+          <p className="text-[10px] text-stone-400 mt-0.5">
+            {disabled
+              ? 'Toate apelurile Google (Geocoding, Directions, Maps JS) sunt blocate. Geocodarea folosește doar Nominatim.'
+              : 'Geocoding, Directions și Maps JS sunt activate. Dezactivează pentru a opri complet costurile Google.'}
+          </p>
+        </div>
+        <button
+          onClick={() => toggleMutation.mutate()}
+          disabled={toggleMutation.isPending}
+          className={`ml-4 shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors disabled:opacity-50 ${
+            disabled
+              ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+              : 'bg-red-600 hover:bg-red-700 text-white'
+          }`}
+        >
+          {toggleMutation.isPending ? '...' : disabled ? 'Activează' : 'Dezactivează'}
+        </button>
+      </div>
+
+      {/* Contoare apeluri */}
+      <div className={`p-3 rounded-lg bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/50 ${disabled ? 'opacity-50' : ''}`}>
+        <p className="text-xs font-semibold text-blue-700 dark:text-blue-400 mb-2">Apeluri API luna curentă</p>
+        <Row label="Geocoding"   calls={geoCalls} cost={geoCost} month={geoMonth} onReset={() => resetGeo.mutate()} pending={resetGeo.isPending} />
+        <Row label="Directions"  calls={dirCalls} cost={dirCost} month={dirMonth} onReset={() => resetDir.mutate()} pending={resetDir.isPending} />
+        <Row label="Maps JS"     calls={jsCalls}  cost={jsCost}  month={jsMonth}  onReset={() => resetJs.mutate()}  pending={resetJs.isPending}  />
+        <p className="text-[10px] text-stone-400 mt-2">
+          Geocoding $5/1000 · Directions $10/1000 · Maps JS $7/1000 · Credit gratuit $200/lună Google Cloud
+        </p>
+      </div>
     </div>
   );
 };

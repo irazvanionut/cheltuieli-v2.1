@@ -10,6 +10,7 @@ import httpx
 from app.core.database import get_db
 from app.models import Setting, MapPin
 from app.api.navigatie import _get_setting
+from app.api.geocoding import google_maps_enabled
 from app.api.comenzi import (
     _read_erp_prod_token, _fetch_comenzi_erp,
     _is_ridicare, STATUS_MAP, _fmt_eta,
@@ -23,12 +24,18 @@ router = APIRouter(tags=["🌐 GPS Public"], prefix="/public/gps")
 async def public_gps_settings(db: AsyncSession = Depends(get_db)):
     """Return non-sensitive GPS settings (no API keys exposed)."""
     api_key = await _get_setting(db, "google_maps_api_key")
-    return {"has_maps_key": bool(api_key)}
+    enabled = await google_maps_enabled(db)
+    return {"has_maps_key": bool(api_key) and enabled}
 
 
 @router.get("/maps-js")
 async def public_gps_maps_js(db: AsyncSession = Depends(get_db)):
     """Proxy the Google Maps JS loader — key stays on the server."""
+    if not await google_maps_enabled(db):
+        return Response(
+            content="// Google Maps API calls are disabled by administrator.",
+            media_type="application/javascript",
+        )
     api_key = await _get_setting(db, "google_maps_api_key")
     if not api_key:
         return Response(

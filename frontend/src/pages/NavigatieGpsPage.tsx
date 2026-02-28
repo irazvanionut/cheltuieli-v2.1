@@ -99,14 +99,17 @@ export const NavigatieGpsPage: React.FC = () => {
     enabled: !isPublic,
   });
 
+  const googleDisabledAuth = (authSettings as any[]).find((s: any) => s.cheie === 'google_maps_disabled')?.valoare === 'true';
+
   const hasMapsKey = isPublic
     ? (publicSettings?.has_maps_key ?? false)
-    : Boolean((authSettings as any[]).find((s: any) => s.cheie === 'google_maps_api_key')?.valoare);
+    : Boolean((authSettings as any[]).find((s: any) => s.cheie === 'google_maps_api_key')?.valoare) && !googleDisabledAuth;
 
   // In public mode Maps JS loads via backend proxy → key never sent to browser
   const mapsJsSrc = isPublic
     ? (hasMapsKey ? api.getPublicMapsJsUrl() : '')
     : (() => {
+        if (googleDisabledAuth) return '';
         const key = (authSettings as any[]).find((s: any) => s.cheie === 'google_maps_api_key')?.valoare || '';
         return key ? `https://maps.googleapis.com/maps/api/js?key=${key}&v=weekly` : '';
       })();

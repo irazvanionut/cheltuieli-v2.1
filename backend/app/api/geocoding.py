@@ -140,6 +140,14 @@ async def _read_gmaps_key(db: AsyncSession) -> str:
     return (s.valoare or "").strip() if s else ""
 
 
+async def google_maps_enabled(db: AsyncSession) -> bool:
+    """Returns False when the admin has disabled all Google Maps API calls."""
+    s = (await db.execute(
+        select(Setting).where(Setting.cheie == "google_maps_disabled")
+    )).scalar_one_or_none()
+    return (s.valoare or "") != "true"
+
+
 # ─── Combined entry point ─────────────────────────────────────────────────────
 
 async def geocode_one(address: str, db: AsyncSession | None = None) -> tuple[float, float] | None:
@@ -151,7 +159,8 @@ async def geocode_one(address: str, db: AsyncSession | None = None) -> tuple[flo
     """
     api_key = ""
     if db is not None:
-        api_key = await _read_gmaps_key(db)
+        if await google_maps_enabled(db):
+            api_key = await _read_gmaps_key(db)
 
     clean   = clean_address(address)
     structured = _nominatim_query(address)  # postal stripped + Ilfov/Romania context

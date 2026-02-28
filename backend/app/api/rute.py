@@ -10,7 +10,7 @@ import httpx
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models import User, Setting, MapPin
-from app.api.geocoding import RESTAURANT_LAT, RESTAURANT_LNG, geocode_one
+from app.api.geocoding import RESTAURANT_LAT, RESTAURANT_LNG, geocode_one, google_maps_enabled
 
 router = APIRouter(tags=["🗺️ Rute"])
 
@@ -210,6 +210,8 @@ async def _increment_directions_counter(db: AsyncSession) -> None:
 
 async def _route_google(stops: list[dict], api_key: str, db: AsyncSession) -> dict | None:
     if not api_key or not stops:
+        return None
+    if not await google_maps_enabled(db):
         return None
     origin = f"{RESTAURANT_LAT},{RESTAURANT_LNG}"
     waypoints = "|".join(f"{s['lat']},{s['lng']}" for s in stops)
