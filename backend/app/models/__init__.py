@@ -18,6 +18,8 @@ from app.models.models import (
     SmsTemplate,
     SmsLog,
     SysLog,
+    ErpCustomer,
+    MapPin,
 )
 
 __all__ = [
@@ -40,4 +42,6 @@ __all__ = [
     "SmsTemplate",
     "SmsLog",
     "SysLog",
+    "ErpCustomer",
+    "MapPin",
 ]

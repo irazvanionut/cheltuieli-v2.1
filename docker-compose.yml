@@ -95,9 +95,29 @@ services:
       umami_db:
         condition: service_healthy
 
+  # Traccar GPS Tracking Server
+  traccar:
+    image: traccar/traccar:latest
+    container_name: cheltuieli_traccar
+    restart: unless-stopped
+    volumes:
+      - ./docker/traccar.xml:/opt/traccar/conf/traccar.xml:ro
+      - traccar_data:/opt/traccar/data
+      - traccar_logs:/opt/traccar/logs
+    ports:
+      - "30003:8082"
+      - "5055:5055"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/api/server || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
 volumes:
   postgres_data:
   umami_db_data:
+  traccar_data:
+  traccar_logs:
 
 networks:
   default:

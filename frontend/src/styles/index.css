@@ -250,3 +250,18 @@ tbody tr:hover {
     display: none !important;
   }
 }
+
+/* Leaflet pin labels */
+.leaflet-pin-label {
+  background: rgba(255, 255, 255, 0.93) !important;
+  border: 1px solid rgba(0, 0, 0, 0.18) !important;
+  border-radius: 5px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18) !important;
+  padding: 3px 7px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  color: #1c1917 !important;
+  line-height: 1.4 !important;
+}
+.leaflet-pin-label::before { display: none !important; }

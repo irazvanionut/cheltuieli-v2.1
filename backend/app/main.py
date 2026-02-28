@@ -10,7 +10,7 @@ from sqlalchemy import select, delete
 from app.core.config import settings
 from app.core.database import init_db, AsyncSessionLocal
 from app.core.log import write_log
-from app.models import Exercitiu, ApeluriZilnic, ApeluriDetalii
+from app.models import Exercitiu, ApeluriZilnic, ApeluriDetalii, MapPin
 from app.api import api_router
 from app.api.apeluri import compute_stats
 from app.models import AmiApel
@@ -18,6 +18,7 @@ from app.api.lista_apeluri import ami_event_loop
 from app.api.pontaj import pontaj_fetch_loop
 from app.api.google_reviews import do_refresh as google_reviews_refresh, do_analysis as google_reviews_analyze, do_fetch_serpapi_account, do_negative_analysis as google_reviews_negative_analyze
 from app.api.competitori import competitor_scrape_loop
+from app.api.erp_prod import erp_prod_sync_loop
 
 AUTO_CLOSE_HOUR = 7   # 07:00
 SAVE_APELURI_HOUR = 23  # 23:00
@@ -85,6 +86,15 @@ async def _do_auto_close():
             print(f"Auto-close: exercitiu for {today} already exists")
 
         await session.commit()
+
+    # Șterge toți pinii non-permanenți (comenzi de livrare din ziua anterioară)
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            delete(MapPin).where(MapPin.permanent.isnot(True))
+        )
+        deleted = result.rowcount
+        await session.commit()
+        print(f"Auto-close: șters {deleted} pini non-permanenți de pe hartă")
 
 
 async def save_apeluri_loop():
@@ -373,11 +383,12 @@ async def lifespan(app: FastAPI):
     task_ami = asyncio.create_task(ami_event_loop())
     task_mnt = asyncio.create_task(mnt_monitor_loop())
     task_competitori = asyncio.create_task(competitor_scrape_loop())
+    task_erp_prod = asyncio.create_task(erp_prod_sync_loop())
     yield
     # Shutdown
-    for task in [task_close, task_apeluri, task_pontaj, task_google_reviews, task_google_analysis, task_google_neg_analysis, task_serpapi_account, task_ami, task_mnt, task_competitori]:
+    for task in [task_close, task_apeluri, task_pontaj, task_google_reviews, task_google_analysis, task_google_neg_analysis, task_serpapi_account, task_ami, task_mnt, task_competitori, task_erp_prod]:
         task.cancel()
-    for task in [task_close, task_apeluri, task_pontaj, task_google_reviews, task_google_analysis, task_google_neg_analysis, task_serpapi_account, task_ami, task_mnt, task_competitori]:
+    for task in [task_close, task_apeluri, task_pontaj, task_google_reviews, task_google_analysis, task_google_neg_analysis, task_serpapi_account, task_ami, task_mnt, task_competitori, task_erp_prod]:
         try:
             await task
         except asyncio.CancelledError:

@@ -82,7 +82,8 @@ interface KeySection {
   title: string;
   description: string;
   fields: KeyField[];
-  usage?: boolean; // show SerpAPI usage widget
+  usage?: boolean;     // show SerpAPI usage widget
+  geoUsage?: boolean;  // show Google Maps geocoding call counter
 }
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -139,13 +140,74 @@ const KEY_SECTIONS: KeySection[] = [
     ],
   },
   {
-    title: 'Bearer Token — Pontaj',
-    description: 'Token JWT folosit pentru API-ul legacy de pontaj (stocat în fișierul .set).',
+    title: 'Bearer Token — ERP Pontaj',
+    description: 'Token JWT pentru API-ul de pontaj și furnizori (10.170.4.128).',
     fields: [
       {
         cheie: 'bearer',
         label: 'Bearer Token',
         description: 'Token JWT pentru autentificare la API-ul de pontaj',
+        sensitive: true,
+      },
+    ],
+  },
+  {
+    title: 'Bearer Token — ERP Prod',
+    description: 'Token JWT pentru API-ul ERP Prod — clienți (10.170.4.101:5020).',
+    fields: [
+      {
+        cheie: 'erp_prod_bearer_token',
+        label: 'Bearer Token',
+        description: 'Token JWT pentru autentificare la ERP Prod (clienți)',
+        sensitive: true,
+      },
+    ],
+  },
+  {
+    title: 'Traccar GPS',
+    description: 'Credențiale pentru serverul Traccar (auto-login în pagina Navigație GPS).',
+    fields: [
+      {
+        cheie: 'traccar_url',
+        label: 'URL Traccar',
+        description: 'Ex: http://10.170.4.x:30003',
+        sensitive: false,
+      },
+      {
+        cheie: 'traccar_email',
+        label: 'Email admin',
+        description: 'Emailul contului admin Traccar',
+        sensitive: false,
+      },
+      {
+        cheie: 'traccar_password',
+        label: 'Parolă admin',
+        description: 'Parola contului admin Traccar',
+        sensitive: true,
+      },
+    ],
+  },
+  {
+    title: 'Google Maps Geocoding',
+    description: 'API key pentru geocodarea adreselor românești (primar). Nominatim (OpenStreetMap) este fallback-ul gratuit când cheia nu e configurată.',
+    geoUsage: true,
+    fields: [
+      {
+        cheie: 'google_maps_api_key',
+        label: 'API Key',
+        description: 'Cheie Google Maps Platform — Geocoding API + Directions API + Maps JavaScript API. Activează toate trei în Google Cloud Console ($200 credit gratuit/lună)',
+        sensitive: true,
+      },
+    ],
+  },
+  {
+    title: 'RouteXL',
+    description: 'Optimizare rute TSP (Travelling Salesman Problem) pentru livrări. Gratuit pana la 10 adrese/request.',
+    fields: [
+      {
+        cheie: 'routexl_api_key',
+        label: 'API Key RouteXL',
+        description: 'Obtine cheie de la routexl.com/api. Folosit pentru optimizare rute avansata.',
         sensitive: true,
       },
     ],
@@ -780,6 +842,68 @@ const SerpApiUsage: React.FC<{ settings: Setting[] }> = ({ settings }) => {
   );
 };
 
+// ─── Google Maps geocoding usage widget ───────────────────────────────────────
+
+const GeoUsageWidget: React.FC<{ settings: Setting[] }> = ({ settings }) => {
+  const qc = useQueryClient();
+  const geoCalls  = parseInt(getSetting(settings, 'google_maps_geocoding_calls')  || '0', 10);
+  const dirCalls  = parseInt(getSetting(settings, 'google_maps_directions_calls') || '0', 10);
+  const jsCalls   = parseInt(getSetting(settings, 'google_maps_js_calls')         || '0', 10);
+  const geoMonth  = getSetting(settings, 'google_maps_geocoding_month')  || '—';
+  const dirMonth  = getSetting(settings, 'google_maps_directions_month') || '—';
+  const jsMonth   = getSetting(settings, 'google_maps_js_month')         || '—';
+  const geoCost   = (geoCalls * 0.005).toFixed(3);   // $5/1000
+  const dirCost   = (dirCalls * 0.01).toFixed(3);    // $10/1000
+  const jsCost    = (jsCalls  * 0.007).toFixed(3);   // $7/1000 Dynamic Maps
+
+  const resetGeo = useMutation({
+    mutationFn: () => api.upsertSetting('google_maps_geocoding_calls', '0'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['settings-all'] }); toast.success('Counter geocodare resetat'); },
+  });
+  const resetDir = useMutation({
+    mutationFn: () => api.upsertSetting('google_maps_directions_calls', '0'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['settings-all'] }); toast.success('Counter directions resetat'); },
+  });
+  const resetJs = useMutation({
+    mutationFn: () => api.upsertSetting('google_maps_js_calls', '0'),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['settings-all'] }); toast.success('Counter Maps JS resetat'); },
+  });
+
+  const Row = ({ label, calls, cost, month, onReset, pending }: {
+    label: string; calls: number; cost: string; month: string;
+    onReset: () => void; pending: boolean;
+  }) => (
+    <div className="flex items-center justify-between gap-3 py-1.5 border-b border-blue-100 dark:border-blue-900/30 last:border-0">
+      <div className="min-w-0">
+        <span className="text-xs font-medium text-stone-700 dark:text-stone-300">{label}</span>
+        <span className="text-[10px] text-stone-400 ml-1.5">{month}</span>
+      </div>
+      <div className="flex items-center gap-3 shrink-0">
+        <span className="font-mono font-bold text-blue-800 dark:text-blue-200 text-sm">{calls.toLocaleString()}</span>
+        <span className="text-[10px] text-stone-400 font-mono">≈ ${cost}</span>
+        <button
+          onClick={onReset}
+          disabled={pending || calls === 0}
+          className="text-[10px] text-stone-400 hover:text-red-500 dark:hover:text-red-400 disabled:opacity-40 transition-colors"
+          title="Resetează"
+        >Reset</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="mx-4 mb-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/50">
+      <p className="text-xs font-semibold text-blue-700 dark:text-blue-400 mb-2">Apeluri API luna curentă</p>
+      <Row label="Geocoding"   calls={geoCalls} cost={geoCost} month={geoMonth} onReset={() => resetGeo.mutate()} pending={resetGeo.isPending} />
+      <Row label="Directions"  calls={dirCalls} cost={dirCost} month={dirMonth} onReset={() => resetDir.mutate()} pending={resetDir.isPending} />
+      <Row label="Maps JS"     calls={jsCalls}  cost={jsCost}  month={jsMonth}  onReset={() => resetJs.mutate()}  pending={resetJs.isPending}  />
+      <p className="text-[10px] text-stone-400 mt-2">
+        Geocoding $5/1000 · Directions $10/1000 · Maps JS $7/1000 · Credit gratuit $200/lună Google Cloud
+      </p>
+    </div>
+  );
+};
+
 // ─── Single field row ─────────────────────────────────────────────────────────
 
 interface FieldRowProps {
@@ -1385,6 +1509,12 @@ const KeysContent: React.FC = () => {
               <SerpApiUsage settings={settings} />
               <RefetchWidget />
               <SerpLog />
+            </div>
+          )}
+
+          {section.geoUsage && (
+            <div className="pt-3">
+              <GeoUsageWidget settings={settings} />
             </div>
           )}
 

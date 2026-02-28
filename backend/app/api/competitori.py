@@ -570,11 +570,348 @@ async def scrape_lanuci(url: str) -> list[dict]:
     return results
 
 
+async def scrape_lamama(url: str) -> list[dict]:
+    """
+    Scrape comenzi.lamama.ro — TapTasty/TastyIgniter SPA.
+
+    Strategy 1 (primary): Direct httpx API calls to app.cdntaptasty.com.
+      – GET /noauth/company-generals to find location_id
+      – Try multiple menu endpoint + param combinations
+
+    Strategy 2 (fallback): Playwright browser intercept.
+      – Captures cdntaptasty API responses made by the app itself
+      – Pre-seeds localStorage to dismiss cookie consent
+      – MutationObserver auto-clicks any accept button
+    """
+    import httpx
+    import json as _json
+    import re as _re
+
+    API      = "https://app.cdntaptasty.com"
+    HOSTNAME = "comenzi.lamama.ro"
+    COMPANY  = 197
+
+    KNOWN_SECTIONS = ["Meniu Restaurant", "Oala cu Răsfăț", "Mama Bo", "DePost Vegan"]
+
+    results: list[dict] = []
+    seen: set[str] = set()
+
+    def add_product(name, pret, categorie="", unitate=""):
+        key = str(name).strip().upper()
+        if not key or key in seen:
+            return
+        try:
+            p = float(str(pret).replace(",", "."))
+        except Exception:
+            return
+        if p <= 0:
+            return
+        seen.add(key)
+        results.append({"categorie": categorie, "denumire": key, "pret": p, "unitate": unitate})
+
+    def parse_price(v):
+        if v is None:
+            return None
+        try:
+            f = float(str(v).replace(",", "."))
+            return f if f > 0 else None
+        except Exception:
+            return None
+
+    def extract_items(data, cat=""):
+        """Recursively extract products from any TastyIgniter/TapTasty shape."""
+        if isinstance(data, list):
+            for item in data:
+                if not isinstance(item, dict):
+                    continue
+                attrs = item.get("attributes") or item
+                name = (attrs.get("menu_name") or attrs.get("name") or
+                        attrs.get("title") or attrs.get("denumire") or "")
+                pret = parse_price(
+                    attrs.get("menu_price") or attrs.get("price") or
+                    attrs.get("pret") or attrs.get("amount")
+                )
+                item_cat = (cat or attrs.get("category_name") or
+                            attrs.get("category") or attrs.get("categorie") or "")
+                unit = attrs.get("unit") or attrs.get("unitate") or ""
+                if name and pret is not None:
+                    add_product(name, pret, item_cat, unit)
+                for sub_k in ("products", "menus", "items", "menu_items", "children"):
+                    sub = attrs.get(sub_k)
+                    if isinstance(sub, list) and sub:
+                        extract_items(sub, item_cat or name)
+        elif isinstance(data, dict):
+            # TastyIgniter JSON:API with included
+            included = data.get("included") or []
+            menu_items = [x for x in included if x.get("type") == "menus"]
+            cat_items  = [x for x in included if x.get("type") == "categories"]
+            cat_by_id  = {}
+            for ci in cat_items:
+                a = ci.get("attributes") or {}
+                cat_by_id[ci.get("id")] = a.get("name") or a.get("title") or ""
+            for mi in menu_items:
+                attrs = mi.get("attributes") or {}
+                cat_ids = [
+                    r.get("id")
+                    for r in ((mi.get("relationships") or {}).get("categories", {}).get("data") or [])
+                ]
+                cname = next((cat_by_id.get(cid) for cid in cat_ids if cat_by_id.get(cid)), "")
+                add_product(attrs.get("menu_name", ""),
+                            parse_price(attrs.get("menu_price")), cname)
+            # Nested keys
+            for k in ("categories", "menu_top_categories", "sections",
+                      "products", "menus", "items", "data"):
+                v = data.get(k)
+                if isinstance(v, list) and v:
+                    extract_items(v, cat)
+                elif isinstance(v, dict):
+                    extract_items(v, cat)
+
+    # ── Strategy 1: Direct HTTP API ───────────────────────────────────────────
+    api_headers = {
+        "User-Agent": "TapTasty/5.0 (Android; ro.lamama.comenzi)",
+        "Accept": "application/json",
+        "X-Requested-With": "ro.lamama.comenzi",
+        "Origin": f"https://{HOSTNAME}",
+        "Referer": f"https://{HOSTNAME}/",
+    }
+
+    location_id = None
+
+    async with httpx.AsyncClient(timeout=30, follow_redirects=True, headers=api_headers) as client:
+        # Step 1a: company-generals → find location_id
+        try:
+            r = await client.get(f"{API}/noauth/company-generals",
+                                 params={"hostname": HOSTNAME})
+            generals = r.json()
+            d = generals.get("data") or {}
+            print(f"[LaMama] company-generals keys: {list(d.keys()) if isinstance(d, dict) else type(d)}")
+            print(f"[LaMama] company-generals sample: {_json.dumps(d)[:1500]}")
+            if isinstance(d, dict):
+                for k in ("location_id", "default_location_id", "locationId", "location"):
+                    if d.get(k):
+                        location_id = d[k]
+                        break
+                if not location_id:
+                    for loc_key in ("locations", "location", "branches"):
+                        locs = d.get(loc_key)
+                        if isinstance(locs, list) and locs:
+                            loc0 = locs[0]
+                            location_id = (loc0.get("location_id") or
+                                           loc0.get("id") or loc0.get("slug"))
+                            break
+                # Extract from app_link: taptasty://company/197/location/TOKEN
+                app_link = str(d.get("app_link") or d.get("appLink") or "")
+                if "location/" in app_link and not location_id:
+                    m = _re.search(r"location/([^/\s\"']+)", app_link)
+                    if m:
+                        location_id = m.group(1)
+            print(f"[LaMama] location_id={location_id}")
+        except Exception as e:
+            print(f"[LaMama] company-generals error: {e}")
+
+        # Step 1b: try locations endpoint if still not found
+        if not location_id:
+            for ep in [f"{API}/noauth/locations",
+                       f"{API}/api/v2/locations",
+                       f"{API}/noauth/company-locations"]:
+                try:
+                    r = await client.get(ep, params={"company_id": COMPANY})
+                    if r.status_code == 200:
+                        d = r.json()
+                        print(f"[LaMama] {ep}: {_json.dumps(d)[:400]}")
+                        locs = d.get("data") or d
+                        if isinstance(locs, list) and locs:
+                            location_id = (locs[0].get("location_id") or
+                                           locs[0].get("id") or locs[0].get("slug"))
+                            if location_id:
+                                break
+                except Exception as e:
+                    print(f"[LaMama] {ep}: {e}")
+
+        # Step 1c: Try menu endpoints with all param variations
+        param_sets: list[dict] = []
+        if location_id:
+            param_sets += [
+                {"company_id": COMPANY, "location": location_id},
+                {"company_id": COMPANY, "location_id": location_id},
+            ]
+        param_sets.append({"company_id": COMPANY})
+
+        menu_eps = [
+            f"{API}/noauth/menu",
+            f"{API}/noauth/menus",
+            f"{API}/noauth/menu-categories",
+            f"{API}/api/v2/menus",
+            f"{API}/api/v2/categories",
+        ]
+
+        for ep in menu_eps:
+            for params in param_sets:
+                try:
+                    r = await client.get(ep, params=params)
+                    if r.status_code != 200:
+                        continue
+                    resp_json = r.json()
+                    status = resp_json.get("status")
+                    data   = resp_json.get("data") or resp_json
+                    n = len(data) if isinstance(data, (list, dict)) else 0
+                    print(f"[LaMama] {ep} {params}: status={status} len={n}")
+                    if (isinstance(data, list) and len(data) > 0) or \
+                       (isinstance(data, dict) and data):
+                        extract_items(data)
+                        if results:
+                            break
+                except Exception as e:
+                    print(f"[LaMama] {ep} {params}: {e}")
+            if results:
+                break
+
+    if results:
+        print(f"[LaMama] API strategy: {len(results)} products")
+        return results
+
+    # ── Strategy 2: Playwright browser intercept ───────────────────────────────
+    print("[LaMama] API strategy found 0 products — falling back to Playwright")
+    from playwright.async_api import async_playwright
+
+    captured: list[dict] = []
+
+    async def on_response(response):
+        try:
+            if response.status != 200:
+                return
+            ct = response.headers.get("content-type", "")
+            if "json" not in ct:
+                return
+            r_url = response.url
+            # Skip analytics/tracking — but DO capture cdntaptasty API calls
+            if any(x in r_url for x in ["analytics", "tracking", "google",
+                                         "facebook", "firebase", "sentry"]):
+                return
+            data = await response.json()
+            captured.append({"url": r_url, "data": data})
+            print(f"[LaMama] PW captured: {r_url[:120]}")
+        except Exception:
+            pass
+
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        context = await browser.new_context(
+            user_agent=(
+                "Mozilla/5.0 (Linux; Android 12; Pixel 6) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/112.0.0.0 Mobile Safari/537.36"
+            ),
+            viewport={"width": 390, "height": 844},
+        )
+
+        # Pre-seed localStorage + MutationObserver auto-clicker for consent dialogs
+        await context.add_init_script("""
+            const consentKeys = {
+                cookies_accepted: 'true', cookie_consent: '1', gdpr_accepted: '1',
+                cookieConsent: 'true', cookiesAccepted: 'true',
+                consent_given: '1', privacy_accepted: 'true', terms_accepted: 'true'
+            };
+            for (const [k, v] of Object.entries(consentKeys)) {
+                try { localStorage.setItem(k, v); } catch(e) {}
+            }
+            // Auto-click consent buttons as they appear
+            const ACCEPT_TEXTS = ['accepta', 'accept', 'agree', 'ok', 'continua', 'da', 'yes'];
+            const dismiss = () => {
+                for (const el of document.querySelectorAll(
+                        'button, a, ion-button, [role="button"], .btn')) {
+                    const t = (el.textContent || '').toLowerCase().trim();
+                    if (ACCEPT_TEXTS.some(tx => t === tx || t.startsWith(tx))) {
+                        el.click();
+                    }
+                }
+            };
+            const obs = new MutationObserver(dismiss);
+            obs.observe(document.documentElement, { childList: true, subtree: true });
+        """)
+
+        page = await context.new_page()
+        page.on("response", on_response)
+
+        try:
+            await page.goto(url, timeout=60000, wait_until="domcontentloaded")
+            await asyncio.sleep(4)
+
+            # Extra dismiss attempt after initial load
+            await page.evaluate("""
+                const texts = ['accepta', 'accept', 'agree', 'ok', 'continua', 'da'];
+                for (const el of document.querySelectorAll(
+                        'button, a, ion-button, [role="button"]')) {
+                    const t = (el.textContent || '').toLowerCase().trim();
+                    if (texts.some(tx => t === tx || t.startsWith(tx))) {
+                        el.click();
+                    }
+                }
+            """)
+            await asyncio.sleep(2)
+
+            try:
+                await page.wait_for_load_state("networkidle", timeout=20000)
+            except Exception:
+                pass
+            await asyncio.sleep(5)
+
+            # Scroll through the menu to trigger lazy loading
+            for _ in range(25):
+                await page.evaluate("window.scrollBy(0, 500)")
+                await asyncio.sleep(0.4)
+
+            # Click category tabs / segment buttons
+            clicked: set[str] = set()
+            for sel in ["ion-tab-button", ".tab-button", "ion-segment-button",
+                        "[class*='category']", "[class*='tab']"]:
+                try:
+                    tabs = await page.query_selector_all(sel)
+                    for tab in tabs[:8]:
+                        txt = (await tab.inner_text()).strip()
+                        if txt and txt not in clicked:
+                            clicked.add(txt)
+                            await tab.click()
+                            await asyncio.sleep(2.5)
+                except Exception:
+                    pass
+
+            for section in KNOWN_SECTIONS:
+                try:
+                    el = page.get_by_text(section, exact=False)
+                    if await el.count() > 0:
+                        await el.first.click()
+                        await asyncio.sleep(2.5)
+                except Exception:
+                    pass
+
+            await asyncio.sleep(4)
+            print(f"[LaMama] PW: {len(captured)} JSON responses captured")
+
+        except Exception as e:
+            print(f"[LaMama] PW error: {e}")
+            import traceback; traceback.print_exc()
+        finally:
+            await browser.close()
+
+    # Parse all captured responses
+    for resp in captured:
+        data  = resp["data"]
+        r_url = resp["url"]
+        print(f"[LaMama] parsing: {r_url[:100]}")
+        extract_items(data)
+
+    print(f"[LaMama] TOTAL {len(results)} products extracted")
+    return results
+
+
 # ─── Scraper registry ─────────────────────────────────────────────────────────
 
 _SCRAPERS: dict[str, Callable] = {
     "margineni": scrape_margineni,
     "lanuci": scrape_lanuci,
+    "lamama": scrape_lamama,
 }
 
 

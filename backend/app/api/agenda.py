@@ -4,7 +4,6 @@ from sqlalchemy import select, and_, or_
 from sqlalchemy.orm import selectinload
 from typing import List, Optional
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 import json
 import httpx
 
@@ -26,7 +25,6 @@ from app.schemas.schemas import (
 
 router = APIRouter(tags=["📒 Agenda Furnizori"])
 
-SET_FILE = Path("/opt/cheltuieli-v2.1/.set")
 ERP_URL = "http://10.170.4.101:5000/api/Entity/Get"
 ERP_BODY = {
     "dataSetName": "BusinessPartnerVendorProjection",
@@ -45,23 +43,10 @@ ERP_BODY = {
 
 
 async def _read_bearer(db: AsyncSession) -> str:
-    """Citește bearer token: DB (erp_bearer_token) → fallback .set"""
-    # 1. DB (primary, always writable)
-    result = await db.execute(select(Setting).where(Setting.cheie == "erp_bearer_token"))
+    """Citește bearer token ERP Prod (10.170.4.101) din DB."""
+    result = await db.execute(select(Setting).where(Setting.cheie == "erp_prod_bearer_token"))
     s = result.scalar_one_or_none()
-    if s and s.valoare:
-        return s.valoare
-    # 2. Fallback: .set file
-    if SET_FILE.exists():
-        try:
-            for line in SET_FILE.read_text().strip().splitlines():
-                if line.strip().startswith("bearer"):
-                    parts = line.split("=", 1)
-                    if len(parts) == 2:
-                        return parts[1].strip()
-        except Exception:
-            pass
-    return ""
+    return (s.valoare or "") if s else ""
 
 
 def _vendor_field(vendor: dict, *keys: str) -> str:

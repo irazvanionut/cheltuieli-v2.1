@@ -21,6 +21,9 @@ import { AgendaPage } from '@/pages/agenda/AgendaPage';
 import { FurnizorDetail } from '@/pages/agenda/FurnizorDetail';
 import { ListaApeluriPage } from '@/pages/ListaApeluriPage';
 import { CompetitoriPage } from '@/pages/CompetitoriPage';
+import { NavigatiePage } from '@/pages/NavigatiePage';
+import { NavigatieGpsPage } from '@/pages/NavigatieGpsPage';
+import { ComenziAziPage } from '@/pages/ComenziAziPage';
 import { Spinner } from '@/components/ui';
 
 // Create React Query client
@@ -149,6 +152,30 @@ function App() {
                 <ProtectedRoute>
                   <ApeluriTrendPage />
                 </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/apeluri/comenzi"
+              element={
+                <ProtectedRoute>
+                  <ComenziAziPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/apeluri/navigatie"
+              element={
+                <ProtectedRoute>
+                  <NavigatiePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/apeluri/navigatie-gps"
+              element={
+                <ApeluriListaRoute>
+                  <NavigatieGpsPage />
+                </ApeluriListaRoute>
               }
             />
             <Route

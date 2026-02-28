@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Numeric, Text, ForeignKey, Date, UniqueConstraint, SmallInteger
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Numeric, Text, ForeignKey, Date, UniqueConstraint, SmallInteger, Float
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -482,6 +482,41 @@ class AgendaTodo(Base):
     furnizor = relationship("AgendaFurnizor", back_populates="todos")
     user = relationship("User")
 
+
+# ============================================
+# ERP PROD — CLIENȚI
+# ============================================
+
+class ErpCustomer(Base):
+    __tablename__ = "erp_customers"
+
+    id        = Column(Integer, primary_key=True, index=True)
+    erp_id    = Column(String(100), unique=True, nullable=False, index=True)
+    name      = Column(String(255))
+    address   = Column(Text)
+    phone     = Column(String(100))
+    email     = Column(String(255))
+    type      = Column(String(100))
+    synced_at = Column(DateTime, server_default=func.now())
+    created_at= Column(DateTime, server_default=func.now())
+
+
+# ============================================
+# MAP PINS
+# ============================================
+
+class MapPin(Base):
+    __tablename__ = "map_pins"
+    id         = Column(Integer, primary_key=True, index=True)
+    name       = Column(String(255), nullable=False)
+    address    = Column(Text)
+    lat        = Column(Numeric(10, 7), nullable=False)
+    lng        = Column(Numeric(10, 7), nullable=False)
+    color            = Column(String(20), default="blue")
+    permanent        = Column(Boolean, default=False)
+    note             = Column(String(255))
+    travel_time_min  = Column(Float)
+    created_at       = Column(DateTime, server_default=func.now())
 
 # ============================================
 # COMPETITORI

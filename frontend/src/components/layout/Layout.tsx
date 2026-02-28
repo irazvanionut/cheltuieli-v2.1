@@ -32,6 +32,9 @@ import {
   BookUser,
   Building2,
   BarChart2,
+  MapPin,
+  Navigation,
+  Truck,
 } from 'lucide-react';
 import { useAppStore, useIsAdmin, useIsSef } from '@/hooks/useAppStore';
 import api from '@/services/api';
@@ -180,6 +183,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         { name: 'Monitor Coadă', href: '/apeluri/lista', icon: PhoneCall, show: true, badge: null, badgeApeluri: null },
         { name: 'Recomandari Apeluri', href: '/apeluri/recomandari', icon: Lightbulb, show: true, badge: null, badgeApeluri: null },
         { name: 'Statistici & Trend', href: '/apeluri/trend', icon: TrendingUp, show: true, badge: null, badgeApeluri: null },
+        { name: 'Comenzi Azi', href: '/apeluri/comenzi', icon: Truck, show: true, badge: null, badgeApeluri: null },
+        { name: 'Monitorizare Flota', href: '/apeluri/navigatie', icon: MapPin, show: true, badge: null, badgeApeluri: null },
+        { name: 'Navigatie GPS', href: '/apeluri/navigatie-gps', icon: Navigation, show: true, badge: null, badgeApeluri: null },
       ],
     },
     {

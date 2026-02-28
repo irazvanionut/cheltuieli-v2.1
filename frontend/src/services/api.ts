@@ -1015,6 +1015,108 @@ class ApiService {
     });
     return data;
   }
+
+  // ============================================
+  // ERP PROD — CLIENȚI
+  // ============================================
+
+  async getErpCustomers(params?: { search?: string; skip?: number; limit?: number }): Promise<{
+    customers: import('@/types').ErpCustomer[];
+    total: number;
+    skip: number;
+    limit: number;
+  }> {
+    const { data } = await this.client.get('/erp-prod/customers', { params });
+    return data;
+  }
+
+  async syncErpCustomers(): Promise<{ added: number; total_fetched: number }> {
+    const { data } = await this.client.post('/erp-prod/customers/sync');
+    return data;
+  }
+
+  // Navigatie / Map pins
+  async getMapPins(): Promise<import('@/types').MapPin[]> {
+    const { data } = await this.client.get('/navigatie/pins');
+    return data;
+  }
+  async createMapPin(pin: { name: string; address?: string; lat: number; lng: number; color?: string }): Promise<import('@/types').MapPin> {
+    const { data } = await this.client.post('/navigatie/pins', pin);
+    return data;
+  }
+  async deleteMapPin(id: number): Promise<void> {
+    await this.client.delete(`/navigatie/pins/${id}`);
+  }
+  async geocodeAddress(q: string): Promise<{ lat: string; lon: string; display_name: string }[]> {
+    const { data } = await this.client.get('/navigatie/geocode', { params: { q } });
+    return data;
+  }
+  async getTraccarToken(): Promise<{ token: string | null; url: string | null }> {
+    const { data } = await this.client.get('/navigatie/traccar-token');
+    return data;
+  }
+
+  // Comenzi Azi
+  async getComenziorAzi(): Promise<{ comenzi: any[]; total: number }> {
+    const { data } = await this.client.get('/comenzi/azi');
+    return data;
+  }
+  async marcheazaHartaTot(): Promise<{ added: number; failed: string[]; total_livrari: number }> {
+    const { data } = await this.client.post('/comenzi/marcare-harta-toate');
+    return data;
+  }
+  async marcheazaPin(payload: { address: string; customer_name: string; color: string; note?: string }): Promise<{ id: number; lat: number; lng: number }> {
+    const { data } = await this.client.post('/comenzi/marcare-pin', payload);
+    return data;
+  }
+  async getTraccarPozitii(): Promise<{ vehicles: any[]; configured: boolean; error?: string }> {
+    const { data } = await this.client.get('/navigatie/traccar/pozitii');
+    return data;
+  }
+  async incrementMapsJsCounter(): Promise<void> {
+    await this.client.post('/navigatie/maps-js/count').catch(() => {});
+  }
+  async syncComenziHarta(): Promise<{ added: number; updated: number; unchanged: number; failed: string[] }> {
+    const { data } = await this.client.post('/comenzi/sync-harta');
+    return data;
+  }
+  async calculeazaRute(payload: {
+    comenzi: any[];
+    sofer1_ids?: string[];
+    sofer2_ids?: string[];
+    engines?: string[];
+  }): Promise<any> {
+    const { data } = await this.client.post('/comenzi/rute', payload);
+    return data;
+  }
+
+  // ── Public GPS endpoints (no auth, key never exposed) ──────────────────────
+  async getPublicGpsSettings(): Promise<{ has_maps_key: boolean }> {
+    const { data } = await this.client.get('/public/gps/settings');
+    return data;
+  }
+  getPublicMapsJsUrl(): string {
+    return `${API_URL}/public/gps/maps-js`;
+  }
+  async getPublicGpsPins(): Promise<import('@/types').MapPin[]> {
+    const { data } = await this.client.get('/public/gps/pins');
+    return data;
+  }
+  async getPublicGpsPozitii(): Promise<{ vehicles: any[]; configured: boolean; error?: string }> {
+    const { data } = await this.client.get('/public/gps/pozitii');
+    return data;
+  }
+  async getPublicGpsComenzii(): Promise<{ comenzi: any[]; total: number }> {
+    const { data } = await this.client.get('/public/gps/comenzi');
+    return data;
+  }
+  async syncPublicGpsHarta(): Promise<{ added: number; updated: number; unchanged: number; failed: string[] }> {
+    const { data } = await this.client.post('/public/gps/sync');
+    return data;
+  }
+  async incrementPublicMapsJsCounter(): Promise<void> {
+    await this.client.post('/public/gps/maps-js/count').catch(() => {});
+  }
 }
 
 export const api = new ApiService();

@@ -479,6 +479,18 @@ export interface Toast {
   message: string;
 }
 
+export interface ErpCustomer {
+  id: number;
+  erp_id: string;
+  name: string | null;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  type: string | null;
+  synced_at: string | null;
+  created_at: string | null;
+}
+
 export interface SysLogEntry {
   id: number;
   ts: string;
@@ -486,4 +498,16 @@ export interface SysLogEntry {
   sursa: string;
   mesaj: string;
   detalii: string | null;
+}
+
+export interface MapPin {
+  id: number;
+  name: string;
+  address: string | null;
+  lat: number;
+  lng: number;
+  color: string;
+  permanent: boolean;
+  note: string | null;
+  created_at: string | null;
 }

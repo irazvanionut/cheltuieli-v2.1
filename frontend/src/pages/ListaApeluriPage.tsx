@@ -284,6 +284,13 @@ const SmsModal: React.FC<SmsModalProps> = ({ phone, onClose }) => {
   );
 };
 
+// ── Customer name lookup helpers ────────────────────────────────────────────
+/** Normalize a phone number to its last 9 digits for matching. */
+const normPhone = (raw: string): string => {
+  const digits = (raw || '').replace(/\D/g, '');
+  return digits.length >= 9 ? digits.slice(-9) : digits;
+};
+
 // ── ActiveCallCard ─────────────────────────────────────────────────────────
 interface ActiveCallCardProps {
   call: {
@@ -297,9 +304,11 @@ interface ActiveCallCardProps {
   copied: string | null;
   onCopy: (n: string) => void;
   onSms?: (n: string) => void;
+  customerName?: string | null;
+  customerEmail?: string | null;
 }
 
-const ActiveCallCard: React.FC<ActiveCallCardProps> = ({ call, copied, onCopy, onSms }) => {
+const ActiveCallCard: React.FC<ActiveCallCardProps> = ({ call, copied, onCopy, onSms, customerName, customerEmail }) => {
   const elapsed = useLiveSeconds(call.seconds);
   const inQueue = !call.bridged; // IN_QUEUE = waiting, IN_CURS = bridged/talking
   const waNum = call.caller_id ? toWaNum(call.caller_id) : '';
@@ -332,7 +341,7 @@ const ActiveCallCard: React.FC<ActiveCallCardProps> = ({ call, copied, onCopy, o
         </span>
       </div>
 
-      {/* Phone number — large & prominent */}
+      {/* Phone number + customer name */}
       <div>
         <p className="text-[10px] uppercase tracking-widest text-stone-400 dark:text-stone-500 mb-1">
           Număr apelant
@@ -340,6 +349,16 @@ const ActiveCallCard: React.FC<ActiveCallCardProps> = ({ call, copied, onCopy, o
         <span className="text-3xl font-mono font-bold tracking-tight text-stone-900 dark:text-stone-50 leading-none break-all">
           {call.caller_id || '—'}
         </span>
+        {customerName && (
+          <p className="mt-1.5 text-sm font-semibold text-stone-700 dark:text-stone-200 truncate">
+            {customerName}
+          </p>
+        )}
+        {customerEmail && (
+          <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400 truncate">
+            {customerEmail}
+          </p>
+        )}
       </div>
 
       {/* Agent info */}
@@ -524,6 +543,30 @@ export const ListaApeluriPage: React.FC = () => {
     return map;
   }, [smsLogAll]);
 
+  // ERP customers — lookup by normalized phone (last 9 digits)
+  const { data: erpCustomersData } = useQuery({
+    queryKey: ['erp-customers-lookup'],
+    queryFn: () => api.getErpCustomers({ limit: 20000 }),
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const customerByPhone = useMemo(() => {
+    const map = new Map<string, { name: string; email: string | null }>();
+    for (const c of erpCustomersData?.customers ?? []) {
+      if (c.phone && c.name) {
+        const key = normPhone(c.phone);
+        if (key) map.set(key, { name: c.name, email: c.email ?? null });
+      }
+    }
+    return map;
+  }, [erpCustomersData]);
+
+  const getCustomerName = (phone: string): string | null =>
+    customerByPhone.get(normPhone(phone))?.name ?? null;
+
+  const getCustomerEmail = (phone: string): string | null =>
+    customerByPhone.get(normPhone(phone))?.email ?? null;
+
   const handleSearch = useCallback(() => {
     setPage(1);
     setActiveQ(q);
@@ -647,6 +690,8 @@ export const ListaApeluriPage: React.FC = () => {
                   copied={copied}
                   onCopy={handleCopy}
                   onSms={isAuthenticated ? setSmsPhone : undefined}
+                  customerName={c.caller_id ? getCustomerName(c.caller_id) : null}
+                  customerEmail={c.caller_id ? getCustomerEmail(c.caller_id) : null}
                 />
               ))}
             </div>
@@ -872,6 +917,16 @@ export const ListaApeluriPage: React.FC = () => {
                                   : <Copy className="w-3 h-3 opacity-0 group-hover:opacity-40 flex-shrink-0" />
                               )}
                             </button>
+                            {c.caller_id && getCustomerName(c.caller_id) && (
+                              <p className="text-[11px] text-stone-500 dark:text-stone-400 font-sans font-medium mt-0.5 truncate max-w-[160px]">
+                                {getCustomerName(c.caller_id)}
+                              </p>
+                            )}
+                            {c.caller_id && getCustomerEmail(c.caller_id) && (
+                              <p className="text-[11px] text-stone-400 dark:text-stone-500 font-sans mt-0 truncate max-w-[160px]">
+                                {getCustomerEmail(c.caller_id)}
+                              </p>
+                            )}
                           </td>
                           <td className="py-2 px-3 text-stone-500 dark:text-stone-400 font-mono text-xs">
                             {c.agent || '-'}

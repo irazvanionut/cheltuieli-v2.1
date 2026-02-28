@@ -39,6 +39,7 @@ import { FurnizoriSettings } from './settings/FurnizoriSettings';
 import { SmsSettings } from './settings/SmsSettings';
 import { LogSettings } from './settings/LogSettings';
 import { CompetitoriSettings } from './settings/CompetitoriSettings';
+import { ClientiErpProdSettings } from './settings/ClientiErpProdSettings';
 
 interface MenuItem {
   path: string;
@@ -62,7 +63,8 @@ const settingsGroups: MenuGroup[] = [
       { path: '/settings/grupe', name: 'Grupe', icon: Layers, description: 'Subgrupări pentru categorii' },
       { path: '/settings/nomenclator', name: 'Nomenclator', icon: BookOpen, description: 'Furnizori, servicii, denumiri' },
       { path: '/settings/monede', name: 'Monede', icon: DollarSign, description: 'Gestionare monede active' },
-      { path: '/settings/furnizori', name: 'Furnizori', icon: Building2, description: 'Listă furnizori din ERP' },
+      { path: '/settings/furnizori', name: 'Furnizori ERP Pontaj', icon: Building2, description: 'Listă furnizori din ERP Pontaj' },
+      { path: '/settings/clienti-erp-prod', name: 'Clienți ERP Prod', icon: Users, description: 'Clienți din ERP Prod (10.170.4.101:5020)' },
     ],
   },
   {
@@ -215,6 +217,7 @@ export const SettingsPage: React.FC = () => {
           <Route path="sms" element={<SmsSettings />} />
           <Route path="log" element={<LogSettings />} />
           <Route path="competitori" element={<CompetitoriSettings />} />
+          <Route path="clienti-erp-prod" element={<ClientiErpProdSettings />} />
         </Routes>
       </div>
     </div>

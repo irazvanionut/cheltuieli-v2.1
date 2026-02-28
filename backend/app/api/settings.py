@@ -413,7 +413,7 @@ ERP_BODY = {
 
 
 async def _read_bearer_db(db: AsyncSession) -> str:
-    """Citește bearer token: DB (erp_bearer_token) → fallback .set"""
+    """Citește bearer token pontaj: DB (erp_bearer_token) → fallback .set"""
     result = await db.execute(select(Setting).where(Setting.cheie == "erp_bearer_token"))
     s = result.scalar_one_or_none()
     if s and s.valoare:
@@ -430,15 +430,22 @@ async def _read_bearer_db(db: AsyncSession) -> str:
     return ""
 
 
+async def _read_erp_prod_token(db: AsyncSession) -> str:
+    """Citește bearer token ERP Prod (10.170.4.101) din DB."""
+    result = await db.execute(select(Setting).where(Setting.cheie == "erp_prod_bearer_token"))
+    s = result.scalar_one_or_none()
+    return (s.valoare or "") if s else ""
+
+
 @router.get("/furnizori")
 async def get_furnizori(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Preia lista furnizori din ERP folosind bearer token"""
-    token = await _read_bearer_db(db)
+    """Preia lista furnizori din ERP Prod (10.170.4.101) folosind erp_prod_bearer_token"""
+    token = await _read_erp_prod_token(db)
     if not token:
-        raise HTTPException(status_code=400, detail="Bearer token neconfigurat. Setează-l din Settings → Keys.")
+        raise HTTPException(status_code=400, detail="Bearer token ERP Prod neconfigurat. Setează-l din Settings → Keys → Bearer Token — ERP Prod.")
 
     try:
         async with httpx.AsyncClient(timeout=30) as client:

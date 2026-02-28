@@ -415,11 +415,13 @@ export const CompetitoriSettings: React.FC = () => {
         <p className="font-medium text-stone-500 dark:text-stone-400 mb-1">Scraper-e disponibile</p>
         <ul className="list-disc list-inside space-y-1">
           <li>
-            <code className="font-mono text-xs">margineni</code> — restaurantmargineni.ro
-            (WooCommerce)
+            <code className="font-mono text-xs">margineni</code> — restaurantmargineni.ro (WooCommerce)
           </li>
           <li>
             <code className="font-mono text-xs">lanuci</code> — lanuci.ro (Wix online ordering)
+          </li>
+          <li>
+            <code className="font-mono text-xs">lamama</code> — comenzi.lamama.ro (TapTasty SPA, 4 secțiuni)
           </li>
         </ul>
         <p className="mt-2 text-xs">
