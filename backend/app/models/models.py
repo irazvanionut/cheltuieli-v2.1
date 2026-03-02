@@ -518,6 +518,16 @@ class MapPin(Base):
     travel_time_min  = Column(Float)
     created_at       = Column(DateTime, server_default=func.now())
 
+
+class GeocodeOverride(Base):
+    __tablename__ = "geocode_overrides"
+    id                 = Column(Integer, primary_key=True)
+    address_normalized = Column(String(500), unique=True, nullable=False, index=True)
+    lat                = Column(Numeric(10, 7), nullable=False)
+    lng                = Column(Numeric(10, 7), nullable=False)
+    created_at         = Column(DateTime, server_default=func.now())
+    updated_at         = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
 # ============================================
 # COMPETITORI
 # ============================================
@@ -588,6 +598,7 @@ class Comanda(Base):
     payload_json         = Column(Text)
     linii_synced         = Column(Boolean, default=False)
     linii_needs_refresh  = Column(Boolean, default=False)
+    current_status       = Column(Integer)
     synced_at            = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     created_at           = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -616,3 +627,14 @@ class ComandaLinie(Base):
 
     comanda = relationship("Comanda", back_populates="linii")
     created_at       = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class ComandaStatusHistory(Base):
+    __tablename__ = "comenzi_status_history"
+    id          = Column(Integer, primary_key=True)
+    erp_id      = Column(String(64), nullable=False, index=True)
+    number      = Column(Integer)
+    status      = Column(Integer, nullable=False)
+    is_ridicare = Column(Boolean, default=False)
+    erp_time    = Column(DateTime(timezone=True))
+    recorded_at = Column(DateTime(timezone=True), server_default=func.now())

@@ -9,6 +9,8 @@ import {
   MessageSquare,
   Loader2,
   Phone,
+  Truck,
+  ShoppingBag,
 } from 'lucide-react';
 import api from '@/services/api';
 import type { RecomandariApeluri, RecomandariConversation } from '@/types';
@@ -98,6 +100,30 @@ export const RecomandariApeluriPage: React.FC = () => {
     queryFn: () => api.getRecomandariApeluri(selectedDate, selectedAiModel === 'Any' ? undefined : selectedAiModel),
     enabled: !!selectedDate,
   });
+
+  const today = new Date().toISOString().slice(0, 10);
+  const { data: timingData } = useQuery({
+    queryKey: ['comenzi-timing', today],
+    queryFn: () => api.getComenziTiming(today),
+    refetchInterval: 120_000,
+  });
+
+  const timingStats = useMemo(() => {
+    const orders = timingData?.orders ?? [];
+    const calc = (list: typeof orders) => {
+      const durs = list
+        .filter(o => o.current_status === 512 && o.created_at && o.journal_dt)
+        .map(o => (new Date(o.journal_dt!).getTime() - new Date(o.created_at!).getTime()) / 60000)
+        .filter(d => d > 0);
+      if (!durs.length) return null;
+      const avg = durs.reduce((a, b) => a + b, 0) / durs.length;
+      return { avg: Math.round(avg), min: Math.round(Math.min(...durs)), max: Math.round(Math.max(...durs)), count: durs.length };
+    };
+    return {
+      livrare: calc(orders.filter(o => !o.is_ridicare && !!o.address)),
+      ridicare: calc(orders.filter(o => o.is_ridicare)),
+    };
+  }, [timingData]);
 
   // Aggregate products from conversations
   const produse = useMemo(() => {
@@ -260,6 +286,7 @@ export const RecomandariApeluriPage: React.FC = () => {
           {activeTab === 'sumar' && (
             <SumarTab
               data={data}
+              timingStats={timingStats}
               onFilterByTipApel={handleFilterByTipApel}
               onFilterByRecomandare={handleFilterByRecomandare}
               onFilterByLucruBun={handleFilterByLucruBun}
@@ -285,20 +312,80 @@ export const RecomandariApeluriPage: React.FC = () => {
 // SUMAR TAB
 // ============================================
 
+type TimingStatEntry = { avg: number; min: number; max: number; count: number } | null;
+
 interface SumarTabProps {
   data: RecomandariApeluri;
+  timingStats: { livrare: TimingStatEntry; ridicare: TimingStatEntry };
   onFilterByTipApel: (tip: string, count: number) => void;
   onFilterByRecomandare: (recomandare: string, count: number) => void;
   onFilterByLucruBun: (comportament: string, count: number) => void;
 }
 
+const TimingCard: React.FC<{
+  label: string;
+  icon: React.ElementType;
+  iconColor: string;
+  bgColor: string;
+  stat: TimingStatEntry;
+}> = ({ label, icon: Icon, iconColor, bgColor, stat }) => (
+  <div className="bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800 p-5 flex-1 min-w-0">
+    <div className="flex items-center gap-3 mb-4">
+      <div className={clsx('w-10 h-10 rounded-lg flex items-center justify-center', bgColor)}>
+        <Icon className={clsx('w-5 h-5', iconColor)} />
+      </div>
+      <div>
+        <p className="text-sm font-semibold text-stone-900 dark:text-stone-100">{label}</p>
+        {stat && <p className="text-xs text-stone-400">{stat.count} comenzi livrate</p>}
+      </div>
+    </div>
+    {stat ? (
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <div>
+          <p className="text-[11px] text-stone-400 uppercase tracking-wide mb-0.5">Min</p>
+          <p className="text-xl font-bold text-stone-900 dark:text-stone-100">{stat.min}<span className="text-xs font-normal text-stone-400 ml-0.5">m</span></p>
+        </div>
+        <div className="border-x border-stone-100 dark:border-stone-800">
+          <p className="text-[11px] text-stone-400 uppercase tracking-wide mb-0.5">Avg</p>
+          <p className="text-xl font-bold text-stone-900 dark:text-stone-100">{stat.avg}<span className="text-xs font-normal text-stone-400 ml-0.5">m</span></p>
+        </div>
+        <div>
+          <p className="text-[11px] text-stone-400 uppercase tracking-wide mb-0.5">Max</p>
+          <p className="text-xl font-bold text-stone-900 dark:text-stone-100">{stat.max}<span className="text-xs font-normal text-stone-400 ml-0.5">m</span></p>
+        </div>
+      </div>
+    ) : (
+      <p className="text-sm text-stone-400 text-center py-2">—</p>
+    )}
+  </div>
+);
+
 const SumarTab: React.FC<SumarTabProps> = ({
   data,
+  timingStats,
   onFilterByTipApel,
   onFilterByRecomandare,
   onFilterByLucruBun,
 }) => (
   <div className="space-y-6">
+    {/* Timing cards */}
+    <div className="flex gap-4">
+      <TimingCard
+        label="Livrare"
+        icon={Truck}
+        iconColor="text-blue-600 dark:text-blue-400"
+        bgColor="bg-blue-100 dark:bg-blue-900/30"
+        stat={timingStats.livrare}
+      />
+      <TimingCard
+        label="Ridicare"
+        icon={ShoppingBag}
+        iconColor="text-purple-600 dark:text-purple-400"
+        bgColor="bg-purple-100 dark:bg-purple-900/30"
+        stat={timingStats.ridicare}
+      />
+    </div>
+
     {/* Total card + tip apeluri */}
     <div className="bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800 p-6">
       <div className="flex items-center gap-6 flex-wrap">

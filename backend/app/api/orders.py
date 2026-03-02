@@ -311,7 +311,7 @@ async def _fetch_page(token: str, skip: int, where: list | None = None) -> list[
             "selectFields": _SELECT_FIELDS,
             "where": where or [],
             "orderBy": [{"fieldName": "Number", "direction": "Desc"}],
-            "pagination": {"skip": skip, "take": 5000, "useLastRecords": False},
+            "pagination": {"skip": skip, "take": 1000, "useLastRecords": False},
         },
         "formatOptions": 1,
         "endpoint": "/proxy/http://10.170.4.101:5020//api/Entity/Get",
@@ -524,7 +524,7 @@ async def orders_sync_loop() -> None:
                     await write_log("ERROR", "orders_sync", "Yesterday sync failed", str(e))
 
             elif 11 <= hour <= 23:
-                print(f"[Orders] {hour:02d}:00 — incremental sync")
+                print(f"[Orders] {hour:02d}:00 — incremental + today sync")
                 try:
                     async with AsyncSessionLocal() as db:
                         res = await _sync_incremental(db)
@@ -532,6 +532,13 @@ async def orders_sync_loop() -> None:
                 except Exception as e:
                     print(f"[Orders] Incremental sync error: {e}")
                     await write_log("ERROR", "orders_sync", "Incremental sync failed", str(e))
+                try:
+                    async with AsyncSessionLocal() as db:
+                        res = await _sync_today(db)
+                    print(f"[Orders] Today sync: {res}")
+                except Exception as e:
+                    print(f"[Orders] Today sync error: {e}")
+                    await write_log("ERROR", "orders_sync", "Today sync failed", str(e))
 
         except asyncio.CancelledError:
             print("[Orders] Sync loop cancelled")
@@ -541,7 +548,77 @@ async def orders_sync_loop() -> None:
             await asyncio.sleep(60)
 
 
+async def _sync_today(db: AsyncSession) -> dict:
+    """
+    Fetch all of today's orders from ERP and upsert into local DB.
+    Updates all fields for existing records (journal_dt, erp_time, current_status etc.).
+    """
+    token = await _read_token(db)
+    if not token:
+        return {"error": "Token ERP Prod neconfigurat"}
+
+    now = datetime.now(TZ_RO)
+    today_start = datetime.combine(now.date(), datetime.min.time()).replace(tzinfo=TZ_RO)
+
+    where = [
+        {"group": 0, "fieldName": "CreatedAt", "comparator": 4,
+         "fieldValue": today_start.isoformat(), "logicOperator": 1},
+    ]
+
+    skip = 0
+    inserted = 0
+    updated = 0
+
+    while True:
+        try:
+            results = await _fetch_page(token, skip, where=where)
+        except Exception as e:
+            return {"error": str(e), "inserted": inserted, "updated": updated}
+
+        if not results:
+            break
+
+        for r in results:
+            erp_id = str(r.get("id") or "").strip()
+            if not erp_id:
+                continue
+            kwargs = _to_kwargs(r)
+            existing = (await db.execute(
+                select(Comanda).where(Comanda.erp_id == erp_id)
+            )).scalar_one_or_none()
+
+            if existing is None:
+                db.add(Comanda(**kwargs))
+                inserted += 1
+            else:
+                for k, v in kwargs.items():
+                    if k not in ("erp_id",):
+                        setattr(existing, k, v)
+                updated += 1
+
+        await db.commit()
+
+        if len(results) < 5000:
+            break
+        skip += 5000
+
+    return {"inserted": inserted, "updated": updated, "date": now.date().isoformat()}
+
+
 # ─── Endpoints ────────────────────────────────────────────────────────────────
+
+@router.post("/orders/sync/today")
+async def sync_today_endpoint(
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Manual trigger: fetch all today's orders from ERP and upsert."""
+    result = await _sync_today(db)
+    if "error" in result:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result
+
 
 @router.post("/orders/sync/incremental")
 async def sync_incremental_endpoint(

@@ -8,8 +8,8 @@ import httpx
 
 from app.core.database import get_db, AsyncSessionLocal
 from app.core.security import get_current_user
-from app.models import User, Setting, MapPin, Comanda
-from app.api.geocoding import geocode_one, clean_address, travel_time_from_restaurant
+from app.models import User, Setting, MapPin, Comanda, ComandaStatusHistory
+from app.api.geocoding import geocode_one, clean_address, travel_time_from_restaurant, save_geocode_override
 
 router = APIRouter(tags=["📦 Comenzi"])
 
@@ -81,7 +81,7 @@ async def _fetch_comenzi_erp(token: str) -> list[dict]:
                 {"name": "IndexInInterval_"}, {"name": "Total_"}, {"name": "Id"},
                 {"name": "PayloadAsJson"}, {"name": "CreatedAt_"},
                 {"name": "BusinessPartnerId_"}, {"name": "Number_"},
-                {"name": "OrderStatus_"},
+                {"name": "OrderStatus_"}, {"name": "JournalRecordDateTime"},
             ],
             "where": [
                 {"group": 0, "fieldName": "DistributionChannelId", "comparator": 3,
@@ -322,7 +322,82 @@ async def _do_sync_harta(db: AsyncSession) -> dict:
                 failed.append(name)
 
     await db.commit()
+    await _record_status_changes(db, results)
     return {"added": added, "updated": updated, "unchanged": unchanged, "failed": failed}
+
+
+async def _record_status_changes(db: AsyncSession, results: list[dict]) -> None:
+    """Detect status changes from ERP results and insert into comenzi_status_history."""
+    if not results:
+        return
+    erp_ids = [r.get("id") for r in results if r.get("id")]
+    if not erp_ids:
+        return
+
+    # Last recorded status per erp_id
+    from sqlalchemy import text as _text
+    last_rows = (await db.execute(
+        _text(
+            "SELECT DISTINCT ON (erp_id) erp_id, status "
+            "FROM comenzi_status_history "
+            "WHERE erp_id = ANY(:ids) "
+            "ORDER BY erp_id, recorded_at DESC"
+        ),
+        {"ids": erp_ids},
+    )).all()
+    last_status_map = {row.erp_id: row.status for row in last_rows}
+
+    new_entries = []
+    status_updates = []  # (erp_id, status)
+
+    for r in results:
+        erp_id = r.get("id")
+        if not erp_id:
+            continue
+        status_raw = r.get("orderStatus_", 0)
+        status = _ERP_STRING_TO_INT.get(status_raw, status_raw) if isinstance(status_raw, str) else status_raw
+        if not isinstance(status, int):
+            continue
+
+        is_ridicare = _is_ridicare(r.get("shipToAddressText", ""))
+        number = r.get("number_")
+
+        # Parse erp_time from Date + Time fields
+        erp_time_dt = None
+        try:
+            date_str = (r.get("date") or r.get("Date") or "").strip()
+            time_str = (r.get("time") or r.get("Time") or "").strip()
+            if date_str and time_str:
+                erp_time_dt = datetime.fromisoformat(f"{date_str}T{time_str}").replace(tzinfo=TZ_RO)
+        except Exception:
+            pass
+
+        last = last_status_map.get(erp_id)
+        if last is None or last != status:
+            new_entries.append(ComandaStatusHistory(
+                erp_id=erp_id,
+                number=number,
+                status=status,
+                is_ridicare=is_ridicare,
+                erp_time=erp_time_dt,
+            ))
+            status_updates.append((erp_id, status))
+
+    if new_entries:
+        db.add_all(new_entries)
+
+    # Bulk update current_status on comenzi rows
+    if status_updates:
+        for erp_id, status in status_updates:
+            await db.execute(
+                _text("UPDATE comenzi SET current_status = :s WHERE erp_id = :eid"),
+                {"s": status, "eid": erp_id},
+            )
+
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
 
 
 async def sync_harta_loop() -> None:
@@ -488,6 +563,7 @@ async def marcare_pin_individual(
     address = (data.get("address") or "").strip()
     name = (data.get("customer_name") or "").strip()
     color = data.get("color", "blue")
+    original_address = (data.get("original_address") or "").strip()
 
     if not address or not name:
         raise HTTPException(status_code=400, detail="Adresa și numele sunt obligatorii.")
@@ -505,4 +581,163 @@ async def marcare_pin_individual(
     db.add(pin)
     await db.commit()
     await db.refresh(pin)
+
+    # Save override keyed by original ERP address so future geocoding skips external APIs
+    if original_address and original_address != address:
+        await save_geocode_override(db, original_address, lat, lng)
+
     return {"id": pin.id, "lat": float(pin.lat), "lng": float(pin.lng)}
+
+
+@router.get("/comenzi/timing")
+async def get_comenzi_timing(
+    date: str = Query(None, description="YYYY-MM-DD (implicit azi)"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Return orders with full status history for timeline visualization."""
+    from sqlalchemy import text as _text
+
+    today_str = datetime.now(TZ_RO).date().isoformat()
+    target_date = date or today_str
+    is_today = target_date == today_str
+
+    # If today → fetch live from ERP, record changes, and collect live journal_dt values
+    live_journal_map: dict[str, str] = {}
+    if is_today:
+        token = await _read_erp_prod_token(db)
+        if token:
+            try:
+                results = await _fetch_comenzi_erp(token)
+                await _record_status_changes(db, results)
+                for r in results:
+                    erp_id = r.get("id")
+                    jrd = r.get("journalRecordDateTime") or r.get("JournalRecordDateTime")
+                    if erp_id and jrd:
+                        live_journal_map[erp_id] = jrd
+            except Exception:
+                pass
+
+    # Build date range (ERP day = 07:00–06:59 next day; use calendar day for simplicity)
+    try:
+        day_start = datetime.fromisoformat(target_date).replace(hour=0, minute=0, second=0, tzinfo=TZ_RO)
+        day_end   = day_start + timedelta(days=1)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Format dată invalid.")
+
+    # Load orders from DB
+    orders_q = (await db.execute(
+        select(Comanda).where(
+            Comanda.created_at_erp >= day_start,
+            Comanda.created_at_erp < day_end,
+        ).order_by(Comanda.created_at_erp.desc())
+    )).scalars().all()
+
+    erp_ids = [o.erp_id for o in orders_q]
+
+    # Load all history entries for these orders
+    history_rows = []
+    if erp_ids:
+        history_rows = (await db.execute(
+            select(ComandaStatusHistory)
+            .where(ComandaStatusHistory.erp_id.in_(erp_ids))
+            .order_by(ComandaStatusHistory.erp_id, ComandaStatusHistory.erp_time, ComandaStatusHistory.recorded_at)
+        )).scalars().all()
+
+    from collections import defaultdict as _dd
+    hist_by_erp: dict[str, list] = _dd(list)
+    for h in history_rows:
+        hist_by_erp[h.erp_id].append({
+            "status": h.status,
+            "erp_time": h.erp_time.isoformat() if h.erp_time else None,
+            "recorded_at": h.recorded_at.isoformat() if h.recorded_at else None,
+        })
+
+    orders = []
+    for o in orders_q:
+        # Use DB journal_dt; fall back to live ERP value for today's unsynced orders
+        journal_dt_val: str | None = None
+        if o.journal_dt:
+            journal_dt_val = o.journal_dt.isoformat()
+        elif o.erp_id in live_journal_map:
+            raw = live_journal_map[o.erp_id]
+            try:
+                # Normalize to ISO with timezone
+                parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+                if parsed.tzinfo is None:
+                    parsed = parsed.replace(tzinfo=TZ_RO)
+                journal_dt_val = parsed.isoformat()
+            except Exception:
+                journal_dt_val = raw
+
+        orders.append({
+            "erp_id":        o.erp_id,
+            "number":        o.number,
+            "customer_name": o.ship_to_address.split(",")[0].strip() if o.ship_to_address and _is_ridicare(o.ship_to_address) else (o.staff_order_name or o.erp_id),
+            "address":       o.ship_to_address or "",
+            "is_ridicare":   _is_ridicare(o.ship_to_address or ""),
+            "created_at":    o.created_at_erp.isoformat() if o.created_at_erp else None,
+            "journal_dt":    journal_dt_val,
+            "erp_time":      o.erp_time,
+            "erp_date":      o.erp_date,
+            "current_status": o.current_status,
+            "history":       hist_by_erp.get(o.erp_id, []),
+        })
+
+    return {"orders": orders, "date": target_date}
+
+
+@router.post("/comenzi/timing/backfill")
+async def backfill_timing(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Seed comenzi_status_history for orders that have no entries yet."""
+    from sqlalchemy import text as _text
+
+    # Find orders with no history entries
+    rows = (await db.execute(
+        _text(
+            "SELECT c.erp_id, c.number, c.ship_to_address, c.created_at_erp, "
+            "       c.erp_date, c.erp_time, c.current_status "
+            "FROM comenzi c "
+            "LEFT JOIN comenzi_status_history csh ON csh.erp_id = c.erp_id "
+            "WHERE csh.id IS NULL"
+        )
+    )).all()
+
+    seeded = 0
+    for row in rows:
+        is_ridicare = _is_ridicare(row.ship_to_address or "")
+        erp_id = row.erp_id
+        number = row.number
+
+        # Initial status: Nouă at created_at_erp
+        entry = ComandaStatusHistory(
+            erp_id=erp_id,
+            number=number,
+            status=1,
+            is_ridicare=is_ridicare,
+            erp_time=row.created_at_erp,
+        )
+        db.add(entry)
+        seeded += 1
+
+        # If current_status is known and different from 1, add final status entry
+        if row.current_status and row.current_status != 1:
+            final_ts = None
+            try:
+                if row.erp_date and row.erp_time:
+                    final_ts = datetime.fromisoformat(f"{row.erp_date}T{row.erp_time}").replace(tzinfo=TZ_RO)
+            except Exception:
+                pass
+            db.add(ComandaStatusHistory(
+                erp_id=erp_id,
+                number=number,
+                status=row.current_status,
+                is_ridicare=is_ridicare,
+                erp_time=final_ts,
+            ))
+
+    await db.commit()
+    return {"seeded": seeded}

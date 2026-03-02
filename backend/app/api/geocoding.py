@@ -7,7 +7,7 @@ from datetime import date
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.models import Setting
+from app.models import Setting, GeocodeOverride
 
 
 # ─── Restaurant location & range filter ──────────────────────────────────────
@@ -241,6 +241,39 @@ async def google_maps_enabled(db: AsyncSession) -> bool:
     return (s.valoare or "") != "true" if s else True
 
 
+# ─── Geocode overrides (persistent manual corrections) ───────────────────────
+
+def _normalize_for_override(address: str) -> str:
+    return clean_address(address).lower()
+
+
+async def _lookup_geocode_override(db: AsyncSession, address: str) -> tuple[float, float] | None:
+    key = _normalize_for_override(address)
+    row = (await db.execute(
+        select(GeocodeOverride).where(GeocodeOverride.address_normalized == key)
+    )).scalar_one_or_none()
+    if row:
+        return float(row.lat), float(row.lng)
+    return None
+
+
+async def save_geocode_override(db: AsyncSession, original_address: str, lat: float, lng: float) -> None:
+    """UPSERT a geocode override so future geocode_one() calls skip external APIs."""
+    key = _normalize_for_override(original_address)
+    existing = (await db.execute(
+        select(GeocodeOverride).where(GeocodeOverride.address_normalized == key)
+    )).scalar_one_or_none()
+    if existing:
+        existing.lat = lat
+        existing.lng = lng
+    else:
+        db.add(GeocodeOverride(address_normalized=key, lat=lat, lng=lng))
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+
+
 # ─── Combined entry point ─────────────────────────────────────────────────────
 
 async def geocode_one(address: str, db: AsyncSession | None = None, name_hint: str | None = None) -> tuple[float, float] | None:
@@ -261,6 +294,12 @@ async def geocode_one(address: str, db: AsyncSession | None = None, name_hint: s
             api_key = await _read_gmaps_key(db)
 
     clean      = clean_address(address)
+
+    # ── Override lookup — persistent manual corrections, checked first ────────
+    if db is not None:
+        if coords := await _lookup_geocode_override(db, clean):
+            return coords
+
     structured = _nominatim_query(address)  # postal stripped + Ilfov/Romania context
     locality   = _extract_locality(clean)   # e.g. "afumati", "voluntari", None
 

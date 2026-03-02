@@ -300,6 +300,8 @@ interface ActiveCallCardProps {
     status: string; // IN_QUEUE | IN_CURS
     seconds: number;
     bridged: boolean;
+    last_order_nr?: number | null;
+    last_order_date?: string | null;
   };
   copied: string | null;
   onCopy: (n: string) => void;
@@ -357,6 +359,12 @@ const ActiveCallCard: React.FC<ActiveCallCardProps> = ({ call, copied, onCopy, o
         {customerEmail && (
           <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400 truncate">
             {customerEmail}
+          </p>
+        )}
+        {call.last_order_nr && (
+          <p className="mt-0.5 text-xs text-stone-400 dark:text-stone-500">
+            Ultima comandă: <b>#{call.last_order_nr}</b>
+            {call.last_order_date ? ` · ${call.last_order_date}` : ''}
           </p>
         )}
       </div>

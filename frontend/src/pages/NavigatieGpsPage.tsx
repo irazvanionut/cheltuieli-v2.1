@@ -216,6 +216,7 @@ export const NavigatieGpsPage: React.FC = () => {
         customer_name: c.customer_name,
         color: 'blue',
         note: c.status_label,
+        original_address: c.address,
       });
       queryClient.invalidateQueries({ queryKey: isPublic ? ['public-gps-pins'] : ['map-pins'] });
       queryClient.invalidateQueries({ queryKey: isPublic ? ['public-gps-comenzi'] : ['comenzi-azi'] });

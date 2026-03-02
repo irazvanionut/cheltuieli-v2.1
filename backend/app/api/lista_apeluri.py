@@ -14,17 +14,19 @@ Flow:
 
 import asyncio
 import json
+import re
 from datetime import datetime, date, timedelta
 from typing import Optional
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, func
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db, AsyncSessionLocal
 from app.core.security import get_current_user, decode_token
-from app.models import AmiApel, Setting, SmsTemplate, SmsLog
+from app.models import AmiApel, Setting, SmsTemplate, SmsLog, ErpCustomer, Comanda
 
 router = APIRouter(tags=["lista-apeluri"])
 
@@ -583,6 +585,45 @@ def _build_canale_response() -> dict:
     }
 
 
+async def _enrich_with_customer(canale: list[dict], db: AsyncSession) -> None:
+    """Enriches canale entries in-place with customer_name and last_order fields."""
+    phones = [c["caller_id"] for c in canale if c.get("caller_id")]
+    if not phones:
+        return
+
+    def _norm(p: str) -> str:
+        d = re.sub(r'\D', '', p)
+        return d[-9:] if len(d) >= 9 else d
+
+    normed = list({_norm(p) for p in phones})
+
+    customers = (await db.execute(
+        select(ErpCustomer).where(
+            func.right(func.regexp_replace(ErpCustomer.phone, r'\D', '', 'g'), 9).in_(normed)
+        )
+    )).scalars().all()
+    cust_map = {_norm(c.phone): c for c in customers if c.phone}
+
+    rows = (await db.execute(
+        select(Comanda.phone, Comanda.number, Comanda.created_at_erp)
+        .where(func.right(func.regexp_replace(Comanda.phone, r'\D', '', 'g'), 9).in_(normed))
+        .order_by(Comanda.created_at_erp.desc())
+    )).all()
+    last_order_map: dict = {}
+    for row in rows:
+        key = _norm(row.phone or "")
+        if key not in last_order_map:
+            last_order_map[key] = row
+
+    for c in canale:
+        key = _norm(c.get("caller_id", ""))
+        cust  = cust_map.get(key)
+        order = last_order_map.get(key)
+        c["customer_name"]   = cust.name if cust else None
+        c["last_order_nr"]   = order.number if order else None
+        c["last_order_date"] = order.created_at_erp.strftime("%d.%m %H:%M") if order and order.created_at_erp else None
+
+
 @router.get("/apeluri/ami/canale/public")
 async def get_ami_canale_public():
     """Public version — no authentication required."""
@@ -590,8 +631,13 @@ async def get_ami_canale_public():
 
 
 @router.get("/apeluri/ami/canale")
-async def get_ami_canale_endpoint(current_user=Depends(get_current_user)):
-    return _build_canale_response()
+async def get_ami_canale_endpoint(
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    result = _build_canale_response()
+    await _enrich_with_customer(result["canale"], db)
+    return result
 
 
 async def _build_lista_response(

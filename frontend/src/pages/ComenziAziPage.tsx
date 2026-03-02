@@ -714,9 +714,389 @@ const RuteModal: React.FC<{
   );
 };
 
+// ─── Timing ───────────────────────────────────────────────────────────────────
+
+const STAGES_LIVRARE  = [1, 4, 16, 32, 512];
+const STAGES_RIDICARE = [1, 4, 16, 512];
+const STATUS_LABELS: Record<number, string> = { 1: 'Nouă', 2: 'Așteptare', 4: 'Confirmată', 16: 'Pregătită', 32: 'În livrare', 256: 'Problemă', 512: 'Livrată' };
+const STATUS_COLORS: Record<number, string> = { 1: 'blue', 2: 'orange', 4: 'amber', 16: 'amber', 32: 'blue', 256: 'red', 512: 'emerald' };
+
+function fmtDur(ms: number): string {
+  const m = Math.floor(ms / 60000);
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60), rem = m % 60;
+  return rem > 0 ? `${h}h ${rem}m` : `${h}h`;
+}
+
+interface TimingOrder {
+  erp_id: string;
+  number: number;
+  customer_name: string;
+  address: string;
+  is_ridicare: boolean;
+  created_at: string | null;
+  journal_dt: string | null;
+  erp_time: string | null;
+  erp_date: string | null;
+  current_status: number | null;
+  history: { status: number; erp_time: string | null; recorded_at: string | null }[];
+}
+
+// Returns milliseconds between two status transitions, or null
+function getSegMs(hist: TimingOrder['history'], fromStatus: number, toStatus: number): number | null {
+  const timeOf = (s: number): Date | null => {
+    const h = hist.find(h => h.status === s);
+    if (!h) return null;
+    const ts = h.erp_time ?? h.recorded_at;
+    return ts ? new Date(ts) : null;
+  };
+  const t0 = timeOf(fromStatus), t1 = timeOf(toStatus);
+  return t0 && t1 ? t1.getTime() - t0.getTime() : null;
+}
+
+
+function avgMs(vals: (number | null)[]): number | null {
+  const v = vals.filter((x): x is number => x !== null);
+  return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+}
+
+// Mini inline progress bar for a row
+const MiniProgress: React.FC<{ stages: number[]; currentStatus: number | null }> = ({ stages, currentStatus }) => {
+  const idx = currentStatus !== null ? stages.indexOf(currentStatus) : -1;
+  const pct = idx < 0 ? 0 : Math.round((idx / (stages.length - 1)) * 100);
+  const done = currentStatus === stages[stages.length - 1];
+  return (
+    <div className="flex items-center gap-1.5 min-w-[60px]">
+      <div className="flex-1 h-1.5 bg-stone-100 dark:bg-stone-700 rounded-full overflow-hidden">
+        <div
+          className={clsx('h-full rounded-full transition-all', done ? 'bg-emerald-500' : 'bg-blue-500')}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <span className="text-[10px] font-mono text-stone-400 w-6 text-right">{pct}%</span>
+    </div>
+  );
+};
+
+const StatusPill: React.FC<{ status: number | null }> = ({ status }) => {
+  if (status === null) return <span className="text-stone-300 dark:text-stone-600">—</span>;
+  const label = STATUS_LABELS[status] ?? `${status}`;
+  const color = STATUS_COLORS[status] ?? 'blue';
+  return (
+    <span className={clsx('inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold whitespace-nowrap',
+      color === 'emerald' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' :
+      color === 'amber'   ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' :
+      color === 'red'     ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' :
+      color === 'orange'  ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300' :
+                            'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+    )}>
+      {label}
+    </span>
+  );
+};
+
+const TimingTab: React.FC = () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const [date, setDate] = useState(today);
+  const [typeFilter, setTypeFilter] = useState<'toate' | 'livrari' | 'ridicari'>('toate');
+  const queryClient = useQueryClient();
+  const isToday = date === today;
+
+  const { data, isLoading, isFetching, refetch } = useQuery<{ orders: TimingOrder[]; date: string }>({
+    queryKey: ['comenzi-timing', date],
+    queryFn: () => api.getComenziTiming(date),
+    refetchInterval: isToday ? 120_000 : false,
+    staleTime: isToday ? 60_000 : 5 * 60_000,
+  });
+
+  const backfill = useMutation({
+    mutationFn: () => api.backfillComenziTiming(),
+    onSuccess: (res) => {
+      toast.success(`Backfill: ${res.seeded} comenzi seeded`);
+      queryClient.invalidateQueries({ queryKey: ['comenzi-timing'] });
+    },
+    onError: () => toast.error('Eroare backfill'),
+  });
+
+  const orders = data?.orders ?? [];
+  const filtered = orders.filter(o =>
+    typeFilter === 'toate' ? true :
+    typeFilter === 'livrari' ? !o.is_ridicare && !!o.address : o.is_ridicare
+  );
+  // Always use STAGES_LIVRARE as column headers; ridicare rows show — for stages they skip
+  const stages = STAGES_LIVRARE;
+  const showTip = typeFilter === 'toate';
+
+  // ── Computed durations per order ──────────────────────────────────────────
+  type Row = {
+    order: TimingOrder;
+    segs: (number | null)[];   // duration ms per stage transition
+    totalMs: number | null;
+  };
+
+  const rows: Row[] = filtered.map(o => {
+    let totalMs: number | null = null;
+    if (o.created_at && o.journal_dt) {
+      const diff = new Date(o.journal_dt).getTime() - new Date(o.created_at).getTime();
+      totalMs = Math.max(0, diff);
+    }
+    return {
+      order: o,
+      segs: stages.slice(0, -1).map((s, i) => getSegMs(o.history, s, stages[i + 1])),
+      totalMs,
+    };
+  });
+
+  // Sort: delivered last (or by number desc)
+  rows.sort((a, b) => (b.order.number ?? 0) - (a.order.number ?? 0));
+
+  // ── Metrics ───────────────────────────────────────────────────────────────
+  const total      = filtered.length;
+  const livrate    = filtered.filter(o => o.current_status === 512).length;
+  const inProgress = filtered.filter(o => o.current_status !== null && o.current_status !== 512).length;
+  const withTiming = rows.filter(r => r.totalMs !== null).length;
+
+  const deliveredRows = rows.filter(r => r.order.current_status === 512 && r.totalMs !== null);
+  const totalDurs = deliveredRows.map(r => r.totalMs!);
+  const avgTotal = avgMs(totalDurs.map(d => d));
+  const minTotal = totalDurs.length ? Math.min(...totalDurs) : null;
+  const maxTotal = totalDurs.length ? Math.max(...totalDurs) : null;
+
+  // Per-stage averages (only from delivered orders)
+  const stageAvgs = stages.slice(0, -1).map((_, i) =>
+    avgMs(deliveredRows.map(r => r.segs[i]))
+  );
+
+  // ── Stage column headers ───────────────────────────────────────────────────
+  const stageHeaders = stages.slice(0, -1).map((s, i) =>
+    `${STATUS_LABELS[s] ?? s} → ${STATUS_LABELS[stages[i + 1]] ?? stages[i + 1]}`
+  );
+
+  return (
+    <div className="space-y-4">
+      {/* Controls row */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            value={date}
+            max={today}
+            onChange={e => setDate(e.target.value)}
+            className="px-3 py-1.5 rounded-lg border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <div className="flex rounded-lg border border-stone-200 dark:border-stone-700 overflow-hidden text-xs">
+            {([
+              { id: 'toate',    label: 'Toate' },
+              { id: 'livrari',  label: 'Livrări' },
+              { id: 'ridicari', label: 'Ridicări' },
+            ] as const).map(t => (
+              <button
+                key={t.id}
+                onClick={() => setTypeFilter(t.id)}
+                className={clsx('px-3 py-1.5 font-medium transition-colors',
+                  typeFilter === t.id
+                    ? 'bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-900'
+                    : 'bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-700'
+                )}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 disabled:opacity-50 transition-colors"
+          >
+            <RefreshCw className={clsx('w-3 h-3', isFetching && 'animate-spin')} />
+            Refresh
+          </button>
+          <button
+            onClick={() => backfill.mutate()}
+            disabled={backfill.isPending}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-stone-100 dark:bg-stone-800 text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-700 disabled:opacity-50 transition-colors"
+            title="Seeder pentru comenzi fără history"
+          >
+            {backfill.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
+            Backfill
+          </button>
+        </div>
+      </div>
+
+      {/* Metrics cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {[
+          { label: 'Total',       value: total,                              cls: 'text-stone-800 dark:text-stone-100' },
+          { label: 'Livrate',     value: livrate,                            cls: 'text-emerald-600 dark:text-emerald-400' },
+          { label: 'În progres',  value: inProgress,                         cls: 'text-blue-600 dark:text-blue-400' },
+          { label: 'Cu timing',   value: withTiming,                         cls: 'text-stone-600 dark:text-stone-300' },
+          { label: 'Avg total',   value: avgTotal !== null ? fmtDur(avgTotal) : '—', cls: 'text-stone-800 dark:text-stone-100' },
+          { label: 'Min / Max',   value: minTotal !== null ? `${fmtDur(minTotal)} / ${fmtDur(maxTotal!)}` : '—', cls: 'text-stone-600 dark:text-stone-300' },
+        ].map(m => (
+          <div key={m.label} className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 px-3 py-2.5">
+            <p className="text-[11px] text-stone-400 dark:text-stone-500 mb-0.5">{m.label}</p>
+            <p className={clsx('text-lg font-bold leading-tight', m.cls)}>{m.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Per-stage averages */}
+      {deliveredRows.length > 0 && (
+        <div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 px-4 py-3">
+          <p className="text-xs font-semibold text-stone-500 dark:text-stone-400 mb-2">
+            Durată medie pe etapă ({deliveredRows.length} livrate cu timing complet)
+          </p>
+          <div className="flex flex-wrap gap-4">
+            {stageHeaders.map((h, i) => (
+              <div key={h} className="flex items-center gap-2">
+                <span className="text-[11px] text-stone-400">{h}</span>
+                <span className="text-sm font-bold text-stone-800 dark:text-stone-100">
+                  {stageAvgs[i] !== null ? fmtDur(stageAvgs[i]!) : '—'}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {isLoading && (
+        <div className="flex items-center justify-center py-16 text-stone-400">
+          <Loader2 className="w-5 h-5 animate-spin mr-2" /> Se încarcă timing...
+        </div>
+      )}
+
+      {!isLoading && filtered.length === 0 && (
+        <div className="text-center py-12 text-stone-400 text-sm">
+          Nicio comandă pentru {date}.
+        </div>
+      )}
+
+      {/* Table */}
+      {rows.length > 0 && (
+        <div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-stone-100 dark:border-stone-700 text-[11px] text-stone-400 dark:text-stone-500 uppercase tracking-wider">
+                  <th className="text-left px-3 py-2 font-medium">Nr</th>
+                  <th className="text-left px-3 py-2 font-medium">Creat</th>
+                  <th className="text-left px-3 py-2 font-medium">Ultima modif.</th>
+                  <th className="text-left px-3 py-2 font-medium">Client</th>
+                  {showTip && <th className="text-left px-3 py-2 font-medium">Tip</th>}
+                  <th className="text-left px-3 py-2 font-medium">Status</th>
+                  <th className="text-left px-3 py-2 font-medium">Progres</th>
+                  {stageHeaders.map(h => (
+                    <th key={h} className="text-right px-3 py-2 font-medium whitespace-nowrap">{h}</th>
+                  ))}
+                  <th className="text-right px-3 py-2 font-medium">Total</th>
+                </tr>
+                {/* Averages row */}
+                {deliveredRows.length > 0 && (
+                  <tr className="border-b border-stone-100 dark:border-stone-700 bg-stone-50 dark:bg-stone-700/30 text-[10px] text-stone-400">
+                    <td colSpan={showTip ? 7 : 6} className="px-3 py-1 italic">avg livrate</td>
+                    {stageAvgs.map((a, i) => (
+                      <td key={i} className="px-3 py-1 text-right font-mono text-stone-500 dark:text-stone-400">
+                        {a !== null ? fmtDur(a) : '—'}
+                      </td>
+                    ))}
+                    <td className="px-3 py-1 text-right font-mono font-semibold text-stone-600 dark:text-stone-300">
+                      {avgTotal !== null ? fmtDur(avgTotal) : '—'}
+                    </td>
+                  </tr>
+                )}
+              </thead>
+              <tbody className="divide-y divide-stone-50 dark:divide-stone-700/40">
+                {rows.map(({ order: o, segs, totalMs: tms }) => {
+                  const cs = o.current_status;
+                  const isLivrata = cs === 512;
+                  const orderStages = o.is_ridicare ? STAGES_RIDICARE : STAGES_LIVRARE;
+                  return (
+                    <tr
+                      key={o.erp_id}
+                      className={clsx(
+                        'hover:bg-stone-50 dark:hover:bg-stone-700/30 transition-colors',
+                        isLivrata && 'opacity-60'
+                      )}
+                    >
+                      <td className="px-3 py-2 whitespace-nowrap">
+                        <span className="font-mono text-xs font-semibold text-stone-600 dark:text-stone-300">#{o.number}</span>
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap">
+                        <span className="font-mono text-xs text-stone-700 dark:text-stone-200">
+                          {o.created_at ? o.created_at.slice(11, 16) : '—'}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap">
+                        {o.journal_dt ? (
+                          <span className="font-mono text-xs text-amber-600 dark:text-amber-400">
+                            {o.journal_dt.slice(11, 16)}
+                          </span>
+                        ) : (
+                          <span className="text-stone-300 dark:text-stone-600">—</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 max-w-[160px]">
+                        <p className="text-xs font-medium text-stone-800 dark:text-stone-100 truncate capitalize">
+                          {o.customer_name?.toLowerCase()}
+                        </p>
+                        <p className="text-[10px] text-stone-400 truncate">{o.address}</p>
+                      </td>
+                      {showTip && (
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          <span className={clsx('inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold',
+                            o.is_ridicare
+                              ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                              : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                          )}>
+                            {o.is_ridicare ? 'R' : 'L'}
+                          </span>
+                        </td>
+                      )}
+                      <td className="px-3 py-2 whitespace-nowrap">
+                        <StatusPill status={cs} />
+                      </td>
+                      <td className="px-3 py-2">
+                        <MiniProgress stages={orderStages} currentStatus={cs} />
+                      </td>
+                      {segs.map((ms, i) => (
+                        <td key={i} className="px-3 py-2 text-right whitespace-nowrap">
+                          {ms !== null ? (
+                            <span className={clsx('font-mono text-xs', ms > (stageAvgs[i] ?? Infinity) * 1.5 ? 'text-red-500 font-semibold' : 'text-stone-600 dark:text-stone-300')}>
+                              {fmtDur(ms)}
+                            </span>
+                          ) : (
+                            <span className="text-stone-200 dark:text-stone-700">—</span>
+                          )}
+                        </td>
+                      ))}
+                      <td className="px-3 py-2 text-right whitespace-nowrap">
+                        {tms !== null ? (
+                          <span className={clsx('font-mono text-xs font-semibold',
+                            isLivrata ? 'text-emerald-600 dark:text-emerald-400' : 'text-stone-500')}>
+                            {fmtDur(tms)}
+                          </span>
+                        ) : (
+                          <span className="text-stone-200 dark:text-stone-700">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export const ComenziAziPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const [mainTab, setMainTab] = useState<'comenzi' | 'timing'>('comenzi');
   const [copied, setCopied] = useState<string | null>(null);
   const [markModal, setMarkModal] = useState<Comanda | null>(null);
   const [showRute, setShowRute] = useState(false);
@@ -725,10 +1105,22 @@ export const ComenziAziPage: React.FC = () => {
     queryKey: ['comenzi-azi'],
     queryFn: () => api.getComenziorAzi(),
     staleTime: 2 * 60 * 1000,
+    refetchInterval: 120_000,
   });
 
   const livrari = (data?.comenzi ?? []).filter(c => !c.is_ridicare);
   const ridicari = (data?.comenzi ?? []).filter(c => c.is_ridicare);
+
+  // Sync OrderProjection azi
+  const syncOrders = useMutation({
+    mutationFn: () => api.syncOrdersToday(),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ['comenzi-azi'] });
+      queryClient.invalidateQueries({ queryKey: ['comenzi-timing'] });
+      toast.success(`Sync OK · ${res.inserted} noi · ${res.updated} actualizate`);
+    },
+    onError: () => toast.error('Eroare la sync comenzi'),
+  });
 
   // Mark ALL on map
   const marcheazaTot = useMutation({
@@ -788,6 +1180,17 @@ export const ComenziAziPage: React.FC = () => {
             Refresh
           </button>
           <button
+            onClick={() => syncOrders.mutate()}
+            disabled={syncOrders.isPending}
+            title="Sync Comenzi (OrderProjection)"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 disabled:opacity-50 transition-colors"
+          >
+            {syncOrders.isPending
+              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              : <RotateCcw className="w-3.5 h-3.5" />}
+            Sync Comenzi
+          </button>
+          <button
             onClick={() => setShowRute(true)}
             disabled={livrari.length === 0}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors"
@@ -809,8 +1212,32 @@ export const ComenziAziPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Tab bar */}
+      <div className="flex gap-1 border-b border-stone-200 dark:border-stone-700">
+        {([
+          { id: 'comenzi' as const, label: 'Comenzi' },
+          { id: 'timing'  as const, label: 'Timing ⏱' },
+        ] as const).map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setMainTab(tab.id)}
+            className={clsx(
+              'px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
+              mainTab === tab.id
+                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-200'
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Timing tab */}
+      {mainTab === 'timing' && <TimingTab />}
+
       {/* Stats */}
-      {data && (
+      {mainTab === 'comenzi' && data && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { label: 'Livrări azi',  value: livrari.length,              icon: Truck,        cls: 'text-blue-600' },
@@ -827,19 +1254,19 @@ export const ComenziAziPage: React.FC = () => {
       )}
 
       {/* Loading / Error */}
-      {isLoading && (
+      {mainTab === 'comenzi' && isLoading && (
         <div className="flex items-center justify-center py-16 text-stone-400">
           <Loader2 className="w-6 h-6 animate-spin mr-2" /> Se încarcă comenzile...
         </div>
       )}
-      {isError && (
+      {mainTab === 'comenzi' && isError && (
         <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 rounded-xl p-4 text-sm text-red-700 dark:text-red-400">
           {(error as any)?.response?.data?.detail ?? 'Eroare la încărcarea comenzilor'}
         </div>
       )}
 
       {/* Delivery orders table */}
-      {livrari.length > 0 && (
+      {mainTab === 'comenzi' && livrari.length > 0 && (
         <div className="bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 overflow-hidden">
           <div className="px-4 py-3 border-b border-stone-100 dark:border-stone-700 flex items-center gap-2">
             <Truck className="w-4 h-4 text-blue-500" />
@@ -942,7 +1369,7 @@ export const ComenziAziPage: React.FC = () => {
       )}
 
       {/* Pickup orders — collapsed summary */}
-      {ridicari.length > 0 && (
+      {mainTab === 'comenzi' && ridicari.length > 0 && (
         <div className="bg-stone-50 dark:bg-stone-800/50 rounded-xl border border-stone-200 dark:border-stone-700 px-4 py-3">
           <div className="flex items-center gap-2 text-stone-400 dark:text-stone-500">
             <Package className="w-4 h-4" />

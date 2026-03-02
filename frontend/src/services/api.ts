@@ -1069,7 +1069,7 @@ class ApiService {
     const { data } = await this.client.post('/comenzi/marcare-harta-toate');
     return data;
   }
-  async marcheazaPin(payload: { address: string; customer_name: string; color: string; note?: string }): Promise<{ id: number; lat: number; lng: number }> {
+  async marcheazaPin(payload: { address: string; customer_name: string; color: string; note?: string; original_address?: string }): Promise<{ id: number; lat: number; lng: number }> {
     const { data } = await this.client.post('/comenzi/marcare-pin', payload);
     return data;
   }
@@ -1082,6 +1082,14 @@ class ApiService {
   }
   async syncComenziHarta(): Promise<{ added: number; updated: number; unchanged: number; failed: string[] }> {
     const { data } = await this.client.post('/comenzi/sync-harta');
+    return data;
+  }
+  async getComenziTiming(date?: string): Promise<{ orders: any[]; date: string }> {
+    const { data } = await this.client.get('/comenzi/timing', { params: date ? { date } : {} });
+    return data;
+  }
+  async backfillComenziTiming(): Promise<{ seeded: number }> {
+    const { data } = await this.client.post('/comenzi/timing/backfill');
     return data;
   }
   async calculeazaRute(payload: {
@@ -1130,6 +1138,10 @@ class ApiService {
     return data;
   }
 
+  async syncOrdersToday(): Promise<{ inserted: number; updated: number; date: string }> {
+    const { data } = await this.client.post('/orders/sync/today');
+    return data;
+  }
   async syncOrdersIncremental(): Promise<{ added: number; pages: number }> {
     const { data } = await this.client.post('/orders/sync/incremental');
     return data;

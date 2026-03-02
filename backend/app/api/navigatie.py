@@ -8,7 +8,7 @@ import httpx
 from app.core.database import get_db
 from app.core.security import get_current_user, require_admin
 from app.models import User, Setting, MapPin
-from app.api.geocoding import geocode_one, travel_time_from_restaurant
+from app.api.geocoding import geocode_one, travel_time_from_restaurant, save_geocode_override
 
 router = APIRouter(tags=["🗺️ Navigatie"])
 
@@ -110,6 +110,7 @@ async def update_pin_address(
     if not pin:
         raise HTTPException(status_code=404, detail="Pin negăsit.")
 
+    old_address = pin.address or ""
     address = (data.get("address") or "").strip()
     if not address:
         raise HTTPException(status_code=400, detail="Adresa este obligatorie.")
@@ -127,6 +128,11 @@ async def update_pin_address(
         pin.travel_time_min = tm
 
     await db.commit()
+
+    # Save override keyed by the original address so future geocoding skips external APIs
+    if old_address:
+        await save_geocode_override(db, old_address, lat, lng)
+
     return {"id": pin.id, "lat": float(pin.lat), "lng": float(pin.lng), "address": pin.address}
 
 
