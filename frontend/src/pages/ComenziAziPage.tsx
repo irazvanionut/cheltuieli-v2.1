@@ -161,7 +161,7 @@ const MarkModal: React.FC<MarkModalProps> = ({ comanda, onConfirm, onClose, isPe
 // ─── Route Modal ──────────────────────────────────────────────────────────────
 const RUTE_PIN = '2910';
 
-interface RouteStop { id: string; number: string; name: string; address: string; lat: number; lng: number; order: number; status_label?: string; status_color?: string; }
+interface RouteStop { id: string; number: string; name: string; address: string; lat: number; lng: number; order: number; status_label?: string; status_color?: string; eta_delivery?: string | null; eta_return?: string | null; order_time?: string | null; }
 interface RoutingResult { duration_min: number; return_min: number; total_min: number; geometry: [number, number][]; available?: boolean; }
 interface TripRoute { comenzi: RouteStop[]; osrm: RoutingResult | null; google: RoutingResult | { available: false }; maps_url: string; }
 interface DriverRoute { sofer: number; curse: TripRoute[]; }
@@ -193,6 +193,7 @@ const RuteModal: React.FC<{
   const mapDivRef = useRef<HTMLDivElement>(null);
   const gMapRef = useRef<any>(null);
   const routeObjsRef = useRef<any[]>([]);
+  const infoWindowsRef = useRef<any[]>([]);
 
   // Get Google Maps API key
   const { data: settings = [] } = useQuery<any[]>({
@@ -226,9 +227,11 @@ const RuteModal: React.FC<{
 
       const map = gMapRef.current;
 
-      // Clear previous route objects
+      // Clear previous route objects and info windows
       routeObjsRef.current.forEach(o => o.setMap(null));
       routeObjsRef.current = [];
+      infoWindowsRef.current.forEach(iw => iw.close());
+      infoWindowsRef.current = [];
 
       // Restaurant marker
       const restM = new g.maps.Marker({
@@ -279,6 +282,22 @@ const RuteModal: React.FC<{
           });
           routeObjsRef.current.push(marker);
           bounds.extend({ lat: stop.lat, lng: stop.lng });
+
+          // InfoWindow with order time + ETA
+          const iwContent = [
+            `<div style="font-family:sans-serif;font-size:12px;line-height:1.7;min-width:150px">`,
+            `<div style="font-weight:700;font-size:13px;margin-bottom:4px;text-transform:capitalize">${(stop.name ?? '').toLowerCase()}</div>`,
+            stop.order_time ? `<div>🕐 Comandă: <b>${stop.order_time}</b></div>` : '',
+            stop.eta_delivery ? `<div>📦 La client: <b style="color:#16a34a">${stop.eta_delivery}</b></div>` : '',
+            stop.eta_return ? `<div>↩ Întoarcere: <b style="color:#6b7280">${stop.eta_return}</b></div>` : '',
+            `</div>`,
+          ].join('');
+          const infoWindow = new g.maps.InfoWindow({ content: iwContent });
+          marker.addListener('click', () => {
+            infoWindowsRef.current.forEach(iw => iw.close());
+            infoWindow.open(map, marker);
+          });
+          infoWindowsRef.current.push(infoWindow);
         });
       });
 
@@ -293,9 +312,24 @@ const RuteModal: React.FC<{
     mutationFn: (payload: any) => api.calculeazaRute(payload),
     onSuccess: (data: RuteData) => {
       setRuteData(data);
+      // Enrich route stops with ETA/time from original livrari
+      const byId: Record<string, any> = {};
+      (comenzi as any[]).forEach(c => { byId[c.id] = c; });
       setLocalSoferi(data.soferi.map(d => ({
         ...d,
-        flatOrders: d.curse.flatMap(c => c.comenzi),
+        flatOrders: d.curse.flatMap(c => c.comenzi).map(stop => {
+          const src = byId[stop.id];
+          // Replicate table logic: prefer created_at slice, fall back to time field
+          const order_time = src
+            ? (src.created_at ? src.created_at.slice(11, 16) : src.time) || null
+            : null;
+          return {
+            ...stop,
+            eta_delivery: src?.eta_delivery ?? null,
+            eta_return:   src?.eta_return   ?? null,
+            order_time,
+          };
+        }),
       })));
       setDirty(false);
       setPhase('results');
@@ -850,12 +884,13 @@ export const ComenziAziPage: React.FC = () => {
                     <td className="px-4 py-2.5 whitespace-nowrap">
                       {c.eta_delivery ? (
                         <div>
+                          <p className="text-[10px] text-stone-400 dark:text-stone-500 leading-tight">La client</p>
                           <p className="font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400">{c.eta_delivery}</p>
                           {c.eta_return && (
-                            <p className="text-[10px] text-stone-400 font-mono">({c.eta_return} ↩)</p>
-                          )}
-                          {c.travel_time_min != null && (
-                            <p className="text-[10px] text-stone-400">{c.travel_time_min}m drum</p>
+                            <>
+                              <p className="text-[10px] text-stone-400 dark:text-stone-500 leading-tight mt-1">Întoarcere</p>
+                              <p className="font-mono text-xs text-stone-500 dark:text-stone-400">{c.eta_return}</p>
+                            </>
                           )}
                         </div>
                       ) : (

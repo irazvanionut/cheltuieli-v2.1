@@ -35,6 +35,7 @@ import {
   MapPin,
   Navigation,
   Truck,
+  BrainCircuit,
 } from 'lucide-react';
 import { useAppStore, useIsAdmin, useIsSef } from '@/hooks/useAppStore';
 import api from '@/services/api';
@@ -186,6 +187,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         { name: 'Comenzi Azi', href: '/apeluri/comenzi', icon: Truck, show: true, badge: null, badgeApeluri: null },
         { name: 'Monitorizare Flota', href: '/apeluri/navigatie', icon: MapPin, show: true, badge: null, badgeApeluri: null },
         { name: 'Navigatie GPS', href: '/apeluri/navigatie-gps', icon: Navigation, show: true, badge: null, badgeApeluri: null },
+        { name: 'Analiză Comenzi', href: '/analiza-comenzi', icon: BarChart2, show: isSef, badge: null, badgeApeluri: null },
+        { name: 'Predicții Bucătărie', href: '/predictii', icon: BrainCircuit, show: isSef, badge: null, badgeApeluri: null },
       ],
     },
     {
@@ -281,7 +284,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         )}
       >
         {/* Logo */}
-        <div className="flex items-center gap-3 px-6 h-16 border-b border-stone-200 dark:border-stone-800">
+        <button
+          onClick={() => window.open('/hub', '_blank')}
+          className="flex items-center gap-3 px-6 h-16 border-b border-stone-200 dark:border-stone-800 w-full hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors text-left"
+        >
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center shadow-lg shadow-red-500/20">
             <Wallet className="w-6 h-6 text-white" />
           </div>
@@ -289,7 +295,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             <h1 className="font-bold text-stone-900 dark:text-stone-100">La Nuci</h1>
             <p className="text-xs text-stone-500">Management Daily</p>
           </div>
-        </div>
+        </button>
 
         {/* Exercitiu info */}
         {exercitiu && (

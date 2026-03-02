@@ -49,6 +49,9 @@ _ILFOV_AREAS = [
 
 def _nominatim_query(address: str) -> str:
     """Build geocoding query: strip postal code, add Ilfov or Romania context."""
+    # Replace ';' with space (not comma) so "centura; 8a" → "centura 8a", not "centura, 8a"
+    # A comma makes geocoders treat "centura" as a locality component instead of a street name.
+    address = address.replace(';', ' ')
     cleaned = clean_address(_strip_postal(address))
     lower = cleaned.lower()
     # Already contains location context — just add country
@@ -81,10 +84,97 @@ async def _try_nominatim(q: str) -> tuple[float, float] | None:
     return None
 
 
+# ─── Google Address Validation API ───────────────────────────────────────────
+
+_GOOD_GRANULARITIES = {"SUB_PREMISE", "PREMISE", "PREMISE_PROXIMITY", "BLOCK", "ROUTE"}
+
+
+async def _validate_address_google(
+    address: str, api_key: str, expected_locality: str | None = None
+) -> tuple[float, float] | None:
+    """Call Google Address Validation API (more authoritative than Geocoding API).
+
+    Returns coords only when validationGranularity is PREMISE/ROUTE level and,
+    if expected_locality is given, the locality component is CONFIRMED and matches.
+    Prevents cross-locality snapping (e.g. Afumați street returned as Voluntari).
+    """
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.post(
+                "https://addressvalidation.googleapis.com/v1:validateAddress",
+                params={"key": api_key},
+                json={"address": {"regionCode": "RO", "addressLines": [address]}},
+            )
+            resp.raise_for_status()
+            data = resp.json()
+
+        result = data.get("result", {})
+        verdict = result.get("verdict", {})
+        granularity = verdict.get("validationGranularity", "OTHER")
+
+        if granularity not in _GOOD_GRANULARITIES:
+            return None
+
+        loc = result.get("geocode", {}).get("location", {})
+        lat, lng = loc.get("latitude"), loc.get("longitude")
+        if lat is None or lng is None:
+            return None
+
+        if expected_locality:
+            components = result.get("address", {}).get("addressComponents", [])
+            confirmed = False
+            exp = expected_locality.lower()
+            for comp in components:
+                ctype = comp.get("componentType", "")
+                if ctype in ("locality", "administrative_area_level_3",
+                             "sublocality", "sublocality_level_1", "postal_town"):
+                    level = comp.get("confirmationLevel", "")
+                    name = comp.get("componentName", {}).get("text", "").lower()
+                    if level == "CONFIRMED" and (exp in name or name in exp):
+                        confirmed = True
+                        break
+            if not confirmed:
+                return None
+
+        return float(lat), float(lng)
+    except Exception:
+        pass
+    return None
+
+
 # ─── Google Maps ──────────────────────────────────────────────────────────────
 
-async def geocode_google(address: str, api_key: str) -> tuple[float, float] | None:
-    """Call Google Maps Geocoding API."""
+def _extract_locality(address: str) -> str | None:
+    """Return the Ilfov locality name found in the address, or None."""
+    lower = address.lower()
+    for area in _ILFOV_AREAS:
+        if area in lower:
+            return area
+    return None
+
+
+def _google_locality_ok(result: dict, expected: str) -> bool:
+    """Return True if the Google result's locality matches expected (case-insensitive substring)."""
+    exp = expected.lower()
+    for comp in result.get("address_components", []):
+        types = comp.get("types", [])
+        if any(t in types for t in ("locality", "sublocality", "sublocality_level_1",
+                                     "administrative_area_level_3", "postal_town")):
+            name = comp.get("long_name", "").lower()
+            short = comp.get("short_name", "").lower()
+            if exp in name or exp in short or name in exp or short in exp:
+                return True
+    return False
+
+
+async def geocode_google(address: str, api_key: str,
+                         expected_locality: str | None = None) -> tuple[float, float] | None:
+    """Call Google Maps Geocoding API.
+
+    If *expected_locality* is given, the result is rejected when the returned
+    address_components don't contain that locality — preventing cross-locality
+    snapping (e.g. Aurel Vlaicu in Voluntari instead of Afumati).
+    """
     url = "https://maps.googleapis.com/maps/api/geocode/json"
     try:
         async with httpx.AsyncClient(timeout=10) as client:
@@ -97,7 +187,10 @@ async def geocode_google(address: str, api_key: str) -> tuple[float, float] | No
             resp.raise_for_status()
             data = resp.json()
         if data.get("status") == "OK" and data.get("results"):
-            loc = data["results"][0]["geometry"]["location"]
+            result = data["results"][0]
+            if expected_locality and not _google_locality_ok(result, expected_locality):
+                return None  # wrong locality — let caller fall through to Nominatim
+            loc = result["geometry"]["location"]
             return float(loc["lat"]), float(loc["lng"])
     except Exception:
         pass
@@ -145,28 +238,44 @@ async def google_maps_enabled(db: AsyncSession) -> bool:
     s = (await db.execute(
         select(Setting).where(Setting.cheie == "google_maps_disabled")
     )).scalar_one_or_none()
-    return (s.valoare or "") != "true"
+    return (s.valoare or "") != "true" if s else True
 
 
 # ─── Combined entry point ─────────────────────────────────────────────────────
 
-async def geocode_one(address: str, db: AsyncSession | None = None) -> tuple[float, float] | None:
+async def geocode_one(address: str, db: AsyncSession | None = None, name_hint: str | None = None) -> tuple[float, float] | None:
     """Geocode address: Google Maps (primary, if key set) → Nominatim fallback.
 
     All results are filtered to within MAX_DISTANCE_KM of the restaurant.
     Business-name fallback: tries the raw name as a POI/firm search when
     structured address geocoding fails (e.g. 'Remat Green, Stefanesti').
+
+    name_hint: optional customer/business name (e.g. ERP customerName_).
+      - If address has no locality but name_hint contains one (e.g. "voluntari voluntari"),
+        the locality is extracted and injected into the geocoding query.
+      - As last fallback, tries "name_hint + address" as a combined business/POI search.
     """
     api_key = ""
     if db is not None:
         if await google_maps_enabled(db):
             api_key = await _read_gmaps_key(db)
 
-    clean   = clean_address(address)
+    clean      = clean_address(address)
     structured = _nominatim_query(address)  # postal stripped + Ilfov/Romania context
+    locality   = _extract_locality(clean)   # e.g. "afumati", "voluntari", None
+
+    # If no locality in address, try to extract one from the customer/business name.
+    # E.g. customerName_ = "voluntari voluntari" → locality = "voluntari"
+    # → augments query: "Str Scolii, 40, voluntari, Ilfov, Romania"
+    if not locality and name_hint:
+        locality_from_hint = _extract_locality(name_hint)
+        if locality_from_hint and locality_from_hint not in clean.lower():
+            clean      = f"{clean}, {locality_from_hint}"
+            structured = _nominatim_query(clean)
+            locality   = locality_from_hint
 
     async def _google_ok(q: str) -> tuple[float, float] | None:
-        coords = await geocode_google(q, api_key)
+        coords = await geocode_google(q, api_key, expected_locality=locality)
         if coords and _in_range(*coords):
             if db is not None:
                 await _increment_gmaps_counter(db)
@@ -177,14 +286,22 @@ async def geocode_one(address: str, db: AsyncSession | None = None) -> tuple[flo
         coords = await _try_nominatim(q)
         return coords if (coords and _in_range(*coords)) else None
 
+    # ── 0. Google Address Validation API — most authoritative ────────────────
+    if api_key:
+        if coords := await _validate_address_google(structured, api_key, expected_locality=locality):
+            if _in_range(*coords):
+                if db is not None:
+                    await _increment_gmaps_counter(db)
+                return coords
+
     # ── 1. Google Maps — address (primary) ───────────────────────────────────
     if api_key:
-        # 1a. Cleaned address — Google understands Romanian addresses & businesses
-        if coords := await _google_ok(clean):
+        # 1a. Structured query first — explicit locality context ("afumati, Ilfov, Romania")
+        if coords := await _google_ok(structured):
             return coords
-        # 1b. With explicit Ilfov/Romania context
+        # 1b. Cleaned address fallback
         if clean != structured:
-            if coords := await _google_ok(structured):
+            if coords := await _google_ok(clean):
                 return coords
 
     # ── 2. Nominatim — structured address fallback ───────────────────────────
@@ -214,6 +331,18 @@ async def geocode_one(address: str, db: AsyncSession | None = None) -> tuple[flo
     if business_q != structured:
         if coords := await _nom_ok(business_q):
             return coords
+
+    # ── 4. Combined name_hint + address search ────────────────────────────────
+    # For cases like "remat green" + "centura; 8a" where neither address nor name
+    # contains an explicit locality.  Google knows the business by name.
+    if name_hint:
+        hint_q = _nominatim_query(f"{name_hint}, {clean_address(address)}")
+        if hint_q not in (structured, business_q):
+            if api_key:
+                if coords := await _google_ok(hint_q):
+                    return coords
+            if coords := await _nom_ok(hint_q):
+                return coords
 
     return None
 

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Eye, EyeOff, Copy, Check, Save, X, KeyRound, Lock, RefreshCw, AlertTriangle, CheckCircle, List, ChevronDown, Wifi, WifiOff, Bot, Send, XCircle, Phone, Terminal } from 'lucide-react';
+import { Eye, EyeOff, Copy, Check, Save, X, KeyRound, Lock, RefreshCw, AlertTriangle, CheckCircle, List, ChevronDown, Wifi, WifiOff, Bot, Send, XCircle, Phone, Terminal, Play, Pause } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/services/api';
 import type { Setting } from '@/types';
@@ -1488,6 +1488,243 @@ const AmiConfigWidget: React.FC = () => {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
+// ─── Order Lines Backfill Widget ──────────────────────────────────────────────
+
+const OrderLinesBackfillWidget: React.FC = () => {
+  const queryClient = useQueryClient();
+  const { data, refetch } = useQuery({
+    queryKey: ['backfill-status'],
+    queryFn: () => api.getBackfillStatus(),
+    refetchInterval: (query) => (query.state.data?.running ? 2000 : 15000),
+    staleTime: 0,
+  });
+
+  const startMutation = useMutation({
+    mutationFn: () => api.startBackfill(),
+    onSuccess: (res) => {
+      const msg = res.status === 'started' ? 'Backfill pornit' : res.status === 'resumed' ? 'Backfill reluat' : 'Deja în curs';
+      toast.success(msg);
+      queryClient.invalidateQueries({ queryKey: ['backfill-status'] });
+    },
+    onError: (e: any) => toast.error(e.response?.data?.detail || 'Eroare la pornire'),
+  });
+
+  const pauseMutation = useMutation({
+    mutationFn: () => api.pauseBackfill(),
+    onSuccess: (res) => {
+      toast.success(res.paused ? 'Backfill pausat' : 'Backfill reluat');
+      queryClient.invalidateQueries({ queryKey: ['backfill-status'] });
+    },
+    onError: (e: any) => toast.error(e.response?.data?.detail || 'Eroare'),
+  });
+
+  const pct = data && data.total > 0 ? Math.min(Math.round((data.done / data.total) * 100), 100) : 0;
+  const remaining = data ? Math.max(data.total - data.done - data.errors, 0) : 0;
+  const dbPct = data && data.total_in_db > 0
+    ? Math.min(Math.round((data.synced_in_db / data.total_in_db) * 100), 100)
+    : 0;
+
+  return (
+    <div className="bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
+      <div className="px-4 py-3 border-b border-stone-100 dark:border-stone-800 bg-stone-50 dark:bg-stone-800/50 flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-semibold text-stone-800 dark:text-stone-200">Backfill Linii Comenzi</h3>
+          <p className="text-xs text-stone-400 mt-0.5">Fetch detalii produse per comandă (via Rfc/Next). Pornire manuală.</p>
+        </div>
+        <button onClick={() => refetch()} className="text-stone-400 hover:text-stone-600 transition-colors">
+          <RefreshCw className="w-4 h-4" />
+        </button>
+      </div>
+      <div className="px-4 py-4 space-y-3">
+        {data ? (
+          <>
+            {/* DB-level progress */}
+            {data.total_in_db > 0 && (
+              <div className="bg-stone-50 dark:bg-stone-800/50 rounded-lg px-3 py-2.5 space-y-1.5">
+                <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400">
+                  <span>Total sincronizate în DB</span>
+                  <span className="font-semibold text-stone-700 dark:text-stone-200">
+                    {data.synced_in_db.toLocaleString('ro-RO')} / {data.total_in_db.toLocaleString('ro-RO')} ({dbPct}%)
+                  </span>
+                </div>
+                <div className="w-full bg-stone-200 dark:bg-stone-700 rounded-full h-1.5">
+                  <div className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500" style={{ width: `${dbPct}%` }} />
+                </div>
+              </div>
+            )}
+
+            {/* Status + butoane */}
+            <div className="flex items-center gap-2">
+              {data.running && !data.paused && (
+                <span className="flex items-center gap-1.5 text-xs font-medium text-blue-600 dark:text-blue-400">
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />Rulează…
+                </span>
+              )}
+              {data.running && data.paused && (
+                <span className="flex items-center gap-1.5 text-xs font-medium text-amber-600 dark:text-amber-400">
+                  <Pause className="w-3.5 h-3.5" />Pausat
+                </span>
+              )}
+              {!data.running && (data.done > 0 || data.errors > 0) && (
+                <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                  <CheckCircle className="w-3.5 h-3.5" />Sesiune finalizată
+                </span>
+              )}
+              {!data.running && data.done === 0 && data.errors === 0 && (
+                <span className="text-xs text-stone-400">Inactiv</span>
+              )}
+
+              <div className="ml-auto flex gap-2">
+                {/* Buton Start (când nu rulează) sau Resume (când e pausat) */}
+                {(!data.running || data.paused) && (
+                  <button
+                    onClick={() => startMutation.mutate()}
+                    disabled={startMutation.isPending}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-medium transition-colors"
+                  >
+                    <Play className="w-3.5 h-3.5" />
+                    {data.paused ? 'Reia' : 'Pornește'}
+                  </button>
+                )}
+                {/* Buton Pause (când rulează și nu e pausat) */}
+                {data.running && !data.paused && (
+                  <button
+                    onClick={() => pauseMutation.mutate()}
+                    disabled={pauseMutation.isPending}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-xs font-medium transition-colors"
+                  >
+                    <Pause className="w-3.5 h-3.5" />Pauză
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Progres sesiune curentă */}
+            {(data.running || data.done > 0 || data.errors > 0) && (
+              <>
+                <div className="w-full bg-stone-100 dark:bg-stone-800 rounded-full h-2">
+                  <div
+                    className="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <p className="text-xs text-stone-400">Procesate</p>
+                    <p className="text-sm font-semibold text-blue-600">{data.done.toLocaleString('ro-RO')}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-stone-400">Erori</p>
+                    <p className="text-sm font-semibold text-red-500">{data.errors.toLocaleString('ro-RO')}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-stone-400">Rămase</p>
+                    <p className="text-sm font-semibold text-stone-600 dark:text-stone-400">{remaining > 0 ? remaining.toLocaleString('ro-RO') : '—'}</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-xs text-stone-400">
+                  <span>{pct}% din {data.total.toLocaleString('ro-RO')} în sesiune</span>
+                  {data.running && data.current_number != null && (
+                    <span className="font-mono text-stone-500 dark:text-stone-400">
+                      cmd #{data.current_number.toLocaleString('ro-RO')}
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
+            {data.finished_at && !data.running && (
+              <p className="text-xs text-stone-400">Finalizat la: {new Date(data.finished_at).toLocaleString('ro-RO')}</p>
+            )}
+          </>
+        ) : (
+          <p className="text-xs text-stone-400">Se încarcă…</p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+
+// ─── Orders Sync Widget ───────────────────────────────────────────────────────
+
+const OrdersSyncWidget: React.FC = () => {
+  const { data: countData, refetch: refetchCount } = useQuery({
+    queryKey: ['orders-count'],
+    queryFn: () => api.getOrdersCount(),
+    staleTime: 30000,
+  });
+
+  const incrementalMutation = useMutation({
+    mutationFn: () => api.syncOrdersIncremental(),
+    onSuccess: (res) => {
+      toast.success(`Sync incremental: +${res.added} comenzi noi`);
+      refetchCount();
+    },
+    onError: (e: any) => toast.error(e.response?.data?.detail || 'Eroare sync incremental'),
+  });
+
+  const yesterdayMutation = useMutation({
+    mutationFn: () => api.syncOrdersYesterday(),
+    onSuccess: (res) => {
+      toast.success(`Sync ieri: șters ${res.deleted}, adăugat ${res.added} comenzi`);
+      refetchCount();
+    },
+    onError: (e: any) => toast.error(e.response?.data?.detail || 'Eroare sync ieri'),
+  });
+
+  const isPending = incrementalMutation.isPending || yesterdayMutation.isPending;
+
+  return (
+    <div className="bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-800 overflow-hidden">
+      <div className="px-4 py-3 border-b border-stone-100 dark:border-stone-800 bg-stone-50 dark:bg-stone-800/50">
+        <h3 className="text-sm font-semibold text-stone-800 dark:text-stone-200">Sync Comenzi (OrderProjection)</h3>
+        <p className="text-xs text-stone-400 mt-0.5">
+          Import istoric comenzi din ERP în tabela locală. Automat: 11:00–23:00 orar + 07:00 re-sync ieri.
+        </p>
+      </div>
+      <div className="px-4 py-4 space-y-3">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-stone-500">Comenzi în DB local</span>
+          <span className="font-mono font-semibold text-stone-900 dark:text-stone-100">
+            {countData ? countData.total.toLocaleString('ro-RO') : '—'}
+          </span>
+        </div>
+        {countData?.latest_number && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-stone-500">Ultima comandă</span>
+            <span className="font-mono text-stone-600 dark:text-stone-400">
+              #{countData.latest_number}
+              {countData.latest_date && ` · ${countData.latest_date.slice(0, 10)}`}
+            </span>
+          </div>
+        )}
+        <div className="flex gap-2 pt-1">
+          <button
+            onClick={() => incrementalMutation.mutate()}
+            disabled={isPending}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-medium transition-colors"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${incrementalMutation.isPending ? 'animate-spin' : ''}`} />
+            {incrementalMutation.isPending ? 'Se sincronizează...' : 'Sync incremental'}
+          </button>
+          <button
+            onClick={() => yesterdayMutation.mutate()}
+            disabled={isPending}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-stone-200 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800 disabled:opacity-50 text-stone-700 dark:text-stone-300 text-xs font-medium transition-colors"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${yesterdayMutation.isPending ? 'animate-spin' : ''}`} />
+            {yesterdayMutation.isPending ? 'Se sincronizează...' : 'Re-sync ieri'}
+          </button>
+        </div>
+        <p className="text-[11px] text-stone-400">
+          <strong>Sync incremental</strong>: adaugă comenzile noi, se oprește la prima găsită în DB.<br />
+          <strong>Re-sync ieri</strong>: șterge și re-importă toate comenzile de ieri.
+        </p>
+      </div>
+    </div>
+  );
+};
+
 export const KeysSettings: React.FC = () => {
   const [unlocked, setUnlocked] = useState(false);
 
@@ -1574,6 +1811,8 @@ const KeysContent: React.FC = () => {
       <OllamaConfigWidget />
       <SmsGatewayWidget />
       <AmiConfigWidget />
+      <OrdersSyncWidget />
+      <OrderLinesBackfillWidget />
     </div>
   );
 };

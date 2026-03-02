@@ -90,6 +90,8 @@ async def public_gps_pozitii(db: AsyncSession = Depends(get_db)):
     if not url or not email or not password:
         return {"vehicles": [], "configured": False}
 
+    if not url.startswith(("http://", "https://")):
+        url = "http://" + url
     base = url.rstrip("/")
     try:
         async with httpx.AsyncClient(timeout=10, auth=(email, password)) as client:
@@ -223,7 +225,7 @@ async def public_gps_sync(db: AsyncSession = Depends(get_db)):
             else:
                 unchanged += 1
         else:
-            coords = await geocode_one(address, db)
+            coords = await geocode_one(address, db, name_hint=name)
             if coords:
                 lat, lng = coords
                 tm = await travel_time_from_restaurant(lat, lng, db)

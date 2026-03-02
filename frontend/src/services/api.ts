@@ -1044,6 +1044,10 @@ class ApiService {
     const { data } = await this.client.post('/navigatie/pins', pin);
     return data;
   }
+  async updateMapPinAddress(id: number, address: string): Promise<{ id: number; lat: number; lng: number }> {
+    const { data } = await this.client.patch(`/navigatie/pins/${id}`, { address });
+    return data;
+  }
   async deleteMapPin(id: number): Promise<void> {
     await this.client.delete(`/navigatie/pins/${id}`);
   }
@@ -1116,6 +1120,148 @@ class ApiService {
   }
   async incrementPublicMapsJsCounter(): Promise<void> {
     await this.client.post('/public/gps/maps-js/count').catch(() => {});
+  }
+
+  // ============================================
+  // ANALIZA COMENZI
+  // ============================================
+  async getOrdersCount(): Promise<{ total: number; latest_number: number | null; latest_date: string | null }> {
+    const { data } = await this.client.get('/orders/count');
+    return data;
+  }
+
+  async syncOrdersIncremental(): Promise<{ added: number; pages: number }> {
+    const { data } = await this.client.post('/orders/sync/incremental');
+    return data;
+  }
+
+  async syncOrdersYesterday(): Promise<{ deleted: number; added: number; date: string }> {
+    const { data } = await this.client.post('/orders/sync/yesterday');
+    return data;
+  }
+
+  async getBackfillStatus(): Promise<{
+    running: boolean; paused: boolean; total: number; done: number; errors: number; mismatched: number;
+    started_at: string | null; finished_at: string | null;
+    synced_in_db: number; total_in_db: number; current_number: number | null;
+  }> {
+    const { data } = await this.client.get('/orders/lines/backfill-status');
+    return data;
+  }
+
+  async startBackfill(): Promise<{ status: string }> {
+    const { data } = await this.client.post('/orders/lines/backfill/start');
+    return data;
+  }
+
+  async pauseBackfill(): Promise<{ paused: boolean }> {
+    const { data } = await this.client.post('/orders/lines/backfill/pause');
+    return data;
+  }
+
+  async getTopProduse(data_start: string, data_end: string, limit = 30): Promise<{
+    produse: { product_name: string; product_group: string | null; qty_total: number; val_total: number; nr_comenzi: number }[];
+    orders_synced: number; orders_total: number; coverage_pct: number;
+  }> {
+    const { data } = await this.client.get('/orders/produse', { params: { data_start, data_end, limit } });
+    return data;
+  }
+
+  async getPredictiiProduse(horizon_min = 20, top_n = 20, model: 'rf' | 'lgb' = 'rf'): Promise<{
+    now: string; window_start: string; horizon_min: number;
+    day_of_week: string; month: number; season: string; model: string;
+    lgb_available: boolean;
+    predictions: { product_name: string; predicted_qty: number; probability: number }[];
+    trained_at: string | null; model_count: number;
+    days_of_data: number; orders_count: number; data_quality: string;
+    training: boolean; error: string | null;
+  }> {
+    const { data } = await this.client.get('/predictii/produse', { params: { horizon_min, top_n, model } });
+    return data;
+  }
+
+  async getPredictiiZiua(model: 'rf' | 'lgb' = 'rf'): Promise<{
+    model: string; data: string; open_hour: number; close_hour: number;
+    lgb_available: boolean; trained_at: string | null;
+    products: { product: string; probabilitate: number; cantitate_estimata: number; cantitate_deja: number }[];
+  }> {
+    const { data } = await this.client.get('/predictii/ziua', { params: { model } });
+    return data;
+  }
+
+  async getPredictiiOre(model: 'rf' | 'lgb' = 'rf'): Promise<{
+    model: string; data: string; ora_curenta: number;
+    open_hour: number; close_hour: number;
+    lgb_available: boolean; trained_at: string | null;
+    ore: Record<string, { product: string; probabilitate: number }[]>;
+  }> {
+    const { data } = await this.client.get('/predictii/ore', { params: { model } });
+    return data;
+  }
+
+  async getPredictiiDeja(): Promise<{
+    data: string; ora: string;
+    products: { product: string; cantitate: number; ultima: string | null }[];
+  }> {
+    const { data } = await this.client.get('/predictii/deja');
+    return data;
+  }
+
+  async getPredictiiSetari(): Promise<{ open_hour: number; close_hour: number }> {
+    const { data } = await this.client.get('/predictii/setari');
+    return data;
+  }
+
+  async savePredictiiSetari(payload: { open_hour: number; close_hour: number }): Promise<{ open_hour: number; close_hour: number }> {
+    const { data } = await this.client.post('/predictii/setari', payload);
+    return data;
+  }
+
+  async retrain(): Promise<{ status: string; model_count: number; lgb_available: boolean; error: string | null; trained_at: string | null }> {
+    const { data } = await this.client.post('/predictii/retrain');
+    return data;
+  }
+
+  async getBacktest(target_dt: string, horizon_min = 20, top_n = 40, model: 'rf' | 'lgb' = 'rf'): Promise<{
+    target_dt: string; window_start: string; window_end: string;
+    window_date: string; day_of_week: string; season: string; model: string;
+    results: {
+      product_name: string; predicted_qty: number; probability: number;
+      actual_qty: number; diff: number; in_model: boolean; in_actuals: boolean;
+    }[];
+    total_actual: number; total_predicted: number;
+    actuals_count: number; model_count: number; no_data: boolean;
+  }> {
+    const { data } = await this.client.get('/predictii/backtest', {
+      params: { target_dt, horizon_min, top_n, model },
+    });
+    return data;
+  }
+
+  async getPredictiiStatus(): Promise<{
+    trained_at: string | null; model_count: number; product_count: number;
+    lgb_available: boolean; training: boolean; error: string | null;
+  }> {
+    const { data } = await this.client.get('/predictii/status');
+    return data;
+  }
+
+  async getAnalizaComenzi(data_start: string, data_end: string): Promise<{
+    total: number;
+    dinein: number;
+    livrare: number;
+    ridicare: number;
+    valoare_totala: number;
+    valoare_medie: number;
+    by_hour_dinein: { ora: number; count: number }[];
+    by_hour_livrare: { ora: number; livrare: number; ridicare: number }[];
+    by_hour_dinein_val: { ora: number; valoare: number }[];
+    by_hour_livrare_val: { ora: number; livrare: number; ridicare: number }[];
+    by_date: { data: string; count: number; valoare: number }[];
+    db_count: number;
+  }> {
+    const { data } = await this.client.get('/comenzi/analiza', { params: { data_start, data_end } });
+    return data;
   }
 }
 

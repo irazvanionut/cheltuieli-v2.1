@@ -20,6 +20,8 @@ from app.models.models import (
     SysLog,
     ErpCustomer,
     MapPin,
+    Comanda,
+    ComandaLinie,
 )
 
 __all__ = [
@@ -44,4 +46,6 @@ __all__ = [
     "SysLog",
     "ErpCustomer",
     "MapPin",
+    "Comanda",
+    "ComandaLinie",
 ]

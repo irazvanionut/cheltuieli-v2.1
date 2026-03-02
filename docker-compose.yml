@@ -26,7 +26,7 @@ services:
       dockerfile: Dockerfile
     container_name: cheltuieli_api
     restart: unless-stopped
-    command: ["gunicorn", "app.main:app", "-w", "1", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:8000", "--access-logfile", "-"]
+    command: ["gunicorn", "app.main:app", "-w", "1", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:8000", "--access-logfile", "-", "--timeout", "300"]
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-cheltuieli_user}:${POSTGRES_PASSWORD:-cheltuieli_pass_2024}@postgres:5432/${POSTGRES_DB:-cheltuieli}
       SECRET_KEY: ${SECRET_KEY:-your-super-secret-key-change-in-production}
@@ -39,6 +39,7 @@ services:
       - ./backend/app:/app/app
       - ./data/asterisk:/mnt/asterisk:ro
       - ./.set:/opt/cheltuieli-v2.1/.set:ro
+      - models_data:/app/models
     ports:
       - "8000:8000"
     depends_on:
@@ -46,6 +47,26 @@ services:
         condition: service_healthy
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  # Worker — ML training (RF + LGB) + Playwright scraping (izolat de API)
+  cheltuieli_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cheltuieli_worker
+    restart: unless-stopped
+    command: ["python", "-m", "app.worker"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cheltuieli_user}:${POSTGRES_PASSWORD:-cheltuieli_pass_2024}@postgres:5432/${POSTGRES_DB:-cheltuieli}
+      SECRET_KEY: ${SECRET_KEY:-your-super-secret-key-change-in-production}
+      TZ: Europe/Bucharest
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ./backend/app:/app/app
+      - models_data:/app/models
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   # Frontend - React
   frontend:
@@ -119,6 +140,7 @@ volumes:
   umami_db_data:
   traccar_data:
   traccar_logs:
+  models_data:
 
 networks:
   default:

@@ -24,6 +24,9 @@ import { CompetitoriPage } from '@/pages/CompetitoriPage';
 import { NavigatiePage } from '@/pages/NavigatiePage';
 import { NavigatieGpsPage } from '@/pages/NavigatieGpsPage';
 import { ComenziAziPage } from '@/pages/ComenziAziPage';
+import { HubPage } from '@/pages/HubPage';
+import { AnalizaComenziPage } from '@/pages/AnalizaComenziPage';
+import { PredictiiPage } from '@/pages/PredictiiPage';
 import { Spinner } from '@/components/ui';
 
 // Create React Query client
@@ -54,6 +57,13 @@ const ApeluriListaRoute: React.FC<{ children: React.ReactNode }> = ({ children }
   if (isAuthenticated) {
     return <Layout>{children}</Layout>;
   }
+  return <>{children}</>;
+};
+
+// Standalone route: requires auth but renders without sidebar (for new-tab pages)
+const StandaloneRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated } = useAppStore();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
 };
 
@@ -233,6 +243,33 @@ function App() {
               element={
                 <ProtectedRoute>
                   <CompetitoriPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/hub"
+              element={
+                <StandaloneRoute>
+                  <HubPage />
+                </StandaloneRoute>
+              }
+            />
+
+            <Route
+              path="/analiza-comenzi"
+              element={
+                <ProtectedRoute>
+                  <AnalizaComenziPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/predictii"
+              element={
+                <ProtectedRoute>
+                  <PredictiiPage />
                 </ProtectedRoute>
               }
             />

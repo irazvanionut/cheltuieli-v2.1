@@ -8,7 +8,7 @@ import httpx
 from app.core.database import get_db
 from app.core.security import get_current_user, require_admin
 from app.models import User, Setting, MapPin
-from app.api.geocoding import geocode_one
+from app.api.geocoding import geocode_one, travel_time_from_restaurant
 
 router = APIRouter(tags=["🗺️ Navigatie"])
 
@@ -98,6 +98,38 @@ async def create_pin(
     }
 
 
+@router.patch("/navigatie/pins/{pin_id}")
+async def update_pin_address(
+    pin_id: int,
+    data: dict,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Re-geocodează un pin existent cu o adresă corectată."""
+    pin = (await db.execute(select(MapPin).where(MapPin.id == pin_id))).scalar_one_or_none()
+    if not pin:
+        raise HTTPException(status_code=404, detail="Pin negăsit.")
+
+    address = (data.get("address") or "").strip()
+    if not address:
+        raise HTTPException(status_code=400, detail="Adresa este obligatorie.")
+
+    coords = await geocode_one(address, db, name_hint=pin.name)
+    if not coords:
+        raise HTTPException(status_code=422, detail=f"Adresa nu a putut fi geocodată: {address}")
+
+    lat, lng = coords
+    pin.address = address
+    pin.lat = lat
+    pin.lng = lng
+    tm = await travel_time_from_restaurant(lat, lng, db)
+    if tm is not None:
+        pin.travel_time_min = tm
+
+    await db.commit()
+    return {"id": pin.id, "lat": float(pin.lat), "lng": float(pin.lng), "address": pin.address}
+
+
 @router.delete("/navigatie/pins/{pin_id}")
 async def delete_pin(
     pin_id: int,
@@ -132,6 +164,8 @@ async def traccar_pozitii(
     if not url or not email or not password:
         return {"vehicles": [], "configured": False}
 
+    if not url.startswith(("http://", "https://")):
+        url = "http://" + url
     base = url.rstrip("/")
     try:
         async with httpx.AsyncClient(timeout=10, auth=(email, password)) as client:

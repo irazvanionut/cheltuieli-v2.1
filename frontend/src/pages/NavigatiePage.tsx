@@ -69,10 +69,11 @@ export const NavigatiePage: React.FC = () => {
   const [searching, setSearching] = useState(false);
   const searchTimeout = useRef<ReturnType<typeof setTimeout>>();
 
-  const { data: pins = [] } = useQuery<MapPinType[]>({
+  const { data: allPins = [] } = useQuery<MapPinType[]>({
     queryKey: ['map-pins'],
     queryFn: () => api.getMapPins(),
   });
+  const pins = allPins.filter(p => p.permanent);
 
   const { data: traccarData } = useQuery({
     queryKey: ['traccar-token'],

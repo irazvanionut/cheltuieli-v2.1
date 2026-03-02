@@ -565,3 +565,54 @@ class CompetitorPriceChange(Base):
     changed_at = Column(DateTime, server_default=func.now())
 
     site = relationship("CompetitorSite", back_populates="price_changes")
+
+
+class Comanda(Base):
+    """OrderProjection history synced from ERP Prod."""
+    __tablename__ = "comenzi"
+
+    id                   = Column(Integer, primary_key=True)
+    erp_id               = Column(String(64), unique=True, nullable=False, index=True)
+    number               = Column(Integer, index=True)
+    index_in_interval    = Column(Integer)
+    created_at_erp       = Column(DateTime(timezone=True), index=True)
+    erp_time             = Column(String(10))
+    erp_date             = Column(String(20))
+    journal_dt           = Column(DateTime(timezone=True))
+    order_info           = Column(Text)
+    ship_to_address      = Column(Text)
+    phone                = Column(String(30), index=True)
+    email                = Column(String(200))
+    staff_order_name     = Column(String(200))
+    total                = Column(Numeric(10, 2))
+    payload_json         = Column(Text)
+    linii_synced         = Column(Boolean, default=False)
+    linii_needs_refresh  = Column(Boolean, default=False)
+    synced_at            = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at           = Column(DateTime(timezone=True), server_default=func.now())
+
+    linii = relationship("ComandaLinie", back_populates="comanda", cascade="all, delete-orphan")
+
+
+class ComandaLinie(Base):
+    """Order line detail fetched via Rfc/Next (GetOrderRfc)."""
+    __tablename__ = "comenzi_linii"
+
+    id                = Column(Integer, primary_key=True)
+    comanda_id        = Column(Integer, ForeignKey("comenzi.id", ondelete="CASCADE"), nullable=False, index=True)
+    erp_order_id      = Column(String(64), nullable=False, index=True)
+    line_index        = Column(Integer)
+    product_name      = Column(Text)
+    product_group     = Column(String(200))
+    quantity          = Column(Numeric(10, 3))
+    unit_of_measure   = Column(String(20))
+    unit_price        = Column(Numeric(10, 2))
+    discount_percent  = Column(Numeric(5, 2))
+    total             = Column(Numeric(10, 2))
+    tax_percent       = Column(Numeric(5, 2))
+    tax_text          = Column(String(50))
+    order_line_status = Column(Integer)
+    created_at        = Column(DateTime(timezone=True), server_default=func.now())
+
+    comanda = relationship("Comanda", back_populates="linii")
+    created_at       = Column(DateTime(timezone=True), server_default=func.now())
