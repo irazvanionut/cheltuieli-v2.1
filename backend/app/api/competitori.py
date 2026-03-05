@@ -906,12 +906,319 @@ async def scrape_lamama(url: str) -> list[dict]:
     return results
 
 
+def _parse_ocr_text(full_text: str) -> list[dict]:
+    """
+    Parsează textul OCR din meniul Ekko Lounge și returnează produse cu prețuri.
+
+    Strategii detectare preț:
+    1. Linie: "Denumire  45" sau "Denumire  45 lei"  (spații >= 2 înainte de număr)
+    2. Două linii: denumire urmată de linie-cu-număr
+    3. Preț inline: "Denumire 45 lei alte cuvinte"
+    Titluri de secțiune: linii scurte fără cifre sau ALL-CAPS fără preț.
+    """
+    import re as _re
+
+    PRICE_AT_END = _re.compile(
+        r"^(.+?)\s{2,}(\d+(?:[.,]\d{1,2})?)\s*(?:lei|ron)?$",
+        _re.IGNORECASE,
+    )
+    PRICE_ONLY   = _re.compile(r"^\d+(?:[.,]\d{1,2})?\s*(?:lei|ron)?$", _re.IGNORECASE)
+    HAS_PRICE    = _re.compile(r"\b(\d+(?:[.,]\d{1,2})?)\s*lei\b", _re.IGNORECASE)
+    NOISE        = _re.compile(r"^[^\w]+$")  # linii cu doar semne
+
+    def parse_p(txt: str) -> float | None:
+        txt = _re.sub(r"[^\d.,]", "", txt)
+        if "," in txt and "." in txt:
+            txt = txt.replace(".", "").replace(",", ".")
+        elif "," in txt:
+            txt = txt.replace(",", ".")
+        try:
+            v = float(txt)
+            return v if 1 <= v <= 9999 else None
+        except Exception:
+            return None
+
+    results: list[dict] = []
+    seen: set[str] = set()
+
+    # Caractere OCR-garbage la început de cuvânt
+    JUNK_PREFIX = _re.compile(r'^[\s|„"\'""«»\-–—_.:,;!?()\[\]{}]+')
+    # Nume valid: cel puțin 3 litere reale
+    VALID_NAME  = _re.compile(r'[A-Za-zÀ-ÿĂăÂâÎîȘșȚț]{3,}')
+
+    # Artefacte OCR la prefix: token-uri scurte (1-4 litere) + separatori, repetate
+    OCR_PREFIX_GARBAGE = _re.compile(
+        r'^(?:[A-ZĂÂÎȘȚ]{1,4}[\s|:()\[\].,_"„-]{1,5}){2,}',
+        _re.UNICODE,
+    )
+
+    def clean_name(raw: str) -> str:
+        # Elimină prefix junk simplu (|, „, ", etc.)
+        cleaned = JUNK_PREFIX.sub("", raw)
+        # Elimină artefacte OCR de tip chenar: "I : | SURE, UTA ", "EE ORE __ ", etc.
+        cleaned = OCR_PREFIX_GARBAGE.sub("", cleaned)
+        # Curăță | rămas inline
+        cleaned = _re.sub(r'\s*\|\s*', ' ', cleaned)
+        cleaned = _re.sub(r'\s{2,}', ' ', cleaned).strip(" |_-–—.,")
+        return cleaned
+
+    def add(name: str, pret: float, cat: str) -> None:
+        cleaned = clean_name(name)
+        key = cleaned.upper()
+        # Respinge dacă nu are suficiente litere reale
+        if not key or key in seen or not VALID_NAME.search(key):
+            return
+        seen.add(key)
+        results.append({"categorie": cat, "denumire": key, "pret": round(pret, 2), "unitate": ""})
+
+    lines = [ln.strip() for ln in full_text.splitlines() if ln.strip()]
+    current_cat = ""
+    prev_name: str | None = None
+
+    for ln in lines:
+        if NOISE.match(ln):
+            continue
+
+        # Preț pe linie proprie după o denumire
+        if prev_name and PRICE_ONLY.match(ln):
+            p = parse_p(ln)
+            if p:
+                add(prev_name, p, current_cat)
+                prev_name = None
+                continue
+
+        # Preț la final pe aceeași linie
+        m = PRICE_AT_END.match(ln)
+        if m:
+            p = parse_p(m.group(2))
+            if p:
+                add(m.group(1), p, current_cat)
+                prev_name = None
+                continue
+
+        # Preț inline "Denumire 45 lei ..."
+        m2 = HAS_PRICE.search(ln)
+        if m2:
+            name_part = ln[:m2.start()].strip(" :-–")
+            p = parse_p(m2.group(1))
+            if name_part and p:
+                add(name_part, p, current_cat)
+                prev_name = None
+                continue
+
+        # Titlu secțiune: max 40 chars, fără cifre, cel puțin 3 litere reale
+        if len(ln) <= 40 and not _re.search(r"\d", ln) and VALID_NAME.search(ln):
+            # Curăță categoria de artefacte OCR
+            cat_clean = _re.sub(r'[|_{}()\[\]]', '', ln).strip()
+            if cat_clean:
+                current_cat = cat_clean.title()
+            prev_name = None
+            continue
+
+        # Candidat denumire pentru linia următoare
+        prev_name = ln if len(ln) > 3 else None
+
+    return results
+
+
+async def _scrape_ekko_ocr(pdf_bytes: bytes) -> list[dict]:
+    """OCR fallback: pdf2image → pytesseract → parsare text."""
+    import io as _io
+    try:
+        from pdf2image import convert_from_bytes
+        import pytesseract
+    except ImportError as e:
+        raise RuntimeError(f"[Ekko] OCR deps lipsă: {e}. Instalează pdf2image + pytesseract.")
+
+    loop = asyncio.get_event_loop()
+
+    def _ocr_sync() -> str:
+        from PIL import Image, ImageEnhance, ImageFilter
+        import io as _io
+
+        pages = convert_from_bytes(pdf_bytes, dpi=350, fmt="jpeg")
+        print(f"[Ekko] OCR: {len(pages)} pagini detectate")
+        texts: list[str] = []
+        for i, img in enumerate(pages):
+            # Preprocesare: grayscale + contrast mărit
+            gray = img.convert("L")
+            enhanced = ImageEnhance.Contrast(gray).enhance(1.5)
+            # PSM 4 = single column, variable text sizes (bun pentru meniuri)
+            txt = pytesseract.image_to_string(
+                enhanced, lang="ron+eng",
+                config="--psm 4 --oem 3",
+            )
+            texts.append(txt)
+            print(f"[Ekko] OCR pagina {i+1}: {len(txt)} chars")
+        return "\n".join(texts)
+
+    full_text = await loop.run_in_executor(None, _ocr_sync)
+    print(f"[Ekko] OCR total text: {len(full_text)} chars")
+
+    if len(full_text.strip()) < 20:
+        raise RuntimeError("[Ekko] OCR a returnat text insuficient. Verifică calitatea PDF-ului.")
+
+    results = _parse_ocr_text(full_text)
+    print(f"[Ekko] OCR TOTAL {len(results)} produse extrase")
+    return results
+
+
+async def scrape_ekko(url: str) -> list[dict]:
+    """
+    Scrape meniu Ekko Lounge dintr-un PDF static (dish.co CDN).
+
+    Strategy 1 (primary): pdfplumber — extrage text embedded din PDF.
+      – Detectează rânduri cu preț (RON sau număr) și asociază denumirea.
+      – Titlurile de secțiune sunt linii fără preț ce conțin CAPS sau text scurt.
+
+    Strategy 2 (fallback): loghează eroare clară dacă PDF-ul e image-based.
+    """
+    import re
+    import io
+    import httpx
+
+    def parse_price_ekko(txt: str) -> float | None:
+        """'28 lei', '28,00', '28.00', '28' → 28.0"""
+        txt = txt.replace("lei", "").replace("ron", "").replace("RON", "").strip()
+        if "," in txt and "." in txt:
+            txt = txt.replace(".", "").replace(",", ".")
+        elif "," in txt:
+            txt = txt.replace(",", ".")
+        nums = re.findall(r"^\d+\.?\d*$", txt.strip())
+        return float(nums[0]) if nums else None
+
+    # Regex: linie cu preț la final  →  "Denumire produs  45"  sau  "Denumire  45 lei"
+    PRICE_AT_END = re.compile(
+        r"^(.+?)\s{2,}(\d+(?:[.,]\d{1,2})?)\s*(?:lei|ron)?$",
+        re.IGNORECASE,
+    )
+    # Sau o linie care e doar un număr (preț pe linie proprie)
+    PRICE_ONLY = re.compile(r"^\d+(?:[.,]\d{1,2})?\s*(?:lei|ron)?$", re.IGNORECASE)
+    # Linie care conține un preț undeva
+    HAS_PRICE  = re.compile(r"\b(\d+(?:[.,]\d{1,2})?)\s*(?:lei|ron)\b", re.IGNORECASE)
+
+    try:
+        async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
+            resp = await client.get(url, headers={"User-Agent": "Mozilla/5.0"})
+            resp.raise_for_status()
+            pdf_bytes = resp.content
+        print(f"[Ekko] PDF downloaded: {len(pdf_bytes)} bytes")
+    except Exception as e:
+        raise RuntimeError(f"[Ekko] Nu am putut descărca PDF-ul: {e}")
+
+    try:
+        import pdfplumber
+    except ImportError:
+        raise RuntimeError("[Ekko] pdfplumber nu este instalat (pip install pdfplumber)")
+
+    results: list[dict] = []
+    seen: set[str] = set()
+
+    def add_product(name: str, pret: float, categorie: str) -> None:
+        key = name.strip().upper()
+        if not key or key in seen or len(key) < 3:
+            return
+        seen.add(key)
+        results.append({
+            "categorie": categorie,
+            "denumire": key,
+            "pret": round(pret, 2),
+            "unitate": "",
+        })
+
+    with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+        total_chars = 0
+        all_lines: list[str] = []
+
+        for page in pdf.pages:
+            # ── Încearcă extragere din tabele ──────────────────────────────
+            tables = page.extract_tables()
+            for table in tables:
+                for row in (table or []):
+                    row = [str(c or "").strip() for c in row]
+                    # Caută coloană cu preț și coloană cu denumire
+                    pret_col = -1
+                    for ci, cell in enumerate(row):
+                        if PRICE_ONLY.match(cell) or (HAS_PRICE.search(cell) and len(cell) < 15):
+                            pret_col = ci
+                            break
+                    if pret_col >= 0:
+                        name_cell = " ".join(
+                            row[ci] for ci in range(len(row))
+                            if ci != pret_col and row[ci]
+                        ).strip()
+                        p_str = re.sub(r"[^\d.,]", "", row[pret_col])
+                        p = parse_price_ekko(p_str)
+                        if name_cell and p:
+                            add_product(name_cell, p, "")
+
+            # ── Extragere text simplu ──────────────────────────────────────
+            text = page.extract_text() or ""
+            total_chars += len(text)
+            for ln in text.splitlines():
+                ln = ln.strip()
+                if ln:
+                    all_lines.append(ln)
+
+        if total_chars < 50:
+            print("[Ekko] Strategy 1 eșuat (PDF image-based). Încerc Strategy 2 (OCR)...")
+            return await _scrape_ekko_ocr(pdf_bytes)
+
+        # ── Parsare text linie cu linie ────────────────────────────────────
+        current_cat = ""
+        prev_name: str | None = None
+
+        for ln in all_lines:
+            # Detectează secțiune: linie scurtă fără preț sau CAPS
+            if len(ln) <= 40 and not re.search(r"\d", ln):
+                current_cat = ln.title()
+                prev_name = None
+                continue
+
+            # Preț pe linie proprie (imediat după denumire)
+            if prev_name and PRICE_ONLY.match(ln):
+                p = parse_price_ekko(ln)
+                if p:
+                    add_product(prev_name, p, current_cat)
+                    prev_name = None
+                continue
+
+            # Preț la finalul liniei: "Denumire  45" sau "Denumire  45 lei"
+            m = PRICE_AT_END.match(ln)
+            if m:
+                p = parse_price_ekko(m.group(2))
+                if p:
+                    add_product(m.group(1), p, current_cat)
+                    prev_name = None
+                    continue
+
+            # Preț inline: "Denumire 45 lei restul"
+            m2 = HAS_PRICE.search(ln)
+            if m2:
+                name_part = ln[:m2.start()].strip(" :-–")
+                p = parse_price_ekko(m2.group(1))
+                if name_part and p:
+                    add_product(name_part, p, current_cat)
+                    prev_name = None
+                    continue
+
+            # Linie fără preț → candidat denumire pentru linia următoare
+            if len(ln) > 3:
+                prev_name = ln
+            else:
+                prev_name = None
+
+    print(f"[Ekko] TOTAL {len(results)} produse extrase din PDF")
+    return results
+
+
 # ─── Scraper registry ─────────────────────────────────────────────────────────
 
 _SCRAPERS: dict[str, Callable] = {
     "margineni": scrape_margineni,
     "lanuci": scrape_lanuci,
     "lamama": scrape_lamama,
+    "ekko": scrape_ekko,
 }
 
 

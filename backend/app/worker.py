@@ -7,8 +7,9 @@ async def main():
     os.makedirs("/app/models", exist_ok=True)
     from app.api.predictii import worker_train_loop
     from app.api.competitori import competitor_scrape_loop
+    from app.api.comenzi_trends import comenzi_trends_loop
     print("[Worker] cheltuieli_worker pornit")
-    await asyncio.gather(worker_train_loop(), competitor_scrape_loop())
+    await asyncio.gather(worker_train_loop(), competitor_scrape_loop(), comenzi_trends_loop())
 
 
 if __name__ == "__main__":

@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMapEvents, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, Circle, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Trash2, Plus, Search, X, ExternalLink } from 'lucide-react';
+import { Trash2, Plus, Search, X, ExternalLink, Maximize2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '@/services/api';
-import type { MapPin as MapPinType } from '@/types';
+import type { MapPin as MapPinType, Geofence } from '@/types';
 
 // Fix Leaflet default icon paths broken by bundlers
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -45,6 +45,12 @@ function FitBoundsOnLoad({ pins }: { pins: MapPinType[] }) {
   return null;
 }
 
+function MapInstanceRef({ onMap }: { onMap: (m: L.Map) => void }) {
+  const map = useMap();
+  useEffect(() => { onMap(map); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
+}
+
 function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lng: number) => void }) {
   useMapEvents({
     click(e) { onMapClick(e.latlng.lat, e.latlng.lng); },
@@ -68,12 +74,18 @@ export const NavigatiePage: React.FC = () => {
   const [searchResults, setSearchResults] = useState<{ lat: string; lon: string; display_name: string }[]>([]);
   const [searching, setSearching] = useState(false);
   const searchTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const mapRef = useRef<L.Map | null>(null);
 
-  const { data: allPins = [] } = useQuery<MapPinType[]>({
+  const { data: pins = [] } = useQuery<MapPinType[]>({
     queryKey: ['map-pins'],
     queryFn: () => api.getMapPins(),
   });
-  const pins = allPins.filter(p => p.permanent);
+
+  const { data: geofences = [] } = useQuery<Geofence[]>({
+    queryKey: ['geofences'],
+    queryFn: () => api.getGeofences(),
+    refetchInterval: 30_000,
+  });
 
   const { data: traccarData } = useQuery({
     queryKey: ['traccar-token'],
@@ -86,6 +98,7 @@ export const NavigatiePage: React.FC = () => {
       api.createMapPin({ name: p.name, address: p.address || undefined, lat: p.lat, lng: p.lng, color: p.color }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['map-pins'] });
+      queryClient.invalidateQueries({ queryKey: ['geofences'] });
       setForm(null);
       setAddMode(false);
       toast.success('Pin adăugat');
@@ -97,6 +110,7 @@ export const NavigatiePage: React.FC = () => {
     mutationFn: (id: number) => api.deleteMapPin(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['map-pins'] });
+      queryClient.invalidateQueries({ queryKey: ['geofences'] });
       toast.success('Pin șters');
     },
   });
@@ -191,11 +205,24 @@ export const NavigatiePage: React.FC = () => {
           </a>
         )}
 
-        <span className="ml-auto text-xs text-stone-400">{pins.length} pini</span>
+        <span className="ml-auto text-xs text-stone-400">{pins.length} pini · {geofences.length} geofence</span>
       </div>
 
       {/* Map */}
       <div className="flex-1 relative">
+        {pins.length > 0 && (
+          <button
+            onClick={() => {
+              if (!mapRef.current) return;
+              const bounds = L.latLngBounds(pins.map(p => [p.lat, p.lng] as [number, number]));
+              mapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+            }}
+            title="Zoom la toți pinii"
+            className="absolute bottom-8 left-3 z-[1000] w-9 h-9 flex items-center justify-center bg-white border-2 border-black/20 rounded shadow-md hover:bg-stone-100 transition-colors"
+          >
+            <Maximize2 className="w-4 h-4 text-stone-600" />
+          </button>
+        )}
         <MapContainer
           center={[44.548, 26.215]}
           zoom={14}
@@ -206,7 +233,18 @@ export const NavigatiePage: React.FC = () => {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <FitBoundsOnLoad pins={pins} />
+          <MapInstanceRef onMap={m => { mapRef.current = m; }} />
           <MapClickHandler onMapClick={handleMapClick} />
+
+          {/* Geofence circles */}
+          {geofences.map(g => (
+            <Circle
+              key={g.id}
+              center={[g.lat, g.lng]}
+              radius={g.radius_m}
+              pathOptions={{ color: '#2563eb', fillColor: '#2563eb', fillOpacity: 0.08, weight: 1.5, dashArray: '4 4' }}
+            />
+          ))}
 
           {/* Saved pins */}
           {pins.map(pin => (

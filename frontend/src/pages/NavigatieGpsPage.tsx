@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Layers, RefreshCw, Navigation, AlertCircle, Settings, Package, Maximize2, MapPinOff, ChevronDown, ChevronUp, Check, X, Search } from 'lucide-react';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import { Layers, RefreshCw, Navigation, AlertCircle, Settings, Package, Maximize2, MapPinOff, ChevronDown, ChevronUp, Check, X, Search, AlertTriangle, Trash2 } from 'lucide-react';
 import { clsx } from 'clsx';
 import api from '@/services/api';
 import { useAppStore } from '@/hooks/useAppStore';
@@ -64,10 +64,96 @@ function makeCarSvg(color: string, course: number) {
   );
 }
 
+// ─── OverrideRow ───────────────────────────────────────────────────────────────
+
+type OverrideEntry = { id: number; name: string; address_erp: string; address_current: string; lat: number; lng: number; corrected: boolean; override_id: number | null; updated_at: string | null };
+
+function OverrideRow({ o, modalFixingId, modalFixQ, modalFixSearching, modalFixSuggestions, modalFixSaving, onFix, onFixSearch, onFixSelect, onFixClose, onDelete }: {
+  o: OverrideEntry;
+  modalFixingId: number | null;
+  modalFixQ: string;
+  modalFixSearching: boolean;
+  modalFixSuggestions: { lat: string; lon: string; display_name: string }[];
+  modalFixSaving: boolean;
+  onFix: () => void;
+  onFixSearch: (v: string) => void;
+  onFixSelect: (display_name: string) => void;
+  onFixClose: () => void;
+  onDelete: () => void;
+}) {
+  const isFixing = modalFixingId === o.id;
+  return (
+    <>
+      <tr className={`border-b ${o.corrected ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-800/30' : 'border-stone-50 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-stone-800/30'}`}>
+        <td className="px-2 py-2 font-medium text-stone-700 dark:text-stone-200 whitespace-nowrap">
+          {o.corrected && <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5 mb-0.5" />}
+          {o.name}
+        </td>
+        <td className="px-2 py-2 max-w-[220px]">
+          {o.corrected
+            ? <span className="text-red-500 dark:text-red-400 line-through block truncate" title={o.address_erp}>{o.address_erp || '—'}</span>
+            : <span className="text-stone-500 block truncate" title={o.address_current}>{o.address_current || '—'}</span>}
+        </td>
+        <td className="px-2 py-2 max-w-[220px]">
+          {o.corrected
+            ? <span className="text-emerald-600 dark:text-emerald-400 block truncate" title={o.address_current}>{o.address_current || '—'}</span>
+            : <span className="text-stone-300 dark:text-stone-600">—</span>}
+        </td>
+        <td className="px-2 py-2 whitespace-nowrap">
+          <div className="flex items-center gap-1">
+            {!o.corrected && (
+              <button onClick={onFix} className="text-xs px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200">Fix</button>
+            )}
+            {o.corrected && o.override_id && (
+              <button onClick={onDelete} className="text-red-400 hover:text-red-600" title="Resetează">
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </td>
+      </tr>
+      {isFixing && (
+        <tr className="bg-blue-50 dark:bg-blue-900/10">
+          <td colSpan={4} className="px-3 py-2">
+            <div className="relative">
+              <div className="flex gap-1.5 items-center">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-400 pointer-events-none" />
+                  <input
+                    autoFocus
+                    value={modalFixQ}
+                    onChange={e => onFixSearch(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Escape') onFixClose(); }}
+                    placeholder="Caută adresa corectă în Google Maps..."
+                    className="w-full pl-6 pr-2 py-1 text-xs rounded border border-blue-300 dark:border-blue-600 bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-200 outline-none focus:ring-1 focus:ring-blue-400"
+                  />
+                  {modalFixSearching && <RefreshCw className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-400 animate-spin" />}
+                </div>
+                <button onClick={onFixClose} className="text-stone-400 hover:text-stone-600"><X className="w-3.5 h-3.5" /></button>
+              </div>
+              {modalFixSuggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-8 mt-1 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded shadow-lg z-20 max-h-48 overflow-y-auto">
+                  {modalFixSuggestions.map((s, i) => (
+                    <button key={i} onClick={() => onFixSelect(s.display_name)} disabled={modalFixSaving}
+                      className="w-full text-left px-2 py-1.5 text-xs text-stone-700 dark:text-stone-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 border-b border-stone-100 dark:border-stone-700 last:border-0 disabled:opacity-50">
+                      <p className="font-medium truncate">{s.display_name.split(',')[0]}</p>
+                      <p className="text-stone-400 truncate">{s.display_name}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export const NavigatieGpsPage: React.FC = () => {
-  const { isAuthenticated } = useAppStore();
+  const { isAuthenticated, token } = useAppStore();
   const isPublic = !isAuthenticated;
   const queryClient = useQueryClient();
 
@@ -91,6 +177,20 @@ export const NavigatieGpsPage: React.FC = () => {
   const [searching, setSearching] = useState(false);
   const searchTimeout = useRef<ReturnType<typeof setTimeout>>();
   const searchMarkerRef = useRef<any>(null);
+  const wsGpsRef = useRef<WebSocket | null>(null);
+  const wsGpsReconnect = useRef<ReturnType<typeof setTimeout>>();
+  const [showOverrides, setShowOverrides] = useState(false);
+  const [overridesFilter, setOverridesFilter] = useState('');
+  const [overridesRecent, setOverridesRecent] = useState(false);
+  const [fixSuggestions, setFixSuggestions] = useState<{ lat: string; lon: string; display_name: string }[]>([]);
+  const [fixSearching, setFixSearching] = useState(false);
+  const fixSearchTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const [modalFixingId, setModalFixingId] = useState<number | null>(null);
+  const [modalFixQ, setModalFixQ] = useState('');
+  const [modalFixSuggestions, setModalFixSuggestions] = useState<{ lat: string; lon: string; display_name: string }[]>([]);
+  const [modalFixSearching, setModalFixSearching] = useState(false);
+  const [modalFixSaving, setModalFixSaving] = useState(false);
+  const modalFixTimeout = useRef<ReturnType<typeof setTimeout>>();
 
   // Public mode: only boolean flag (key stays on server, loaded via /public/gps/maps-js proxy)
   const { data: publicSettings } = useQuery<{ has_maps_key: boolean }>({
@@ -135,6 +235,17 @@ export const NavigatieGpsPage: React.FC = () => {
     queryKey: isPublic ? ['public-gps-comenzi'] : ['comenzi-azi'],
     queryFn: () => isPublic ? api.getPublicGpsComenzii() : api.getComenziorAzi(),
     refetchInterval: ORDER_POLL_MS,
+  });
+
+  const { data: overrides = [], refetch: refetchOverrides } = useQuery<any[]>({
+    queryKey: ['geocode-overrides'],
+    queryFn: () => api.getGeocodeOverrides(),
+    enabled: showOverrides && !isPublic,
+  });
+
+  const deleteOverride = useMutation({
+    mutationFn: (id: number) => api.deleteGeocodeOverride(id),
+    onSuccess: () => refetchOverrides(),
   });
 
   // customer_name.toLowerCase() → all orders with that name (can be >1 for same-name clients)
@@ -200,6 +311,45 @@ export const NavigatieGpsPage: React.FC = () => {
       setFixing(false);
     }
   }, [fixingPin, fixAddress, isPublic, queryClient]);
+
+  const handleFixAddressChange = (val: string) => {
+    setFixAddress(val);
+    setFixSuggestions([]);
+    clearTimeout(fixSearchTimeout.current);
+    if (!val.trim()) return;
+    fixSearchTimeout.current = setTimeout(async () => {
+      setFixSearching(true);
+      try {
+        const results = await api.geocodeAddress(val);
+        setFixSuggestions(results);
+      } catch {}
+      finally { setFixSearching(false); }
+    }, 400);
+  };
+
+  const handleModalFixSearch = (val: string) => {
+    setModalFixQ(val);
+    setModalFixSuggestions([]);
+    clearTimeout(modalFixTimeout.current);
+    if (!val.trim()) return;
+    modalFixTimeout.current = setTimeout(async () => {
+      setModalFixSearching(true);
+      try { setModalFixSuggestions(await api.geocodeAddress(val)); }
+      catch {} finally { setModalFixSearching(false); }
+    }, 400);
+  };
+
+  const handleModalFixSave = async (pinId: number, address: string) => {
+    setModalFixSaving(true);
+    try {
+      await api.updateMapPinAddress(pinId, address);
+      queryClient.invalidateQueries({ queryKey: ['map-pins'] });
+      queryClient.invalidateQueries({ queryKey: ['geocode-overrides'] });
+      setModalFixingId(null);
+      setModalFixQ('');
+      setModalFixSuggestions([]);
+    } catch {} finally { setModalFixSaving(false); }
+  };
 
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editAddress, setEditAddress] = useState('');
@@ -356,6 +506,42 @@ export const NavigatieGpsPage: React.FC = () => {
     const interval = setInterval(fetchVehicles, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [fetchVehicles]);
+
+  // ── WebSocket GPS — real-time pin updates ───────────────────────────────────
+  useEffect(() => {
+    let active = true;
+    const pinKey = isPublic ? ['public-gps-pins'] : ['map-pins'];
+
+    const connect = () => {
+      if (!active) return;
+      const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const url = isPublic
+        ? `${proto}//${window.location.host}/api/ws/gps/public`
+        : `${proto}//${window.location.host}/api/ws/gps?token=${token || ''}`;
+      const ws = new WebSocket(url);
+      wsGpsRef.current = ws;
+
+      ws.onmessage = (e) => {
+        try {
+          const msg = JSON.parse(e.data);
+          if (msg.type === 'pins_updated') {
+            queryClient.invalidateQueries({ queryKey: pinKey });
+          }
+        } catch {}
+      };
+
+      ws.onclose = () => {
+        if (active) wsGpsReconnect.current = setTimeout(connect, 4000);
+      };
+    };
+
+    connect();
+    return () => {
+      active = false;
+      clearTimeout(wsGpsReconnect.current);
+      wsGpsRef.current?.close();
+    };
+  }, [isPublic, token]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Update vehicle markers ──────────────────────────────────────────────────
   useEffect(() => {
@@ -575,7 +761,7 @@ export const NavigatieGpsPage: React.FC = () => {
                 onChange={e => setSearchQ(e.target.value)}
                 onKeyDown={e => e.key === 'Escape' && (setSearchQ(''), setSearchResults([]))}
                 placeholder="Caută adresă..."
-                className="bg-transparent text-xs text-stone-700 dark:text-stone-200 placeholder-stone-400 outline-none w-40"
+                className="bg-transparent text-xs text-stone-700 dark:text-stone-200 placeholder-stone-400 outline-none w-64"
               />
               {searching && <RefreshCw className="w-3 h-3 text-stone-400 animate-spin shrink-0" />}
               {searchQ && !searching && (
@@ -618,6 +804,17 @@ export const NavigatieGpsPage: React.FC = () => {
           </div>
         )}
 
+        {/* Adrese greșite */}
+        {!isPublic && (
+          <button
+            onClick={() => setShowOverrides(true)}
+            className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
+          >
+            <AlertTriangle className="w-3 h-3" />
+            Adrese greșite
+          </button>
+        )}
+
         {/* Settings link hint — only shown to authenticated users */}
         {!hasMapsKey && !isPublic && (
           <span className="ml-auto flex items-center gap-1 text-xs text-amber-500">
@@ -651,6 +848,17 @@ export const NavigatieGpsPage: React.FC = () => {
           </div>
         )}
 
+        {/* Fit all pins button */}
+        {hasMapsKey && mapReady && mapPins.length > 0 && (
+          <button
+            onClick={fitBounds}
+            title="Zoom la toți pinii"
+            className="absolute bottom-8 left-3 z-10 w-9 h-9 flex items-center justify-center bg-white border-2 border-black/20 rounded shadow-md hover:bg-stone-100 transition-colors"
+          >
+            <Maximize2 className="w-4 h-4 text-stone-600" />
+          </button>
+        )}
+
         {/* Traccar not configured */}
         {hasMapsKey && mapReady && vehicles.length === 0 && !traccarError && (
           <div className="absolute bottom-4 left-4 bg-white/90 dark:bg-stone-800/90 rounded-lg px-3 py-2 text-xs text-stone-500 shadow-md">
@@ -672,18 +880,35 @@ export const NavigatieGpsPage: React.FC = () => {
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
-            <input
-              type="text"
-              value={fixAddress}
-              onChange={e => setFixAddress(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') handleFixPin();
-                if (e.key === 'Escape') setFixingPin(null);
-              }}
-              placeholder="Adresa corectă..."
-              autoFocus
-              className="w-full text-xs px-2 py-1.5 rounded border border-blue-300 dark:border-blue-600 bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-200 outline-none focus:ring-1 focus:ring-blue-400 mb-1.5"
-            />
+            <div className="relative mb-1.5">
+              <input
+                type="text"
+                value={fixAddress}
+                onChange={e => handleFixAddressChange(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && fixSuggestions.length === 0) handleFixPin();
+                  if (e.key === 'Escape') { setFixingPin(null); setFixSuggestions([]); }
+                }}
+                placeholder="Adresa corectă..."
+                autoFocus
+                className="w-full text-xs px-2 py-1.5 rounded border border-blue-300 dark:border-blue-600 bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-200 outline-none focus:ring-1 focus:ring-blue-400"
+              />
+              {fixSearching && <RefreshCw className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-400 animate-spin" />}
+              {fixSuggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded shadow-lg z-20 max-h-48 overflow-y-auto">
+                  {fixSuggestions.map((s, i) => (
+                    <button
+                      key={i}
+                      onClick={() => { setFixAddress(s.display_name); setFixSuggestions([]); }}
+                      className="w-full text-left px-2 py-1.5 text-xs text-stone-700 dark:text-stone-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 border-b border-stone-100 dark:border-stone-700 last:border-0"
+                    >
+                      <p className="font-medium truncate">{s.display_name.split(',')[0]}</p>
+                      <p className="text-stone-400 truncate">{s.display_name}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             {fixError && <p className="text-[10px] text-red-500 mb-1.5 leading-tight">{fixError}</p>}
             <div className="flex gap-1.5">
               <button
@@ -792,6 +1017,83 @@ export const NavigatieGpsPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Modal adrese greșite */}
+      {showOverrides && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40" onClick={() => setShowOverrides(false)}>
+          <div className="bg-white dark:bg-stone-900 rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-stone-200 dark:border-stone-700">
+              <div className="flex items-center gap-2 shrink-0">
+                <AlertTriangle className="w-4 h-4 text-amber-500" />
+                <span className="font-semibold text-stone-800 dark:text-stone-100 text-sm">Adrese corectate manual</span>
+                <span className="text-xs text-stone-400">({overrides.length})</span>
+              </div>
+              <div className="relative flex-1">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-400 pointer-events-none" />
+                <input
+                  value={overridesFilter}
+                  onChange={e => setOverridesFilter(e.target.value)}
+                  placeholder="Filtrează după nume sau adresă..."
+                  className="w-full pl-6 pr-2 py-1 text-xs rounded border border-stone-200 dark:border-stone-600 bg-stone-50 dark:bg-stone-800 text-stone-700 dark:text-stone-200 outline-none focus:ring-1 focus:ring-blue-400"
+                />
+              </div>
+              <button
+                onClick={() => setOverridesRecent(r => !r)}
+                className={`shrink-0 text-xs px-2 py-1 rounded border transition-colors ${overridesRecent ? 'bg-blue-600 text-white border-blue-600' : 'bg-stone-50 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-600 hover:border-blue-400'}`}
+              >
+                Ultimele 3 zile
+              </button>
+              <button onClick={() => { setShowOverrides(false); setOverridesFilter(''); setOverridesRecent(false); }}>
+                <X className="w-4 h-4 text-stone-400 hover:text-stone-600" />
+              </button>
+            </div>
+            <div className="overflow-y-auto flex-1 p-2">
+              {overrides.length === 0 ? (
+                <p className="text-center text-stone-400 text-sm py-8">Niciun pin salvat.</p>
+              ) : (
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="text-left text-stone-400 border-b border-stone-100 dark:border-stone-800">
+                      <th className="px-2 py-1.5 font-medium">Nume</th>
+                      <th className="px-2 py-1.5 font-medium">Adresă ERP (greșită)</th>
+                      <th className="px-2 py-1.5 font-medium">Adresă corectată</th>
+                      <th className="px-2 py-1.5"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {overrides.filter(o => {
+                      if (!o.corrected) return false;
+                      if (overridesRecent) {
+                        if (!o.updated_at) return false;
+                        const cutoff = Date.now() - 3 * 24 * 60 * 60 * 1000;
+                        if (new Date(o.updated_at).getTime() < cutoff) return false;
+                      }
+                      if (!overridesFilter.trim()) return true;
+                      const q = overridesFilter.toLowerCase();
+                      return o.name.toLowerCase().includes(q) || o.address_erp.toLowerCase().includes(q) || o.address_current.toLowerCase().includes(q);
+                    }).map(o => (
+                      <OverrideRow
+                        key={o.id}
+                        o={o}
+                        modalFixingId={modalFixingId}
+                        modalFixQ={modalFixQ}
+                        modalFixSearching={modalFixSearching}
+                        modalFixSuggestions={modalFixSuggestions}
+                        modalFixSaving={modalFixSaving}
+                        onFix={() => { setModalFixingId(o.id); setModalFixQ(o.address_current); setModalFixSuggestions([]); }}
+                        onFixSearch={handleModalFixSearch}
+                        onFixSelect={addr => handleModalFixSave(o.id, addr)}
+                        onFixClose={() => { setModalFixingId(null); setModalFixSuggestions([]); }}
+                        onDelete={() => deleteOverride.mutate(o.override_id!)}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

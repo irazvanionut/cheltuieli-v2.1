@@ -8,7 +8,7 @@ from datetime import date
 import httpx
 
 from app.core.database import get_db
-from app.models import Setting, MapPin
+from app.models import Setting, MapPin, Geofence
 from app.api.navigatie import _get_setting
 from app.api.geocoding import google_maps_enabled
 from app.api.comenzi import (
@@ -229,14 +229,17 @@ async def public_gps_sync(db: AsyncSession = Depends(get_db)):
             if coords:
                 lat, lng = coords
                 tm = await travel_time_from_restaurant(lat, lng, db)
-                db.add(MapPin(
+                pin = MapPin(
                     name=name,
                     address=clean_address(address),
                     lat=lat, lng=lng,
                     color=new_color,
                     note=new_note,
                     travel_time_min=tm,
-                ))
+                )
+                db.add(pin)
+                await db.flush()
+                db.add(Geofence(map_pin_id=pin.id, lat=lat, lng=lng, radius_m=100))
                 added += 1
             else:
                 failed.append(name)

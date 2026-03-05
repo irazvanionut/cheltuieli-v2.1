@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { clsx } from 'clsx';
 import {
@@ -15,6 +15,7 @@ import {
   Cpu,
   ChevronDown,
   ChevronUp,
+  ArrowLeftRight,
 } from 'lucide-react';
 import api from '@/services/api';
 import { format } from 'date-fns';
@@ -26,6 +27,8 @@ export const CompetitoriPage: React.FC = () => {
   const [tab, setTab] = useState<Tab>('comparatie');
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('');
+  const [selectedA, setSelectedA] = useState<number | undefined>(undefined);
+  const [selectedB, setSelectedB] = useState<number | undefined>(undefined);
   const [aiSummary, setAiSummary] = useState<{
     summary: string;
     uses_vectors: boolean;
@@ -41,10 +44,18 @@ export const CompetitoriPage: React.FC = () => {
     error: errorCompare,
     refetch: refetchCompare,
   } = useQuery({
-    queryKey: ['competitori-compare'],
-    queryFn: () => api.competitoriCompare(),
+    queryKey: ['competitori-compare', selectedA, selectedB],
+    queryFn: () => api.competitoriCompare({ site_a: selectedA, site_b: selectedB }),
     staleTime: 300_000,
   });
+
+  // Inițializează selecția cu primele 2 site-uri la primul load
+  useEffect(() => {
+    if (compareData?.sites?.length >= 2 && selectedA === undefined && selectedB === undefined) {
+      setSelectedA(compareData.site_a_id);
+      setSelectedB(compareData.site_b_id);
+    }
+  }, [compareData]);
 
   const {
     data: changesData,
@@ -103,7 +114,7 @@ export const CompetitoriPage: React.FC = () => {
     setAiSummary(null);
     setShowAI(true);
     try {
-      const result = await api.competitoriSummarize(siteAId, siteBId);
+      const result = await api.competitoriSummarize(selectedA, selectedB);
       setAiSummary(result);
     } catch (e: any) {
       setAiError(e?.response?.data?.detail || e.message || 'Eroare necunoscută');
@@ -230,6 +241,51 @@ export const CompetitoriPage: React.FC = () => {
       {/* TAB: Comparatie */}
       {tab === 'comparatie' && (
         <div className="space-y-6">
+          {/* Site selectors */}
+          {sites.length >= 2 && (
+            <div className="flex flex-wrap items-center gap-3 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl px-4 py-3">
+              <ArrowLeftRight className="w-4 h-4 text-stone-400 shrink-0" />
+              <div className="flex flex-1 flex-wrap items-center gap-2">
+                <select
+                  value={selectedA ?? ''}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    setSelectedA(val);
+                    setCatFilter('');
+                  }}
+                  className="flex-1 min-w-36 px-3 py-1.5 text-sm bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 font-medium"
+                >
+                  {sites.map((s: any) => (
+                    <option key={s.id} value={s.id} disabled={s.id === selectedB}>
+                      {s.nume}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-stone-400 text-sm font-medium">vs</span>
+                <select
+                  value={selectedB ?? ''}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    setSelectedB(val);
+                    setCatFilter('');
+                  }}
+                  className="flex-1 min-w-36 px-3 py-1.5 text-sm bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 font-medium"
+                >
+                  {sites.map((s: any) => (
+                    <option key={s.id} value={s.id} disabled={s.id === selectedA}>
+                      {s.nume}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {matched.length > 0 && (
+                <span className="text-xs text-stone-400 whitespace-nowrap">
+                  {matched.length} produse comune
+                </span>
+              )}
+            </div>
+          )}
+
           {/* Filters */}
           <div className="flex flex-wrap gap-3">
             <div className="relative flex-1 min-w-48">

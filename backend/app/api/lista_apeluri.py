@@ -30,11 +30,11 @@ from app.models import AmiApel, Setting, SmsTemplate, SmsLog, ErpCustomer, Coman
 
 router = APIRouter(tags=["lista-apeluri"])
 
-# ─── AMI config (defaults — overridden by settings table at runtime) ──────────
-AMI_HOST = "10.170.7.32"
+# ─── AMI config (read from settings table at runtime) ────────────────────────
+AMI_HOST = ""
 AMI_PORT = 5038
-AMI_USER = "admin"
-AMI_PASS = "amp111"
+AMI_USER = ""
+AMI_PASS = ""
 MAX_ACTIVE = 500
 RECONNECT_DELAY = 10
 AMI_KEEPALIVE_INTERVAL = 25

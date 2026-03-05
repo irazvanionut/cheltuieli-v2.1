@@ -24,6 +24,9 @@ RUN apt-get update && apt-get install -y \
     libcairo2 \
     fonts-unifont \
     wget \
+    poppler-utils \
+    tesseract-ocr \
+    tesseract-ocr-ron \
     && rm -rf /var/lib/apt/lists/*
 
 # Upgrade pip first

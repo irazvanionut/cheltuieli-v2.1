@@ -519,12 +519,26 @@ class MapPin(Base):
     created_at       = Column(DateTime, server_default=func.now())
 
 
+class Geofence(Base):
+    __tablename__ = "geofences"
+    id         = Column(Integer, primary_key=True, index=True)
+    map_pin_id = Column(Integer, ForeignKey("map_pins.id", ondelete="CASCADE"), nullable=True)
+    lat        = Column(Float, nullable=False)
+    lng        = Column(Float, nullable=False)
+    radius_m   = Column(Integer, nullable=False, default=100)
+    active     = Column(Boolean, default=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+    pin = relationship("MapPin", backref="geofences")
+
+
 class GeocodeOverride(Base):
     __tablename__ = "geocode_overrides"
     id                 = Column(Integer, primary_key=True)
     address_normalized = Column(String(500), unique=True, nullable=False, index=True)
     lat                = Column(Numeric(10, 7), nullable=False)
     lng                = Column(Numeric(10, 7), nullable=False)
+    map_pin_id         = Column(Integer, ForeignKey("map_pins.id", ondelete="SET NULL"), nullable=True, index=True)
     created_at         = Column(DateTime, server_default=func.now())
     updated_at         = Column(DateTime, server_default=func.now(), onupdate=func.now())
 

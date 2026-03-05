@@ -257,7 +257,13 @@ async def _lookup_geocode_override(db: AsyncSession, address: str) -> tuple[floa
     return None
 
 
-async def save_geocode_override(db: AsyncSession, original_address: str, lat: float, lng: float) -> None:
+async def save_geocode_override(
+    db: AsyncSession,
+    original_address: str,
+    lat: float,
+    lng: float,
+    map_pin_id: int | None = None,
+) -> None:
     """UPSERT a geocode override so future geocode_one() calls skip external APIs."""
     key = _normalize_for_override(original_address)
     existing = (await db.execute(
@@ -266,8 +272,10 @@ async def save_geocode_override(db: AsyncSession, original_address: str, lat: fl
     if existing:
         existing.lat = lat
         existing.lng = lng
+        if map_pin_id is not None:
+            existing.map_pin_id = map_pin_id
     else:
-        db.add(GeocodeOverride(address_normalized=key, lat=lat, lng=lng))
+        db.add(GeocodeOverride(address_normalized=key, lat=lat, lng=lng, map_pin_id=map_pin_id))
     try:
         await db.commit()
     except Exception:

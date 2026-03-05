@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api import auth, nomenclator, cheltuieli, portofele, rapoarte, settings, apeluri, apeluri_trend, pontaj, recomandari_apeluri, google_reviews, hass, agenda, lista_apeluri, competitori, erp_prod, navigatie, comenzi, rute, gps_public, orders, predictii
+from app.api import auth, nomenclator, cheltuieli, portofele, rapoarte, settings, apeluri, apeluri_trend, pontaj, recomandari_apeluri, google_reviews, hass, agenda, lista_apeluri, competitori, erp_prod, navigatie, comenzi, rute, gps_public, orders, predictii, comenzi_trends
 
 api_router = APIRouter()
 
@@ -27,3 +27,4 @@ api_router.include_router(rute.router)
 api_router.include_router(gps_public.router)
 api_router.include_router(orders.router)
 api_router.include_router(predictii.router)
+api_router.include_router(comenzi_trends.router)

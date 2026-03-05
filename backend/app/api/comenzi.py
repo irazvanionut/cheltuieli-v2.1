@@ -8,7 +8,7 @@ import httpx
 
 from app.core.database import get_db, AsyncSessionLocal
 from app.core.security import get_current_user
-from app.models import User, Setting, MapPin, Comanda, ComandaStatusHistory
+from app.models import User, Setting, MapPin, Geofence, Comanda, ComandaStatusHistory
 from app.api.geocoding import geocode_one, clean_address, travel_time_from_restaurant, save_geocode_override
 
 router = APIRouter(tags=["📦 Comenzi"])
@@ -234,14 +234,17 @@ async def marcare_harta_toate(
             status_raw = r.get("orderStatus_", 0)
             status = _ERP_STRING_TO_INT.get(status_raw, status_raw) if isinstance(status_raw, str) else status_raw
             info = STATUS_MAP.get(status, {"label": str(status_raw), "color": "blue"})
-            db.add(MapPin(
+            pin = MapPin(
                 name=name,
                 address=clean_address(address),
                 lat=lat, lng=lng,
                 color=info["color"],
                 note=info["label"],
                 travel_time_min=tm,
-            ))
+            )
+            db.add(pin)
+            await db.flush()
+            db.add(Geofence(map_pin_id=pin.id, lat=lat, lng=lng, radius_m=100))
             added += 1
         else:
             failed.append(name)
@@ -579,6 +582,9 @@ async def marcare_pin_individual(
     note = data.get("note")  # status label trimis din frontend
     pin = MapPin(name=name, address=clean_address(address), lat=lat, lng=lng, color=color, note=note, travel_time_min=tm)
     db.add(pin)
+    await db.flush()
+
+    db.add(Geofence(map_pin_id=pin.id, lat=lat, lng=lng, radius_m=100))
     await db.commit()
     await db.refresh(pin)
 

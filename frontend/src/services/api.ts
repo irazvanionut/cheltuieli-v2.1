@@ -1059,6 +1059,20 @@ class ApiService {
     const { data } = await this.client.get('/navigatie/traccar-token');
     return data;
   }
+  async getGeofences(): Promise<import('@/types').Geofence[]> {
+    const { data } = await this.client.get('/navigatie/geofences');
+    return data;
+  }
+  async deleteGeofence(id: number): Promise<void> {
+    await this.client.delete(`/navigatie/geofences/${id}`);
+  }
+  async getGeocodeOverrides(): Promise<{ id: number; name: string; address_erp: string; address_current: string; lat: number; lng: number; corrected: boolean; override_id: number | null; updated_at: string | null }[]> {
+    const { data } = await this.client.get('/navigatie/geocode-overrides');
+    return data;
+  }
+  async deleteGeocodeOverride(overrideId: number): Promise<void> {
+    await this.client.delete(`/navigatie/geocode-overrides/${overrideId}`);
+  }
 
   // Comenzi Azi
   async getComenziorAzi(): Promise<{ comenzi: any[]; total: number }> {
@@ -1176,6 +1190,48 @@ class ApiService {
     orders_synced: number; orders_total: number; coverage_pct: number;
   }> {
     const { data } = await this.client.get('/orders/produse', { params: { data_start, data_end, limit } });
+    return data;
+  }
+
+  async getComenziiTrends(data_start: string, data_end: string): Promise<{
+    current:  { total: number; dinein: number; livrare: number; ridicare: number; val_total: number; val_medie: number };
+    previous: { total: number; dinein: number; livrare: number; ridicare: number; val_total: number; val_medie: number };
+    pct:      { total: number | null; dinein: number | null; livrare: number | null; ridicare: number | null; val_total: number | null };
+    moving_avg:  { data: string; avg: number }[];
+    projection:  { data: string; projected: number }[];
+    prev_period: { start: string; end: string };
+  }> {
+    const { data } = await this.client.get('/comenzi/trends', { params: { data_start, data_end } });
+    return data;
+  }
+
+  async getComenziiHeatmap(): Promise<{
+    cells: { dow: number; hour: number; count: number; dinein: number; livrare: number; ridicare: number; val_avg: number; intensity: number }[];
+    computed_at: string | null;
+    days_window: number;
+  }> {
+    const { data } = await this.client.get('/comenzi/heatmap');
+    return data;
+  }
+  async getProduseHeatmap(data_start: string, data_end: string, limit = 20): Promise<{
+    produse: string[];
+    by_hour: Record<string, number[]>;
+    by_dow: Record<string, number[]>;
+    totals: Record<string, number>;
+  }> {
+    const { data } = await this.client.get('/comenzi/produse-heatmap', { params: { data_start, data_end, limit } });
+    return data;
+  }
+
+  async getTopProduseWithTrends(data_start: string, data_end: string, limit = 30): Promise<{
+    produse: {
+      product_name: string; product_group: string | null;
+      qty_total: number; qty_prev: number; val_total: number; nr_comenzi: number;
+      trend: 'up' | 'down' | 'stable' | 'new'; pct_change: number | null;
+    }[];
+    prev_period: { start: string; end: string };
+  }> {
+    const { data } = await this.client.get('/orders/produse-trends', { params: { data_start, data_end, limit } });
     return data;
   }
 

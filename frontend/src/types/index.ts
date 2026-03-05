@@ -511,3 +511,11 @@ export interface MapPin {
   note: string | null;
   created_at: string | null;
 }
+
+export interface Geofence {
+  id: number;
+  map_pin_id: number | null;
+  lat: number;
+  lng: number;
+  radius_m: number;
+}
