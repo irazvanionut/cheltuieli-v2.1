@@ -9,7 +9,8 @@ import { clsx } from 'clsx';
 import { toast } from 'react-hot-toast';
 import api from '@/services/api';
 
-const DRIVER_COLORS = ['#2563eb', '#ea580c'];  // blue, orange
+const DRIVER_COLORS = ['#2563eb', '#ea580c', '#16a34a', '#9333ea', '#dc2626'];  // blue, orange, green, purple, red
+const DRIVER_BG = ['bg-blue-500', 'bg-orange-500', 'bg-green-600', 'bg-purple-600', 'bg-red-600'];
 
 // ─── Google Maps helpers ───────────────────────────────────────────────────────
 
@@ -162,7 +163,7 @@ const MarkModal: React.FC<MarkModalProps> = ({ comanda, onConfirm, onClose, isPe
 const RUTE_PIN = '2910';
 
 interface RouteStop { id: string; number: string; name: string; address: string; lat: number; lng: number; order: number; status_label?: string; status_color?: string; eta_delivery?: string | null; eta_return?: string | null; order_time?: string | null; }
-interface RoutingResult { duration_min: number; return_min: number; total_min: number; geometry: [number, number][]; available?: boolean; }
+interface RoutingResult { duration_min: number; return_min: number; total_min: number; duration_no_traffic_min?: number; return_no_traffic_min?: number; geometry: [number, number][]; available?: boolean; }
 interface TripRoute { comenzi: RouteStop[]; osrm: RoutingResult | null; google: RoutingResult | { available: false }; maps_url: string; }
 interface DriverRoute { sofer: number; curse: TripRoute[]; }
 interface DriverLocal { sofer: number; curse: TripRoute[]; flatOrders: RouteStop[]; }
@@ -183,6 +184,7 @@ const RuteModal: React.FC<{
 }> = ({ comenzi, onClose }) => {
   const [phase, setPhase] = useState<'pin' | 'engines' | 'loading' | 'results'>('pin');
   const [engines, setEngines] = useState<Set<string>>(new Set(['osrm', 'google']));
+  const [nrSoferi, setNrSoferi] = useState(2);
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState(false);
   const [ruteData, setRuteData] = useState<RuteData | null>(null);
@@ -361,19 +363,17 @@ const RuteModal: React.FC<{
 
   const startCalc = (payload: any) => {
     setPhase('loading');
-    calcMutation.mutate({ ...payload, engines: Array.from(engines) });
+    calcMutation.mutate({ ...payload, engines: Array.from(engines), nr_soferi: nrSoferi });
   };
 
   const handleRecalc = () => {
-    const s1ids = localSoferi[0]?.flatOrders.map(c => c.id) ?? [];
-    const s2ids = localSoferi[1]?.flatOrders.map(c => c.id) ?? [];
-    startCalc({ comenzi, sofer1_ids: s1ids, sofer2_ids: s2ids });
+    const sofer_ids = localSoferi.map(s => s.flatOrders.map(c => c.id));
+    startCalc({ comenzi, sofer_ids, nr_soferi: localSoferi.length });
   };
 
-  const swapStop = (fromDriver: number, stopId: string) => {
+  const moveStop = (fromDriver: number, stopId: string, toDriver: number) => {
     setLocalSoferi(prev => {
       const next = JSON.parse(JSON.stringify(prev)) as DriverLocal[];
-      const toDriver = fromDriver === 0 ? 1 : 0;
       const idx = next[fromDriver].flatOrders.findIndex(o => o.id === stopId);
       if (idx === -1) return prev;
       const [stop] = next[fromDriver].flatOrders.splice(idx, 1);
@@ -481,6 +481,22 @@ const RuteModal: React.FC<{
                 </label>
               ))}
             </div>
+            {/* Driver count */}
+            <div className="flex items-center justify-between px-1">
+              <span className="text-sm text-stone-300">Număr șoferi</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setNrSoferi(n => Math.max(1, n - 1))}
+                  className="w-7 h-7 rounded-lg bg-stone-700 hover:bg-stone-600 text-stone-200 font-bold transition-colors flex items-center justify-center"
+                >−</button>
+                <span className="text-stone-100 font-mono font-bold w-5 text-center">{nrSoferi}</span>
+                <button
+                  onClick={() => setNrSoferi(n => Math.min(5, n + 1))}
+                  className="w-7 h-7 rounded-lg bg-stone-700 hover:bg-stone-600 text-stone-200 font-bold transition-colors flex items-center justify-center"
+                >+</button>
+              </div>
+            </div>
+
             <button
               onClick={() => startCalc({ comenzi })}
               disabled={engines.size === 0}
@@ -509,14 +525,15 @@ const RuteModal: React.FC<{
 
             {/* Map legend */}
             <div className="absolute bottom-3 left-3 z-[1000] bg-white/90 dark:bg-stone-800/90 rounded-lg px-3 py-2 text-xs space-y-1 shadow-md pointer-events-none">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-1 rounded" style={{ background: DRIVER_COLORS[0] }} />
-                <span className="text-stone-700 dark:text-stone-200">Șofer 1</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-0.5 border-t-2 border-dashed" style={{ borderColor: DRIVER_COLORS[1] }} />
-                <span className="text-stone-700 dark:text-stone-200">Șofer 2</span>
-              </div>
+              {localSoferi.map((_, di) => (
+                <div key={di} className="flex items-center gap-2">
+                  {di === 0
+                    ? <div className="w-6 h-1 rounded" style={{ background: DRIVER_COLORS[di] }} />
+                    : <div className="w-6 h-0.5 border-t-2 border-dashed" style={{ borderColor: DRIVER_COLORS[di] }} />
+                  }
+                  <span className="text-stone-700 dark:text-stone-200">Șofer {di + 1}</span>
+                </div>
+              ))}
               {localSoferi[0]?.curse[0] && (
                 <div className="text-stone-400 text-[10px]">
                   {tripGoogleOk(localSoferi[0].curse[0]) ? '🟢 Google (trafic)' : '⚪ OSRM (fără trafic)'}
@@ -565,13 +582,19 @@ const RuteModal: React.FC<{
                           <p className="text-sm font-medium text-stone-200 truncate capitalize">{stop.name?.toLowerCase()}</p>
                           <p className="text-[11px] text-stone-500 truncate">{stop.address}</p>
                         </div>
-                        <button
-                          onClick={() => swapStop(activeTab, stop.id)}
-                          className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-stone-200 transition-colors"
-                        >
-                          <ArrowRightLeft className="w-3 h-3" />
-                          Șofer {activeTab === 0 ? 2 : 1}
-                        </button>
+                        <div className="shrink-0 flex gap-1">
+                          {localSoferi.map((_, di) => di !== activeTab && (
+                            <button
+                              key={di}
+                              onClick={() => moveStop(activeTab, stop.id, di)}
+                              className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-stone-200 transition-colors"
+                              title={`Mută la Șofer ${di + 1}`}
+                            >
+                              <ArrowRightLeft className="w-3 h-3" />
+                              <span className="w-2 h-2 rounded-full inline-block" style={{ background: DRIVER_COLORS[di] }} />
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     ))}
                     {activeDriver.flatOrders.length === 0 && (
@@ -584,11 +607,20 @@ const RuteModal: React.FC<{
                     {activeDriver.curse.map((trip, ti) => {
                       const main = getTripMain(trip);
                       const hasGoogle = tripGoogleOk(trip);
-                      const trafficDus = (hasGoogle && trip.osrm)
-                        ? Math.max(0, (trip.google as RoutingResult).duration_min - trip.osrm.duration_min)
+                      const googleRes = trip.google as RoutingResult;
+                      const trafficDus = hasGoogle
+                        ? trip.osrm
+                          ? Math.max(0, googleRes.duration_min - trip.osrm.duration_min)
+                          : googleRes.duration_no_traffic_min != null
+                            ? Math.max(0, googleRes.duration_min - googleRes.duration_no_traffic_min)
+                            : null
                         : null;
-                      const trafficRetur = (hasGoogle && trip.osrm)
-                        ? Math.max(0, (trip.google as RoutingResult).return_min - trip.osrm.return_min)
+                      const trafficRetur = hasGoogle
+                        ? trip.osrm
+                          ? Math.max(0, googleRes.return_min - trip.osrm.return_min)
+                          : googleRes.return_no_traffic_min != null
+                            ? Math.max(0, googleRes.return_min - googleRes.return_no_traffic_min)
+                            : null
                         : null;
                       const multi = activeDriver.curse.length > 1;
 
@@ -652,14 +684,19 @@ const RuteModal: React.FC<{
                                   <p className="text-[11px] text-stone-500 truncate">{stop.address}</p>
                                   {stop.status_label && <span className="text-[10px] text-stone-500">{stop.status_label}</span>}
                                 </div>
-                                <button
-                                  onClick={() => swapStop(activeTab, stop.id)}
-                                  className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-stone-200 transition-colors"
-                                  title={`Mută la Șofer ${activeTab === 0 ? 2 : 1}`}
-                                >
-                                  <ArrowRightLeft className="w-3 h-3" />
-                                  Șofer {activeTab === 0 ? 2 : 1}
-                                </button>
+                                <div className="shrink-0 flex gap-1">
+                                  {localSoferi.map((_, di) => di !== activeTab && (
+                                    <button
+                                      key={di}
+                                      onClick={() => moveStop(activeTab, stop.id, di)}
+                                      className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-stone-200 transition-colors"
+                                      title={`Mută la Șofer ${di + 1}`}
+                                    >
+                                      <ArrowRightLeft className="w-3 h-3" />
+                                      <span className="w-2 h-2 rounded-full inline-block" style={{ background: DRIVER_COLORS[di] }} />
+                                    </button>
+                                  ))}
+                                </div>
                               </div>
                             ))}
                           </div>

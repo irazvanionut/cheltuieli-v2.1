@@ -92,34 +92,49 @@ def _cluster_orders(orders: list[dict]) -> list[list[dict]]:
     return clusters
 
 
-def _assign_clusters_to_drivers(
+def _assign_clusters_to_n_drivers(
     clusters: list[list[dict]],
-) -> tuple[list[list[dict]], list[list[dict]]]:
-    """Assign clusters (trips) to 2 drivers by bearing proximity."""
+    n: int,
+) -> list[list[list[dict]]]:
+    """Assign clusters (trips) to N drivers by bearing proximity."""
+    n = max(1, n)
     if not clusters:
-        return [], []
+        return [[] for _ in range(n)]
+
+    if n == 1:
+        return [clusters]
 
     clusters = sorted(clusters, key=lambda c: -len(c))
 
     if len(clusters) == 1:
-        # Split single cluster into 2 trips by bearing midpoint
+        # Split single cluster into N groups by bearing
         by_bearing = sorted(clusters[0], key=lambda o: o["bearing"])
-        mid = max(1, len(by_bearing) // 2)
-        return [[by_bearing[:mid]]], [[by_bearing[mid:]]]
+        size = max(1, len(by_bearing) // n)
+        groups = []
+        for i in range(n):
+            start = i * size
+            end = start + size if i < n - 1 else len(by_bearing)
+            groups.append([by_bearing[start:end]] if by_bearing[start:end] else [])
+        return groups
 
-    driver1_trips = [clusters[0]]
-    driver2_trips = [clusters[1]]
+    # Seed each driver with one cluster
+    driver_trips: list[list[list[dict]]] = [[] for _ in range(n)]
+    for i, cluster in enumerate(clusters[:n]):
+        driver_trips[i].append(cluster)
 
-    for extra in clusters[2:]:
-        avg1 = _mean_bearing([o["bearing"] for d in driver1_trips for o in d])
-        avg2 = _mean_bearing([o["bearing"] for d in driver2_trips for o in d])
+    # Assign remaining clusters to nearest driver by bearing
+    for extra in clusters[n:]:
         extra_avg = _mean_bearing([o["bearing"] for o in extra])
-        if _angular_diff(extra_avg, avg1) <= _angular_diff(extra_avg, avg2):
-            driver1_trips.append(extra)
-        else:
-            driver2_trips.append(extra)
+        best_i = min(
+            range(n),
+            key=lambda i: _angular_diff(
+                extra_avg,
+                _mean_bearing([o["bearing"] for t in driver_trips[i] for o in t]) if driver_trips[i] else 0
+            )
+        )
+        driver_trips[best_i].append(extra)
 
-    return driver1_trips, driver2_trips
+    return driver_trips
 
 
 # ─── OSRM routing ─────────────────────────────────────────────────────────────
@@ -213,22 +228,23 @@ async def _route_google(stops: list[dict], api_key: str, db: AsyncSession) -> di
         return None
     if not await google_maps_enabled(db):
         return None
+
     origin = f"{RESTAURANT_LAT},{RESTAURANT_LNG}"
     waypoints = "|".join(f"{s['lat']},{s['lng']}" for s in stops)
-    params = {
-        "origin": origin,
-        "destination": origin,
-        "waypoints": f"optimize:true|{waypoints}",
-        "departure_time": "now",
-        "traffic_model": "best_guess",
-        "key": api_key,
-        "language": "ro",
-    }
+
+    # ── Step 1: Directions API — geometry only ───────────────────────────────
     try:
         async with httpx.AsyncClient(timeout=15) as client:
             resp = await client.get(
                 "https://maps.googleapis.com/maps/api/directions/json",
-                params=params,
+                params={
+                    "origin": origin,
+                    "destination": origin,
+                    "waypoints": waypoints,
+                    "mode": "driving",
+                    "key": api_key,
+                    "language": "ro",
+                },
             )
             resp.raise_for_status()
             data = resp.json()
@@ -243,25 +259,54 @@ async def _route_google(stops: list[dict], api_key: str, db: AsyncSession) -> di
     if not legs:
         return None
 
-    def _leg_dur(leg: dict) -> int:
-        return leg.get("duration_in_traffic", leg.get("duration", {})).get("value", 0)
-
-    total_sec = sum(_leg_dur(l) for l in legs)
-    return_sec = _leg_dur(legs[-1])
-    route_sec = total_sec - return_sec
-
     encoded = route.get("overview_polyline", {}).get("points", "")
     geometry = _decode_polyline(encoded) if encoded else []
-    stop_order = route.get("waypoint_order", list(range(len(stops))))
-
     await _increment_directions_counter(db)
+
+    # Fallback timing from Directions legs (no traffic)
+    leg_no_tr = [leg.get("duration", {}).get("value", 0) for leg in legs]
+    leg_tr = list(leg_no_tr)
+
+    # ── Step 2: Distance Matrix — traffic timing per leg (1 call) ────────────
+    # Build sequential leg pairs: restaurant→s0→s1→...→restaurant
+    pts = [f"{RESTAURANT_LAT},{RESTAURANT_LNG}"] + [f"{s['lat']},{s['lng']}" for s in stops] + [f"{RESTAURANT_LAT},{RESTAURANT_LNG}"]
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            dm_resp = await client.get(
+                "https://maps.googleapis.com/maps/api/distancematrix/json",
+                params={
+                    "origins": "|".join(pts[:-1]),
+                    "destinations": "|".join(pts[1:]),
+                    "mode": "driving",
+                    "departure_time": "now",
+                    "key": api_key,
+                },
+            )
+            dm_resp.raise_for_status()
+            dm = dm_resp.json()
+        if dm.get("status") == "OK":
+            for i, row in enumerate(dm.get("rows", [])):
+                els = row.get("elements", [])
+                if i < len(els) and els[i].get("status") == "OK":
+                    el = els[i]
+                    leg_no_tr[i] = el["duration"]["value"]
+                    leg_tr[i] = el.get("duration_in_traffic", el["duration"])["value"]
+    except Exception:
+        pass  # keep Directions fallback values
+
+    route_sec = sum(leg_tr[:-1])
+    return_sec = leg_tr[-1]
+    route_no = sum(leg_no_tr[:-1])
+    return_no = leg_no_tr[-1]
 
     return {
         "duration_min": round(route_sec / 60, 1),
         "return_min": round(return_sec / 60, 1),
-        "total_min": round(total_sec / 60, 1),
+        "total_min": round((route_sec + return_sec) / 60, 1),
+        "duration_no_traffic_min": round(route_no / 60, 1),
+        "return_no_traffic_min": round(return_no / 60, 1),
         "geometry": geometry,
-        "stop_order": stop_order,
+        "stop_order": list(range(len(stops))),
         "available": True,
     }
 
@@ -358,8 +403,11 @@ async def calculeaza_rute(
     if not raw:
         raise HTTPException(status_code=400, detail="Nicio comandă trimisă.")
 
-    sofer1_ids: set[str] = set(str(x) for x in data.get("sofer1_ids", []))
-    sofer2_ids: set[str] = set(str(x) for x in data.get("sofer2_ids", []))
+    nr_soferi: int = max(1, min(5, int(data.get("nr_soferi", 2))))
+    # sofer_ids: [[id,...], [id,...], ...] — one list per driver
+    sofer_ids_raw: list[list[str]] = [
+        [str(x) for x in pool] for pool in data.get("sofer_ids", [])
+    ]
 
     # ── Geocode: map pin → Google Maps → Nominatim ─────────────────────────────
     orders: list[dict] = []
@@ -402,33 +450,37 @@ async def calculeaza_rute(
         raise HTTPException(status_code=422, detail="Nicio comandă nu a putut fi geocodată.")
 
     # ── Cluster into trips and assign to drivers ────────────────────────────────
-    if sofer1_ids and sofer2_ids:
-        # User manually assigned orders — re-cluster within each driver's pool
-        pool1 = [o for o in orders if str(o["id"]) in sofer1_ids]
-        pool2 = [o for o in orders if str(o["id"]) in sofer2_ids]
-        # Unassigned orders go to nearest driver by bearing
-        for o in orders:
-            oid = str(o["id"])
-            if oid not in sofer1_ids and oid not in sofer2_ids:
-                avg1 = _mean_bearing([x["bearing"] for x in pool1]) if pool1 else 0
-                avg2 = _mean_bearing([x["bearing"] for x in pool2]) if pool2 else 180
-                if _angular_diff(o["bearing"], avg1) <= _angular_diff(o["bearing"], avg2):
-                    pool1.append(o)
-                else:
-                    pool2.append(o)
-        driver1_trips = _cluster_orders(pool1)
-        driver2_trips = _cluster_orders(pool2)
-    else:
-        all_clusters = _cluster_orders(orders)
-        driver1_trips, driver2_trips = _assign_clusters_to_drivers(all_clusters)
-
     api_key = await _read_gmaps_key(db)
     engines = frozenset(data.get("engines", ["osrm", "google"]))
 
-    sofer1 = await _build_driver(1, driver1_trips, api_key, db, engines)
-    sofer2 = await _build_driver(2, driver2_trips, api_key, db, engines)
+    if sofer_ids_raw and all(pool for pool in sofer_ids_raw):
+        # Manual assignment: re-cluster within each driver's pool
+        assigned_ids = {oid for pool in sofer_ids_raw for oid in pool}
+        driver_trips: list[list[list[dict]]] = []
+        pools: list[list[dict]] = [
+            [o for o in orders if str(o["id"]) in set(pool)]
+            for pool in sofer_ids_raw
+        ]
+        # Unassigned orders → nearest driver by bearing
+        for o in orders:
+            if str(o["id"]) not in assigned_ids:
+                avgs = [
+                    _mean_bearing([x["bearing"] for x in p]) if p else (i * 360 / nr_soferi)
+                    for i, p in enumerate(pools)
+                ]
+                best = min(range(len(pools)), key=lambda i: _angular_diff(o["bearing"], avgs[i]))
+                pools[best].append(o)
+        driver_trips = [_cluster_orders(p) for p in pools]
+    else:
+        all_clusters = _cluster_orders(orders)
+        driver_trips = _assign_clusters_to_n_drivers(all_clusters, nr_soferi)
+
+    soferi = [
+        await _build_driver(i + 1, driver_trips[i] if i < len(driver_trips) else [], api_key, db, engines)
+        for i in range(nr_soferi)
+    ]
 
     return {
-        "soferi": [sofer1, sofer2],
+        "soferi": soferi,
         "restaurant": {"lat": RESTAURANT_LAT, "lng": RESTAURANT_LNG},
     }

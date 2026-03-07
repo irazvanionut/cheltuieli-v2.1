@@ -1051,6 +1051,10 @@ class ApiService {
   async deleteMapPin(id: number): Promise<void> {
     await this.client.delete(`/navigatie/pins/${id}`);
   }
+  async refreshPinTravelTime(id: number, departureTime: string): Promise<{ id: number; travel_time_min: number; eta_delivery: string | null; eta_return: string | null }> {
+    const { data } = await this.client.post(`/navigatie/pins/${id}/refresh-travel-time`, { departure_time: departureTime });
+    return data;
+  }
   async geocodeAddress(q: string): Promise<{ lat: string; lon: string; display_name: string }[]> {
     const { data } = await this.client.get('/navigatie/geocode', { params: { q } });
     return data;

@@ -16,6 +16,22 @@ router = APIRouter(tags=["📦 Comenzi"])
 PREP_MIN = 20  # preparation time in minutes
 
 
+def _departure_ts(created_at_str: str | None) -> int | None:
+    """Unix timestamp when car is expected to leave = order_time + PREP_MIN.
+    Returns None if in the past (caller will use 'now')."""
+    if not created_at_str:
+        return None
+    try:
+        ts = created_at_str.replace("Z", "+00:00")
+        created = datetime.fromisoformat(ts)
+        departure = created + timedelta(minutes=PREP_MIN)
+        dept_ts = int(departure.timestamp())
+        now_ts = int(datetime.now(timezone.utc).timestamp())
+        return dept_ts if dept_ts > now_ts else None
+    except Exception:
+        return None
+
+
 TZ_RO = timezone(timedelta(hours=2))
 
 
@@ -230,7 +246,8 @@ async def marcare_harta_toate(
         coords = await geocode_one(address, db, name_hint=name)
         if coords:
             lat, lng = coords
-            tm = await travel_time_from_restaurant(lat, lng, db)
+            dept_ts = _departure_ts(r.get("createdAt_"))
+            tm = await travel_time_from_restaurant(lat, lng, db, departure_ts=dept_ts)
             status_raw = r.get("orderStatus_", 0)
             status = _ERP_STRING_TO_INT.get(status_raw, status_raw) if isinstance(status_raw, str) else status_raw
             info = STATUS_MAP.get(status, {"label": str(status_raw), "color": "blue"})
@@ -308,7 +325,8 @@ async def _do_sync_harta(db: AsyncSession) -> dict:
             coords = await geocode_one(address, db, name_hint=name)
             if coords:
                 lat, lng = coords
-                tm = await travel_time_from_restaurant(lat, lng, db)
+                dept_ts = _departure_ts(r.get("createdAt_"))
+                tm = await travel_time_from_restaurant(lat, lng, db, departure_ts=dept_ts)
                 new_pin = MapPin(
                     name=name,
                     address=clean_addr,

@@ -6,8 +6,8 @@ import api from '@/services/api';
 import { useAppStore } from '@/hooks/useAppStore';
 import type { MapPin } from '@/types';
 
-const RESTAURANT_LAT = 44.5064935;
-const RESTAURANT_LNG = 26.2184075;
+const RESTAURANT_LAT = 44.505798;
+const RESTAURANT_LNG = 26.218803;
 const POLL_INTERVAL_MS = 15_000;
 const ORDER_POLL_MS = 2 * 60 * 1000;
 
@@ -191,6 +191,12 @@ export const NavigatieGpsPage: React.FC = () => {
   const [modalFixSearching, setModalFixSearching] = useState(false);
   const [modalFixSaving, setModalFixSaving] = useState(false);
   const modalFixTimeout = useRef<ReturnType<typeof setTimeout>>();
+
+  // Refresh travel time
+  const [refreshPin, setRefreshPin] = useState<{ id: number; name: string } | null>(null);
+  const [refreshDept, setRefreshDept] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
 
   // Public mode: only boolean flag (key stays on server, loaded via /public/gps/maps-js proxy)
   const { data: publicSettings } = useQuery<{ has_maps_key: boolean }>({
@@ -606,6 +612,7 @@ export const NavigatieGpsPage: React.FC = () => {
     deliveryMarkersRef.current.clear();
 
     deliveryPins.forEach(pin => {
+      const allOrders = ordersByName.get(pin.name.toLowerCase()) ?? [];
       const order = findOrder(pin);
       const eta = order?.eta_delivery || '';
       const etaReturn = order?.eta_return || '';
@@ -627,12 +634,16 @@ export const NavigatieGpsPage: React.FC = () => {
         infoWindowRef.current?.setContent(
           `<div style="font-family:sans-serif;min-width:160px;max-width:220px">
             <p style="font-weight:700;margin:0 0 6px;font-size:13px;text-transform:capitalize">${pin.name.toLowerCase()}</p>
+            ${allOrders.length > 1 ? `<p style="margin:2px 0;font-size:12px;color:#d97706">📦 <b>${allOrders.length} comenzi</b></p>` : ''}
             ${createdTime ? `<p style="margin:2px 0;font-size:12px">🕐 Comandă: <b>${createdTime}</b></p>` : ''}
             ${eta ? `<p style="margin:2px 0;font-size:12px">📦 La client: <b style="color:#059669">${eta}</b>${etaReturn ? ` <span style="color:#9ca3af;font-size:11px">(↩ ${etaReturn})</span>` : ''}</p>` : ''}
             ${travelMin != null ? `<p style="margin:2px 0;font-size:11px;color:#9ca3af">${travelMin} min drum + 20 min prep</p>` : ''}
             ${order?.status_label ? `<p style="margin:2px 0;font-size:12px">Status: <b>${order.status_label}</b></p>` : ''}
             ${pin.address ? `<p style="margin:2px 0;font-size:11px;color:#6b7280">${pin.address}</p>` : ''}
-            <p style="margin:6px 0 0;font-size:11px;color:#d97706;cursor:pointer" onclick="document.dispatchEvent(new CustomEvent('fix-pin',{detail:{id:${pin.id},name:'${pin.name.replace(/'/g, "\\'")}',address:'${(pin.address||'').replace(/'/g, "\\'")}'}}))"">✏ Fix locație</p>
+            <div style="margin-top:6px;display:flex;gap:8px">
+              <p style="margin:0;font-size:11px;color:#d97706;cursor:pointer" onclick="document.dispatchEvent(new CustomEvent('fix-pin',{detail:{id:${pin.id},name:'${pin.name.replace(/'/g, "\\'")}',address:'${(pin.address||'').replace(/'/g, "\\'")}'}}))"">✏ Fix locație</p>
+              <p style="margin:0;font-size:11px;color:#2563eb;cursor:pointer" onclick="document.dispatchEvent(new CustomEvent('refresh-travel-time',{detail:{id:${pin.id},name:'${pin.name.replace(/'/g, "\\'")}'}}))">🕐 Refresh timp</p>
+            </div>
           </div>`
         );
         infoWindowRef.current?.open(map, marker);
@@ -640,7 +651,7 @@ export const NavigatieGpsPage: React.FC = () => {
 
       deliveryMarkersRef.current.set(pin.id, marker);
     });
-  }, [deliveryPins, mapReady, findOrder]);
+  }, [deliveryPins, mapReady, findOrder, ordersByName]);
 
   // ── Listen for fix-pin custom event (fired from InfoWindow HTML) ────────────
   useEffect(() => {
@@ -653,6 +664,50 @@ export const NavigatieGpsPage: React.FC = () => {
     document.addEventListener('fix-pin', handler);
     return () => document.removeEventListener('fix-pin', handler);
   }, []);
+
+  // ── Listen for refresh-travel-time custom event ──────────────────────────────
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { id, name } = (e as CustomEvent).detail;
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      setRefreshPin({ id, name });
+      setRefreshDept(`${hh}:${mm}`);
+      setRefreshError(null);
+    };
+    document.addEventListener('refresh-travel-time', handler);
+    return () => document.removeEventListener('refresh-travel-time', handler);
+  }, []);
+
+  const handleRefreshTravelTime = async () => {
+    if (!refreshPin || !refreshDept) return;
+    setRefreshing(true);
+    setRefreshError(null);
+    try {
+      const result = await api.refreshPinTravelTime(refreshPin.id, refreshDept);
+      // Directly patch the comenzi cache so markers rebuild immediately with correct ETA
+      const cacheKey = isPublic ? ['public-gps-comenzi'] : ['comenzi-azi'];
+      queryClient.setQueryData(cacheKey, (old: any) => {
+        if (!old) return old;
+        const nameLC = refreshPin.name.toLowerCase();
+        return {
+          ...old,
+          comenzi: old.comenzi.map((c: any) =>
+            (c.customer_name || '').toLowerCase() === nameLC
+              ? { ...c, travel_time_min: Math.round(result.travel_time_min), eta_delivery: result.eta_delivery, eta_return: result.eta_return }
+              : c
+          ),
+        };
+      });
+      setRefreshPin(null);
+      infoWindowRef.current?.close();
+    } catch (e: any) {
+      setRefreshError(e?.response?.data?.detail || e?.message || 'Eroare');
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // ── Auto-fit bounds when pins load ──────────────────────────────────────────
   const fitBounds = useCallback(() => {
@@ -679,7 +734,7 @@ export const NavigatieGpsPage: React.FC = () => {
   // ─── Render ─────────────────────────────────────────────────────────────────
 
   const onlineCount = vehicles.filter((v: any) => v.status === 'online').length;
-  const deliveryPinsCount = deliveryPins.length;
+  const deliveryPinsCount = (comenziData?.comenzi || []).filter((c: any) => !c.is_ridicare).length || deliveryPins.length;
 
   return (
     <div className={isPublic
@@ -922,6 +977,46 @@ export const NavigatieGpsPage: React.FC = () => {
               <button
                 onClick={() => setFixingPin(null)}
                 disabled={fixing}
+                className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-300 dark:hover:bg-stone-600 disabled:opacity-50 transition-colors"
+              >
+                <X className="w-3 h-3" />
+                Anulează
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Refresh travel time panel */}
+        {refreshPin && (
+          <div className="absolute bottom-4 left-4 w-64 bg-white/95 dark:bg-stone-900/95 rounded-xl shadow-lg border border-blue-300 dark:border-blue-700 p-3 z-10">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold text-stone-700 dark:text-stone-200 capitalize truncate flex-1">
+                🕐 {refreshPin.name.toLowerCase()}
+              </p>
+              <button onClick={() => setRefreshPin(null)} className="ml-2 text-stone-400 hover:text-stone-600">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <p className="text-[10px] text-stone-400 mb-1.5">Ora la care pleacă mașina:</p>
+            <input
+              type="time"
+              value={refreshDept}
+              onChange={e => setRefreshDept(e.target.value)}
+              className="w-full text-sm px-2 py-1.5 rounded border border-blue-300 dark:border-blue-600 bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-200 outline-none focus:ring-1 focus:ring-blue-400 mb-2"
+            />
+            {refreshError && <p className="text-[10px] text-red-500 mb-1.5">{refreshError}</p>}
+            <div className="flex gap-1.5">
+              <button
+                onClick={handleRefreshTravelTime}
+                disabled={refreshing || !refreshDept}
+                className="flex items-center gap-1 px-3 py-1 rounded text-xs bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50 transition-colors"
+              >
+                {refreshing ? <RefreshCw className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                Calculează
+              </button>
+              <button
+                onClick={() => setRefreshPin(null)}
+                disabled={refreshing}
                 className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-300 dark:hover:bg-stone-600 disabled:opacity-50 transition-colors"
               >
                 <X className="w-3 h-3" />

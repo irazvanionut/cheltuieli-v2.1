@@ -3,7 +3,7 @@
 import re
 import httpx
 from math import radians, sin, cos, sqrt, atan2
-from datetime import date
+from datetime import date, datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -12,8 +12,8 @@ from app.models import Setting, GeocodeOverride
 
 # ─── Restaurant location & range filter ──────────────────────────────────────
 
-RESTAURANT_LAT = 44.5064935
-RESTAURANT_LNG = 26.2184075
+RESTAURANT_LAT = 44.505798
+RESTAURANT_LNG = 26.218803
 MAX_DISTANCE_KM = 20.0
 
 
@@ -399,17 +399,25 @@ async def geocode_one(address: str, db: AsyncSession | None = None, name_hint: s
 _OSRM_URL = "https://router.project-osrm.org"
 
 
-async def travel_time_from_restaurant(lat: float, lng: float, db: AsyncSession | None = None) -> float | None:
+async def travel_time_from_restaurant(
+    lat: float,
+    lng: float,
+    db: AsyncSession | None = None,
+    departure_ts: int | None = None,
+) -> float | None:
     """Travel time in minutes from restaurant to (lat, lng).
 
-    Uses Google Distance Matrix with real-time traffic if API key configured,
-    falls back to OSRM (no traffic) otherwise.
+    departure_ts: Unix timestamp when the car is expected to leave (order_time + prep).
+                  Must be in the future; if None or in the past, uses 'now'.
+    Uses Google Distance Matrix with traffic if API key configured, falls back to OSRM.
     """
     api_key = ""
     if db is not None:
         api_key = await _read_gmaps_key(db)
 
     if api_key:
+        now_ts = int(datetime.now(timezone.utc).timestamp())
+        dept = departure_ts if (departure_ts and departure_ts > now_ts) else "now"
         try:
             async with httpx.AsyncClient(timeout=10) as client:
                 resp = await client.get(
@@ -418,18 +426,19 @@ async def travel_time_from_restaurant(lat: float, lng: float, db: AsyncSession |
                         "origins": f"{RESTAURANT_LAT},{RESTAURANT_LNG}",
                         "destinations": f"{lat},{lng}",
                         "mode": "driving",
-                        "departure_time": "now",
+                        "departure_time": dept,
                         "key": api_key,
                     },
                 )
                 resp.raise_for_status()
                 data = resp.json()
             element = data["rows"][0]["elements"][0]
+            print(f"[TravelTime] Google status={data.get('status')} elem={element.get('status')} dept={dept} has_traffic={'duration_in_traffic' in element} duration={element.get('duration',{}).get('value')} traffic={element.get('duration_in_traffic',{}).get('value')}")
             if element["status"] == "OK":
                 dur = element.get("duration_in_traffic", element["duration"])
                 return dur["value"] / 60.0
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[TravelTime] Google error: {e}")
 
     # Fallback: OSRM (no traffic)
     try:
@@ -442,8 +451,9 @@ async def travel_time_from_restaurant(lat: float, lng: float, db: AsyncSession |
             if r.status_code == 200:
                 row = r.json().get("durations", [[]])[0]
                 if len(row) > 1 and row[1] is not None:
+                    print(f"[TravelTime] OSRM fallback → {row[1]/60:.1f} min")
                     return row[1] / 60.0
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[TravelTime] OSRM error: {e}")
 
     return None

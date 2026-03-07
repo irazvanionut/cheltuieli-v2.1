@@ -129,6 +129,7 @@ services:
     ports:
       - "30003:8082"
       - "5055:5055"
+      - "5027:5027"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8082/api/server || exit 1"]
       interval: 30s

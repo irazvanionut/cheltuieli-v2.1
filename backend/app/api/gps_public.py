@@ -13,7 +13,7 @@ from app.api.navigatie import _get_setting
 from app.api.geocoding import google_maps_enabled
 from app.api.comenzi import (
     _read_erp_prod_token, _fetch_comenzi_erp,
-    _is_ridicare, STATUS_MAP, _fmt_eta,
+    _is_ridicare, STATUS_MAP, _fmt_eta, _departure_ts,
 )
 from app.api.geocoding import geocode_one, travel_time_from_restaurant, clean_address
 
@@ -228,7 +228,8 @@ async def public_gps_sync(db: AsyncSession = Depends(get_db)):
             coords = await geocode_one(address, db, name_hint=name)
             if coords:
                 lat, lng = coords
-                tm = await travel_time_from_restaurant(lat, lng, db)
+                dept_ts = _departure_ts(r.get("createdAt_"))
+                tm = await travel_time_from_restaurant(lat, lng, db, departure_ts=dept_ts)
                 pin = MapPin(
                     name=name,
                     address=clean_address(address),

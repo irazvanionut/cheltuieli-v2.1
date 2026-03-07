@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisco
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Optional
-from datetime import date
+from datetime import date, datetime, timezone, timedelta
 import httpx
 import json
 
@@ -227,6 +227,63 @@ async def update_pin_address(
 
     await _broadcast_gps({"type": "pins_updated"})
     return {"id": pin.id, "lat": float(pin.lat), "lng": float(pin.lng), "address": pin.address}
+
+
+@router.post("/navigatie/pins/{pin_id}/refresh-travel-time")
+async def refresh_travel_time(
+    pin_id: int,
+    data: dict,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Recalculează travel_time_min pentru un pin, la ora de plecare specificată (HH:MM)."""
+    pin = (await db.execute(select(MapPin).where(MapPin.id == pin_id))).scalar_one_or_none()
+    if not pin:
+        raise HTTPException(status_code=404, detail="Pin negăsit.")
+
+    departure_str = (data.get("departure_time") or "").strip()  # "HH:MM"
+    departure_ts: int | None = None
+    if departure_str:
+        try:
+            h, m = map(int, departure_str.split(":"))
+            tz_ro = timezone(timedelta(hours=2))
+            now_ro = datetime.now(tz_ro)
+            dept_ro = now_ro.replace(hour=h, minute=m, second=0, microsecond=0)
+            # If time already passed today, assume tomorrow
+            if dept_ro <= now_ro:
+                dept_ro += timedelta(days=1)
+            departure_ts = int(dept_ro.astimezone(timezone.utc).timestamp())
+        except Exception:
+            pass
+
+    tm = await travel_time_from_restaurant(pin.lat, pin.lng, db, departure_ts=departure_ts)
+    if tm is None:
+        raise HTTPException(status_code=502, detail="Nu s-a putut calcula timpul de drum.")
+
+    pin.travel_time_min = tm
+    await db.commit()
+    await _broadcast_gps({"type": "pins_updated"})
+
+    # Compute ETA from the selected departure time (not order created_at)
+    eta_delivery = eta_return = None
+    if departure_str:
+        try:
+            tz_ro = timezone(timedelta(hours=2))
+            h, m = map(int, departure_str.split(":"))
+            dept_dt = datetime.now(tz_ro).replace(hour=h, minute=m, second=0, microsecond=0)
+            arr_dt = dept_dt + timedelta(minutes=tm)
+            ret_dt = arr_dt + timedelta(minutes=tm)
+            eta_delivery = arr_dt.strftime("%H:%M")
+            eta_return = ret_dt.strftime("%H:%M")
+        except Exception:
+            pass
+
+    return {
+        "id": pin.id,
+        "travel_time_min": round(tm, 1),
+        "eta_delivery": eta_delivery,
+        "eta_return": eta_return,
+    }
 
 
 @router.delete("/navigatie/pins/{pin_id}")
